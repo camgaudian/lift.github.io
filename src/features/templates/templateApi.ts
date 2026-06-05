@@ -8,13 +8,18 @@ export async function fetchTemplates(): Promise<WorkoutTemplate[]> {
     .order('name')
   if (error) throw error
 
+  type TemplateExerciseRow = {
+    sort_order: number
+    exercise: { name: string } | null
+  }
+
   return (data ?? []).map((t) => ({
     id: t.id,
     user_id: t.user_id,
     name: t.name,
     created_at: t.created_at,
     updated_at: t.updated_at,
-    exercise_names: (t.template_exercises ?? [])
+    exercise_names: ((t.template_exercises ?? []) as TemplateExerciseRow[])
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((te) => te.exercise?.name)
       .filter((name): name is string => Boolean(name)),
