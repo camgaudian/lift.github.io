@@ -20,9 +20,10 @@ Open **Authentication → URL configuration** and set:
 
 | Setting | Value |
 |---------|-------|
-| Site URL | `https://lift.github.io` |
+| Site URL | `https://gaudian.dev/lift.github.io` |
 | Redirect URLs | `http://localhost:5173/**` |
-| | `https://lift.github.io/**` |
+| | `https://gaudian.dev/lift.github.io/**` |
+| | `https://camgaudian.github.io/lift.github.io/**` |
 
 ## 4. Run database migrations
 

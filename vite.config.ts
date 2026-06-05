@@ -4,8 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
+const base = process.env.VITE_BASE_PATH || '/'
+
 export default defineConfig({
-  base: '/',
+  base,
   plugins: [
     react(),
     tailwindcss(),
@@ -20,7 +22,8 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
+        start_url: base,
+        scope: base,
         icons: [
           {
             src: 'favicon.svg',

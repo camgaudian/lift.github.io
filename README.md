@@ -2,7 +2,7 @@
 
 A mobile-first PWA workout tracker. Log strength, bodyweight, and cardio sessions with templates, per-exercise notes, and stats-heavy dashboards.
 
-Live at [lift.github.io](https://lift.github.io) after you configure Supabase and enable GitHub Pages.
+Live at [gaudian.dev/lift.github.io](https://gaudian.dev/lift.github.io) (also [camgaudian.github.io/lift.github.io](https://camgaudian.github.io/lift.github.io)).
 
 ## Features
 
