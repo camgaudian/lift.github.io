@@ -56,8 +56,8 @@ function WorkoutIcon({ active }: { active: boolean }) {
 function ProgressIcon({ active }: { active: boolean }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2M4 18V10M20 18v-8" strokeLinecap="round" />
+      <path d="M3 17l6-6 4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 7h7v7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
