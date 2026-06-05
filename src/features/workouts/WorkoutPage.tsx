@@ -11,6 +11,7 @@ import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Input } from '@/components/Input'
+import { formatExercisePreview } from '@/lib/format'
 import type { WorkoutTemplate } from '@/lib/types'
 
 export function WorkoutPage() {
@@ -108,12 +109,22 @@ export function WorkoutPage() {
 
       {templates.length > 0 && (
         <section>
-          <h2 className="mb-2 text-sm font-medium text-text-secondary">From template</h2>
+          <h2 className="mb-2 text-sm font-medium text-text-secondary">Start from template</h2>
           <ul className="flex flex-col gap-2">
             {templates.map((t) => (
               <li key={t.id}>
-                <Button variant="secondary" fullWidth onClick={() => handleStartTemplate(t.id)}>
-                  {t.name}
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => handleStartTemplate(t.id)}
+                  className="flex-col gap-0.5 py-3"
+                >
+                  <span className="font-medium">{t.name}</span>
+                  <span className="block w-full truncate text-center text-sm font-normal text-text-secondary">
+                    {t.exercise_names?.length
+                      ? formatExercisePreview(t.exercise_names)
+                      : 'No exercises yet'}
+                  </span>
                 </Button>
               </li>
             ))}

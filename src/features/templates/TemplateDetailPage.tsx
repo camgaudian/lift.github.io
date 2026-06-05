@@ -101,6 +101,34 @@ export function TemplateDetailPage() {
 
       {showPicker && (
         <Card className="flex flex-col gap-3">
+          <div className="relative">
+            <svg
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden
+            >
+              <circle cx="7" cy="7" r="4.5" />
+              <path d="M11 11l3 3" strokeLinecap="round" />
+            </svg>
+            <Input
+              placeholder="Search exercises…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <ExercisePickerResults
+            exercises={filtered}
+            isSearching={isSearching}
+            showGroupHeaders={!category && !isSearching}
+            disabled={adding}
+            onSelect={handleAddExercise}
+          />
+
           <select
             className="w-full rounded-xl border border-border bg-surface px-4 py-3 capitalize"
             value={category}
@@ -111,21 +139,6 @@ export function TemplateDetailPage() {
               <option key={c} value={c}>{capitalize(c)}</option>
             ))}
           </select>
-
-          <ExercisePickerResults
-            exercises={filtered}
-            isSearching={isSearching}
-            showGroupHeaders={!category && !isSearching}
-            disabled={adding}
-            onSelect={handleAddExercise}
-          />
-
-          <Input
-            placeholder="Search exercises…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            autoFocus
-          />
         </Card>
       )}
 
