@@ -2,11 +2,12 @@ export type ExerciseType = 'strength' | 'bodyweight' | 'cardio'
 export type WorkoutStatus = 'in_progress' | 'completed'
 
 export type ThemeMode = 'light' | 'dark'
+export type WeightUnit = 'lb' | 'kg'
 
 export interface Profile {
   id: string
   display_name: string | null
-  unit_preference: string
+  unit_preference: WeightUnit
   theme: ThemeMode
   accent_color: string
   created_at: string
@@ -30,6 +31,7 @@ export interface WorkoutTemplate {
   name: string
   created_at: string
   updated_at: string
+  exercise_names?: string[]
 }
 
 export interface TemplateExercise {
@@ -52,6 +54,7 @@ export interface Workout {
   completed_at: string | null
   notes: string | null
   created_at: string
+  template?: { id: string; name: string } | null
 }
 
 export interface WorkoutExercise {
@@ -101,7 +104,6 @@ export interface ExercisePR {
   exercise_name: string
   best_weight_lb: number
   best_reps: number
-  estimated_1rm_lb: number
   achieved_at: string
 }
 
@@ -110,8 +112,18 @@ export interface FunStats {
   total_sets: number
   total_reps: number
   cumulative_volume_lb: number
+  total_cardio_seconds: number
   heaviest_set_lb: number | null
   streak_days: number
+}
+
+export interface WorkoutFunStats {
+  exercise_count: number
+  total_sets: number
+  total_reps: number
+  volume_lb: number
+  total_cardio_seconds: number
+  heaviest_set_lb: number | null
 }
 
 export interface WeeklyVolume {

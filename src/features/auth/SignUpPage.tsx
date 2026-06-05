@@ -53,7 +53,7 @@ export function SignUpPage() {
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
-            label="Display name"
+            label="Username"
             type="text"
             autoComplete="name"
             value={displayName}

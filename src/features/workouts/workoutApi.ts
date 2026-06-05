@@ -159,7 +159,11 @@ export async function upsertStrengthSets(
   workoutExerciseId: string,
   sets: Omit<StrengthSet, 'id' | 'workout_exercise_id'>[],
 ): Promise<void> {
-  await supabase.from('strength_sets').delete().eq('workout_exercise_id', workoutExerciseId)
+  const { error: deleteError } = await supabase
+    .from('strength_sets')
+    .delete()
+    .eq('workout_exercise_id', workoutExerciseId)
+  if (deleteError) throw deleteError
 
   if (sets.length === 0) return
 
@@ -180,20 +184,26 @@ export async function upsertCardioEntry(
   workoutExerciseId: string,
   entry: Omit<CardioEntry, 'id' | 'workout_exercise_id'>,
 ): Promise<void> {
-  const { error } = await supabase.from('cardio_entries').upsert({
-    workout_exercise_id: workoutExerciseId,
-    duration_seconds: entry.duration_seconds,
-    distance_miles: entry.distance_miles,
-    calories: entry.calories,
-  })
+  const { error } = await supabase.from('cardio_entries').upsert(
+    {
+      workout_exercise_id: workoutExerciseId,
+      duration_seconds: entry.duration_seconds,
+      distance_miles: entry.distance_miles,
+      calories: entry.calories,
+    },
+    { onConflict: 'workout_exercise_id' },
+  )
   if (error) throw error
 }
 
 export async function upsertSessionNote(workoutExerciseId: string, note: string): Promise<void> {
-  const { error } = await supabase.from('exercise_session_notes').upsert({
-    workout_exercise_id: workoutExerciseId,
-    note_for_next_time: note,
-  })
+  const { error } = await supabase.from('exercise_session_notes').upsert(
+    {
+      workout_exercise_id: workoutExerciseId,
+      note_for_next_time: note,
+    },
+    { onConflict: 'workout_exercise_id' },
+  )
   if (error) throw error
 }
 
@@ -217,10 +227,14 @@ export async function getLastSessionForExercise(exerciseId: string) {
 export async function fetchCompletedWorkouts(limit = 100) {
   const { data, error } = await supabase
     .from('workouts')
-    .select('*')
+    .select('*, template:workout_templates(id, name)')
     .eq('status', 'completed')
     .order('completed_at', { ascending: false })
     .limit(limit)
   if (error) throw error
-  return data ?? []
+
+  return (data ?? []).map((w) => ({
+    ...w,
+    template: Array.isArray(w.template) ? w.template[0] ?? null : w.template,
+  }))
 }

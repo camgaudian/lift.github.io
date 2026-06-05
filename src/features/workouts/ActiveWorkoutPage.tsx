@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   fetchWorkout,
@@ -6,29 +6,32 @@ import {
   completeWorkout,
   cancelWorkout,
 } from './workoutApi'
-import { ExerciseBlock, handleRemoveExercise } from './ExerciseBlock'
+import { ExerciseBlock, handleRemoveExercise, type ExerciseBlockHandle } from './ExerciseBlock'
 import { useExercises } from '@/features/exercises/useExercises'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
-import type { WorkoutExercise } from '@/lib/types'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { WorkoutFunStatsSection } from './WorkoutFunStatsSection'
+import type { Workout, WorkoutExercise } from '@/lib/types'
 
 export function ActiveWorkoutPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { exercises: allExercises } = useExercises()
-  const [workoutStatus, setWorkoutStatus] = useState<string>('in_progress')
+  const [workout, setWorkout] = useState<Workout | null>(null)
   const [items, setItems] = useState<WorkoutExercise[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedExercise, setSelectedExercise] = useState('')
   const [showPicker, setShowPicker] = useState(false)
   const [completing, setCompleting] = useState(false)
+  const exerciseRefs = useRef<Record<string, ExerciseBlockHandle | null>>({})
 
   const reload = async () => {
     if (!id) return
     setLoading(true)
     try {
-      const { workout, exercises } = await fetchWorkout(id)
-      setWorkoutStatus(workout.status)
+      const { workout: w, exercises } = await fetchWorkout(id)
+      setWorkout(w)
       setItems(exercises)
     } finally {
       setLoading(false)
@@ -53,6 +56,9 @@ export function ActiveWorkoutPage() {
     if (!id) return
     setCompleting(true)
     try {
+      await Promise.all(
+        items.map((item) => exerciseRefs.current[item.id]?.save()),
+      )
       await completeWorkout(id)
       navigate('/history')
     } finally {
@@ -66,21 +72,25 @@ export function ActiveWorkoutPage() {
     navigate('/workout')
   }
 
-  if (loading) return <p className="text-text-secondary">Loading workout…</p>
+  if (loading) return <LoadingSpinner />
 
-  const isCompleted = workoutStatus === 'completed'
+  const isCompleted = workout?.status === 'completed'
   const alreadyAdded = new Set(items.map((i) => i.exercise_id))
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{isCompleted ? 'Edit workout' : 'Active workout'}</h1>
+        <h1 className="text-2xl font-semibold">{isCompleted ? 'Workout' : 'Active workout'}</h1>
         {!isCompleted && (
           <button type="button" onClick={handleCancel} className="text-sm text-danger">
             Discard
           </button>
         )}
       </div>
+
+      {isCompleted && (
+        <WorkoutFunStatsSection exercises={items} />
+      )}
 
       {!isCompleted && (
         <>
@@ -112,6 +122,9 @@ export function ActiveWorkoutPage() {
         {items.map((item) => (
           <ExerciseBlock
             key={item.id}
+            ref={(el) => {
+              exerciseRefs.current[item.id] = el
+            }}
             workoutExerciseId={item.id}
             exerciseId={item.exercise_id}
             exerciseName={(item.exercise as { name: string } | undefined)?.name ?? 'Exercise'}

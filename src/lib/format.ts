@@ -1,7 +1,8 @@
-export function formatVolume(lb: number): string {
-  if (lb >= 1_000_000) return `${(lb / 1_000_000).toFixed(1)}M lb`
-  if (lb >= 1_000) return `${(lb / 1_000).toFixed(1)}k lb`
-  return `${Math.round(lb).toLocaleString()} lb`
+import type { WeightUnit } from '@/lib/types'
+import { formatSetSummary as formatSetSummaryWithUnit, formatVolume as formatVolumeWithUnit } from '@/lib/units'
+
+export function formatVolume(lb: number, unit: WeightUnit = 'lb'): string {
+  return formatVolumeWithUnit(lb, unit)
 }
 
 export function formatDuration(seconds: number): string {
@@ -25,16 +26,28 @@ export function epley1rm(weight: number, reps: number): number {
   return weight * (1 + reps / 30)
 }
 
-export function formatSetSummary(weight: number, reps: number, addedWeight?: number | null): string {
-  const total = weight + (addedWeight ?? 0)
-  if (total > 0) return `${total}×${reps}`
-  return `${reps} reps`
+export function formatSetSummary(
+  weight: number,
+  reps: number,
+  unit: WeightUnit = 'lb',
+  addedWeight?: number | null,
+): string {
+  return formatSetSummaryWithUnit(weight, reps, unit, addedWeight)
 }
 
-export function formatSetsList(sets: { weight_lb: number; reps: number; added_weight_lb?: number | null }[]): string {
-  return sets.map((s) => formatSetSummary(s.weight_lb, s.reps, s.added_weight_lb)).join(', ')
+export function formatSetsList(
+  sets: { weight_lb: number; reps: number; added_weight_lb?: number | null }[],
+  unit: WeightUnit = 'lb',
+): string {
+  return sets.map((s) => formatSetSummary(s.weight_lb, s.reps, unit, s.added_weight_lb)).join(', ')
 }
 
 export function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+export function formatExercisePreview(names: string[], maxVisible = 3): string {
+  if (names.length === 0) return ''
+  const visible = names.slice(0, maxVisible)
+  return names.length > maxVisible ? `${visible.join(', ')}, ...` : visible.join(', ')
 }

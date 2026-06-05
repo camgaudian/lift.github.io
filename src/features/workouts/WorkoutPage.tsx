@@ -9,6 +9,7 @@ import {
 import { fetchTemplates } from '@/features/templates/templateApi'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Input } from '@/components/Input'
 import type { WorkoutTemplate } from '@/lib/types'
 
@@ -57,11 +58,11 @@ export function WorkoutPage() {
     navigate(`/workout/${w.id}`)
   }
 
-  if (loading) return <p className="text-text-secondary">Loading…</p>
+  if (loading) return <LoadingSpinner />
 
   if (active) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
         <h1 className="text-2xl font-semibold">Workout</h1>
         <Card>
           <p className="text-text-secondary">You have a workout in progress.</p>
@@ -74,7 +75,7 @@ export function WorkoutPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
       <h1 className="text-2xl font-semibold">Workout</h1>
 
       <Button fullWidth size="lg" onClick={handleStartEmpty}>

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type CSSProperties } from 'react'
 import { fetchLastSessionForExercise } from '@/lib/stats'
+import { useProfile } from '@/contexts/ProfileContext'
 import { formatSetsList } from '@/lib/format'
+import { displayToLb, lbToDisplay } from '@/lib/units'
 import type { ExerciseType, LastSessionData, StrengthSet } from '@/lib/types'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
@@ -12,6 +14,10 @@ import {
   removeWorkoutExercise,
 } from './workoutApi'
 import { formatDuration, parseDuration } from '@/lib/format'
+
+export interface ExerciseBlockHandle {
+  save: () => Promise<void>
+}
 
 interface ExerciseBlockProps {
   workoutExerciseId: string
@@ -25,57 +31,204 @@ interface ExerciseBlockProps {
   readOnly?: boolean
 }
 
-export function ExerciseBlock({
-  workoutExerciseId,
-  exerciseId,
-  exerciseName,
-  exerciseType,
-  initialSets = [],
-  initialNote = '',
-  initialCardio,
-  onRemove,
-  readOnly = false,
-}: ExerciseBlockProps) {
+type SetRow = StrengthSet & { rowKey: string; lastPlaceholderIndex?: number }
+
+function hasSetData(set: StrengthSet): boolean {
+  return set.reps > 0 || set.weight_lb > 0 || (set.added_weight_lb ?? 0) > 0
+}
+
+function reorderSets(sets: SetRow[], from: number, to: number): SetRow[] {
+  const result = [...sets]
+  const [moved] = result.splice(from, 1)
+  result.splice(to, 0, moved)
+  return result.map((set, index) => ({
+    ...set,
+    set_number: index + 1,
+  }))
+}
+
+function toSetRows(sets: StrengthSet[], nextRowKey: () => string): SetRow[] {
+  return sets.map((set, index) => ({
+    ...set,
+    rowKey: nextRowKey(),
+    lastPlaceholderIndex: index,
+  }))
+}
+
+type RowMetrics = {
+  tops: number[]
+  heights: number[]
+  gap: number
+}
+
+function measureRows(container: HTMLElement | null): RowMetrics | null {
+  if (!container) return null
+  const rows = Array.from(container.querySelectorAll<HTMLElement>('[data-set-row]'))
+  if (!rows.length) return null
+
+  const tops = rows.map((row) => row.getBoundingClientRect().top)
+  const heights = rows.map((row) => row.getBoundingClientRect().height)
+  const gap =
+    rows.length > 1
+      ? Math.max(0, tops[1] - tops[0] - heights[0])
+      : 0
+
+  return { tops, heights, gap }
+}
+
+function computeHoverIndex(clientY: number, metrics: RowMetrics): number {
+  for (let i = 0; i < metrics.tops.length; i++) {
+    const mid = metrics.tops[i] + metrics.heights[i] / 2
+    if (clientY < mid) return i
+  }
+  return metrics.tops.length - 1
+}
+
+function getRowShift(
+  idx: number,
+  dragIndex: number,
+  hoverIndex: number,
+  metrics: RowMetrics,
+): number {
+  if (dragIndex === hoverIndex) return 0
+
+  const slotSize = metrics.heights[dragIndex] + metrics.gap
+
+  if (dragIndex < hoverIndex && idx > dragIndex && idx <= hoverIndex) {
+    return -slotSize
+  }
+  if (dragIndex > hoverIndex && idx >= hoverIndex && idx < dragIndex) {
+    return slotSize
+  }
+  return 0
+}
+
+function resolveSetsForSave(
+  sets: SetRow[],
+  lastSession: LastSessionData | null,
+): Omit<StrengthSet, 'id' | 'workout_exercise_id'>[] {
+  return sets
+    .filter(hasSetData)
+    .map((set, index) => {
+      const last = lastSession?.sets?.[set.lastPlaceholderIndex ?? index]
+      return {
+        set_number: index + 1,
+        reps: set.reps > 0 ? set.reps : (last?.reps ?? 0),
+        weight_lb: set.weight_lb > 0 ? set.weight_lb : (last?.weight_lb ?? 0),
+        added_weight_lb: set.added_weight_lb ?? last?.added_weight_lb ?? null,
+        is_warmup: set.is_warmup,
+      }
+    })
+    .filter((set) => set.reps > 0)
+}
+
+export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>(function ExerciseBlock(
+  {
+    workoutExerciseId,
+    exerciseId,
+    exerciseName,
+    exerciseType,
+    initialSets = [],
+    initialNote = '',
+    initialCardio,
+    onRemove,
+    readOnly = false,
+  },
+  ref,
+) {
+  const { unit } = useProfile()
+  const rowKeyRef = useRef(0)
+  const nextRowKey = () => String(++rowKeyRef.current)
+  const setListRef = useRef<HTMLDivElement>(null)
+  const rowMetricsRef = useRef<RowMetrics | null>(null)
+  const hoverIndexRef = useRef<number | null>(null)
+  const dragStartYRef = useRef(0)
+
   const [lastSession, setLastSession] = useState<LastSessionData | null>(null)
   const [note, setNote] = useState(initialNote)
-  const [sets, setSets] = useState<StrengthSet[]>(
+  const [sets, setSets] = useState<SetRow[]>(() =>
     initialSets.length > 0
-      ? initialSets
-      : [{ set_number: 1, reps: 0, weight_lb: 0, added_weight_lb: null, is_warmup: false }],
+      ? toSetRows(initialSets, nextRowKey)
+      : [{
+          rowKey: nextRowKey(),
+          set_number: 1,
+          reps: 0,
+          weight_lb: 0,
+          added_weight_lb: null,
+          is_warmup: false,
+          lastPlaceholderIndex: 0,
+        }],
   )
+  const [draggingRowKey, setDraggingRowKey] = useState<string | null>(null)
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null)
+  const [dragOffset, setDragOffset] = useState(0)
   const [duration, setDuration] = useState(
     initialCardio ? formatDuration(initialCardio.duration_seconds) : '20:00',
   )
   const [distance, setDistance] = useState(String(initialCardio?.distance_miles ?? ''))
   const [calories, setCalories] = useState(String(initialCardio?.calories ?? ''))
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchLastSessionForExercise(exerciseId).then(setLastSession)
   }, [exerciseId])
 
   useEffect(() => {
+    if (!saved) return
+    const timer = setTimeout(() => setSaved(false), 2000)
+    return () => clearTimeout(timer)
+  }, [saved])
+
+  useEffect(() => {
     setNote(initialNote)
   }, [initialNote])
 
-  const lastSetsSummary =
-    lastSession?.sets?.length ? formatSetsList(lastSession.sets) : null
+  useEffect(() => {
+    if (initialSets.length > 0) {
+      setSets(toSetRows(initialSets, nextRowKey))
+    }
+  }, [initialSets])
 
-  const placeholderFromLast = (setIndex: number, field: 'weight' | 'reps') => {
-    const s = lastSession?.sets?.[setIndex]
+  const lastSetsSummary =
+    lastSession?.sets?.length ? formatSetsList(lastSession.sets, unit) : null
+
+  const placeholderFromLast = (set: SetRow, field: 'weight' | 'reps' | 'added') => {
+    const s = lastSession?.sets?.[set.lastPlaceholderIndex ?? -1]
     if (!s) return undefined
     if (field === 'weight') {
-      const w = s.weight_lb + (s.added_weight_lb ?? 0)
-      return w > 0 ? String(w) : undefined
+      const w = s.weight_lb
+      return w > 0 ? String(lbToDisplay(w, unit)) : undefined
+    }
+    if (field === 'added') {
+      const w = s.added_weight_lb ?? 0
+      return w > 0 ? String(lbToDisplay(w, unit)) : undefined
     }
     return s.reps > 0 ? String(s.reps) : undefined
   }
 
+  const weightInputValue = (lb: number) => (lb > 0 ? lbToDisplay(lb, unit) : '')
+
+  const handleWeightInput = (raw: string, onUpdate: (lb: number) => void) => {
+    if (!raw) {
+      onUpdate(0)
+      return
+    }
+    onUpdate(displayToLb(Number(raw), unit))
+  }
+
   const saveStrength = async () => {
     setSaving(true)
+    setSaved(false)
+    setSaveError(null)
     try {
-      await upsertStrengthSets(workoutExerciseId, sets.filter((s) => s.reps > 0))
+      await upsertStrengthSets(workoutExerciseId, resolveSetsForSave(sets, lastSession))
       await upsertSessionNote(workoutExerciseId, note)
+      setSaved(true)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save')
+      throw err
     } finally {
       setSaving(false)
     }
@@ -83,28 +236,55 @@ export function ExerciseBlock({
 
   const saveCardio = async () => {
     setSaving(true)
+    setSaved(false)
+    setSaveError(null)
     try {
       await upsertCardioEntry(workoutExerciseId, {
         duration_seconds: parseDuration(duration),
         distance_miles: distance ? Number(distance) : null,
         calories: calories ? Number(calories) : null,
       })
+      setSaved(true)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save')
+      throw err
     } finally {
       setSaving(false)
     }
+  }
+
+  const save = exerciseType === 'cardio' ? saveCardio : saveStrength
+
+  useImperativeHandle(ref, () => ({ save }), [save])
+
+  const saveButtonLabel = (defaultLabel: string) => {
+    if (saving) return 'Saving…'
+    if (saved) return '✓ Saved'
+    return defaultLabel
   }
 
   const addSet = () => {
     setSets((prev) => [
       ...prev,
       {
+        rowKey: nextRowKey(),
         set_number: prev.length + 1,
         reps: 0,
         weight_lb: 0,
         added_weight_lb: null,
         is_warmup: false,
+        lastPlaceholderIndex: prev.length,
       },
     ])
+  }
+
+  const removeSet = (index: number) => {
+    setSets((prev) => {
+      if (prev.length <= 1) return prev
+      return prev
+        .filter((_, i) => i !== index)
+        .map((set, i) => ({ ...set, set_number: i + 1 }))
+    })
   }
 
   const updateSet = (index: number, field: keyof StrengthSet, value: number | boolean | null) => {
@@ -112,6 +292,103 @@ export function ExerciseBlock({
       prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)),
     )
   }
+
+  const finishDrag = (rowKey: string | null) => {
+    if (rowKey) {
+      const target = hoverIndexRef.current
+      setSets((prev) => {
+        const dragIndex = prev.findIndex((set) => set.rowKey === rowKey)
+        if (dragIndex < 0 || target === null || dragIndex === target) return prev
+        return reorderSets(prev, dragIndex, target)
+      })
+    }
+
+    rowMetricsRef.current = null
+    hoverIndexRef.current = null
+    setDraggingRowKey(null)
+    setHoverIndex(null)
+    setDragOffset(0)
+  }
+
+  const startDrag = (index: number, e: React.PointerEvent<HTMLButtonElement>) => {
+    if (readOnly) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    const handle = e.currentTarget
+    handle.setPointerCapture(e.pointerId)
+
+    const metrics = measureRows(setListRef.current)
+    if (!metrics) return
+
+    const rowKey = sets[index]?.rowKey
+    if (!rowKey) return
+
+    rowMetricsRef.current = metrics
+    dragStartYRef.current = e.clientY
+    hoverIndexRef.current = index
+    setDraggingRowKey(rowKey)
+    setHoverIndex(index)
+    setDragOffset(0)
+
+    const onMove = (ev: PointerEvent) => {
+      ev.preventDefault()
+      const cached = rowMetricsRef.current
+      if (!cached) return
+
+      const nextHover = computeHoverIndex(ev.clientY, cached)
+      hoverIndexRef.current = nextHover
+      setDragOffset(ev.clientY - dragStartYRef.current)
+      setHoverIndex(nextHover)
+    }
+
+    const onEnd = (ev: PointerEvent) => {
+      ev.preventDefault()
+      handle.removeEventListener('pointermove', onMove)
+      handle.removeEventListener('pointerup', onEnd)
+      handle.removeEventListener('pointercancel', onEnd)
+      try {
+        handle.releasePointerCapture(ev.pointerId)
+      } catch {
+        // already released
+      }
+      finishDrag(rowKey)
+    }
+
+    handle.addEventListener('pointermove', onMove)
+    handle.addEventListener('pointerup', onEnd)
+    handle.addEventListener('pointercancel', onEnd)
+  }
+
+  const dragIndex = draggingRowKey ? sets.findIndex((set) => set.rowKey === draggingRowKey) : -1
+  const activeHoverIndex = hoverIndex ?? dragIndex
+  const rowMetrics = rowMetricsRef.current
+
+  const getRowStyle = (idx: number): CSSProperties | undefined => {
+    if (dragIndex < 0 || !rowMetrics) return undefined
+
+    if (idx === dragIndex) {
+      return { transform: `translateY(${dragOffset}px)`, zIndex: 10 }
+    }
+
+    const shift = getRowShift(idx, dragIndex, activeHoverIndex, rowMetrics)
+    if (shift === 0) return undefined
+    return { transform: `translateY(${shift}px)` }
+  }
+
+  const saveButton = (defaultLabel: string, onSave: () => Promise<void>) => (
+    <div className="flex flex-col gap-1">
+      <Button
+        variant="secondary"
+        onClick={onSave}
+        disabled={saving}
+        className={saved ? 'pointer-events-none' : ''}
+      >
+        {saveButtonLabel(defaultLabel)}
+      </Button>
+      {saveError && <p className="text-sm text-danger text-center">{saveError}</p>}
+    </div>
+  )
 
   if (exerciseType === 'cardio') {
     return (
@@ -143,11 +420,7 @@ export function ExerciseBlock({
           onChange={(e) => setCalories(e.target.value)}
           disabled={readOnly}
         />
-        {!readOnly && (
-          <Button variant="secondary" onClick={saveCardio} disabled={saving}>
-            {saving ? 'Saving…' : 'Save cardio'}
-          </Button>
-        )}
+        {!readOnly && saveButton('Save cardio', saveCardio)}
       </Card>
     )
   }
@@ -193,16 +466,47 @@ export function ExerciseBlock({
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div ref={setListRef} className="flex flex-col gap-2">
         {sets.map((set, idx) => (
-          <div key={set.set_number} className="flex items-center gap-2">
-            <span className="w-8 text-sm text-text-secondary">#{set.set_number}</span>
+          <div
+            key={set.rowKey}
+            data-set-row
+            data-set-index={idx}
+            className={[
+              'flex items-center gap-1 rounded-xl',
+              draggingRowKey === set.rowKey
+                ? 'relative bg-surface shadow-lg ring-1 ring-accent/40'
+                : draggingRowKey
+                  ? 'transition-transform duration-150 ease-out'
+                  : '',
+            ].join(' ')}
+            style={getRowStyle(idx)}
+          >
+            {!readOnly && (
+              <button
+                type="button"
+                onPointerDown={(e) => startDrag(idx, e)}
+                className="flex shrink-0 touch-none select-none cursor-grab active:cursor-grabbing text-text-secondary pl-0.5 pr-2 py-2"
+                style={{ touchAction: 'none' }}
+                aria-label={`Reorder set ${idx + 1}`}
+              >
+                <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden>
+                  <circle cx="3" cy="3" r="1.5" />
+                  <circle cx="9" cy="3" r="1.5" />
+                  <circle cx="3" cy="8" r="1.5" />
+                  <circle cx="9" cy="8" r="1.5" />
+                  <circle cx="3" cy="13" r="1.5" />
+                  <circle cx="9" cy="13" r="1.5" />
+                </svg>
+              </button>
+            )}
+            <span className="shrink-0 mr-2 text-sm text-text-secondary whitespace-nowrap">Set {idx + 1}</span>
             {exerciseType === 'bodyweight' ? (
               <>
                 <Input
                   type="number"
                   inputMode="numeric"
-                  placeholder={placeholderFromLast(idx, 'reps') ?? 'reps'}
+                  placeholder={placeholderFromLast(set, 'reps') ?? 'reps'}
                   value={set.reps || ''}
                   onChange={(e) => updateSet(idx, 'reps', Number(e.target.value))}
                   disabled={readOnly}
@@ -211,10 +515,12 @@ export function ExerciseBlock({
                 <Input
                   type="number"
                   inputMode="decimal"
-                  placeholder="added lb"
-                  value={set.added_weight_lb ?? ''}
+                  placeholder={placeholderFromLast(set, 'added') ?? `added ${unit}`}
+                  value={set.added_weight_lb != null && set.added_weight_lb > 0 ? weightInputValue(set.added_weight_lb) : ''}
                   onChange={(e) =>
-                    updateSet(idx, 'added_weight_lb', e.target.value ? Number(e.target.value) : null)
+                    handleWeightInput(e.target.value, (lb) =>
+                      updateSet(idx, 'added_weight_lb', lb > 0 ? lb : null),
+                    )
                   }
                   disabled={readOnly}
                   className="w-24"
@@ -225,9 +531,9 @@ export function ExerciseBlock({
                 <Input
                   type="number"
                   inputMode="decimal"
-                  placeholder={placeholderFromLast(idx, 'weight') ?? 'lb'}
-                  value={set.weight_lb || ''}
-                  onChange={(e) => updateSet(idx, 'weight_lb', Number(e.target.value))}
+                  placeholder={placeholderFromLast(set, 'weight') ?? unit}
+                  value={weightInputValue(set.weight_lb)}
+                  onChange={(e) => handleWeightInput(e.target.value, (lb) => updateSet(idx, 'weight_lb', lb))}
                   disabled={readOnly}
                   className="flex-1"
                 />
@@ -235,13 +541,23 @@ export function ExerciseBlock({
                 <Input
                   type="number"
                   inputMode="numeric"
-                  placeholder={placeholderFromLast(idx, 'reps') ?? 'reps'}
+                  placeholder={placeholderFromLast(set, 'reps') ?? 'reps'}
                   value={set.reps || ''}
                   onChange={(e) => updateSet(idx, 'reps', Number(e.target.value))}
                   disabled={readOnly}
                   className="w-20"
                 />
               </>
+            )}
+            {!readOnly && sets.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeSet(idx)}
+                className="shrink-0 px-1 py-2 text-text-secondary hover:text-danger"
+                aria-label={`Delete set ${idx + 1}`}
+              >
+                ×
+              </button>
             )}
           </div>
         ))}
@@ -250,14 +566,12 @@ export function ExerciseBlock({
       {!readOnly && (
         <>
           <Button variant="ghost" onClick={addSet}>+ Add set</Button>
-          <Button variant="secondary" onClick={saveStrength} disabled={saving}>
-            {saving ? 'Saving…' : 'Save exercise'}
-          </Button>
+          {saveButton('Save', saveStrength)}
         </>
       )}
     </Card>
   )
-}
+})
 
 export async function handleRemoveExercise(workoutExerciseId: string, onDone: () => void) {
   await removeWorkoutExercise(workoutExerciseId)

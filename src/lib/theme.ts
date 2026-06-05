@@ -9,7 +9,7 @@ export const ACCENT_PRESETS = [
   { id: 'green', label: 'Green', color: '#34c759' },
   { id: 'orange', label: 'Orange', color: '#ff9500' },
   { id: 'purple', label: 'Purple', color: '#af52de' },
-  { id: 'red', label: 'Red', color: '#ff3b30' },
+  { id: 'pink', label: 'Pink', color: '#f9a8d4' },
   { id: 'teal', label: 'Teal', color: '#5ac8fa' },
 ] as const
 

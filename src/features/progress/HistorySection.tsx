@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns'
 import { fetchCompletedWorkouts } from '@/features/workouts/workoutApi'
 import { Card } from '@/components/Card'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 import type { Workout } from '@/lib/types'
 
 export function HistorySection() {
@@ -30,7 +31,7 @@ export function HistorySection() {
     ? workouts.filter((w) => isSameDay(parseISO(w.completed_at!), selectedDate))
     : workouts.slice(0, 20)
 
-  if (loading) return <p className="text-text-secondary">Loading history…</p>
+  if (loading) return <LoadingSpinner size="section" />
 
   return (
     <div className="flex flex-col gap-4">
@@ -104,6 +105,9 @@ export function HistorySection() {
                   <p className="font-medium">
                     {format(parseISO(w.completed_at!), 'EEE, MMM d · h:mm a')}
                   </p>
+                  {w.template?.name && (
+                    <p className="text-sm text-text-secondary truncate">{w.template.name}</p>
+                  )}
                   {w.notes && <p className="text-sm text-text-secondary truncate">{w.notes}</p>}
                 </Card>
               </Link>

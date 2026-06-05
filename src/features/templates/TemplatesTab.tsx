@@ -8,6 +8,8 @@ import {
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { formatExercisePreview } from '@/lib/format'
 import type { WorkoutTemplate } from '@/lib/types'
 
 export function TemplatesTab() {
@@ -43,7 +45,7 @@ export function TemplatesTab() {
     reload()
   }
 
-  if (loading) return <p className="text-text-secondary">Loading templates…</p>
+  if (loading) return <LoadingSpinner size="section" />
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,11 +69,18 @@ export function TemplatesTab() {
         {templates.map((t) => (
           <li key={t.id}>
             <Card padding="sm">
-              <div className="flex items-center justify-between">
-                <Link to={`/library/templates/${t.id}`} className="font-medium text-accent">
-                  {t.name}
-                </Link>
-                <button type="button" onClick={() => handleDelete(t.id)} className="text-sm text-danger">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <Link to={`/library/templates/${t.id}`} className="font-medium text-accent">
+                    {t.name}
+                  </Link>
+                  <p className="mt-0.5 text-sm text-text-secondary truncate">
+                    {t.exercise_names?.length
+                      ? formatExercisePreview(t.exercise_names)
+                      : 'No exercises yet'}
+                  </p>
+                </div>
+                <button type="button" onClick={() => handleDelete(t.id)} className="shrink-0 text-sm text-danger">
                   Delete
                 </button>
               </div>

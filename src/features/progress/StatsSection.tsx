@@ -5,9 +5,12 @@ import {
   fetchCumulativeVolume,
   fetchExercisePRs,
 } from '@/lib/stats'
-import { formatVolume } from '@/lib/format'
+import { formatDuration, formatVolume } from '@/lib/format'
+import { formatWeight } from '@/lib/units'
+import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Card } from '@/components/Card'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 import {
   LineChart,
   Line,
@@ -21,6 +24,7 @@ import { format, parseISO } from 'date-fns'
 
 export function StatsSection() {
   const { accentColor } = useTheme()
+  const { unit } = useProfile()
   const [stats, setStats] = useState<FunStats | null>(null)
   const [weekVolume, setWeekVolume] = useState<(WeeklyVolume & { label: string })[]>([])
   const [cumulative, setCumulative] = useState(0)
@@ -49,14 +53,17 @@ export function StatsSection() {
       .catch(() => setLoading(false))
   }, [])
 
-  if (loading) return <p className="text-text-secondary">Loading stats…</p>
+  if (loading) return <LoadingSpinner size="section" />
 
   const funCards = [
     { label: 'Total workouts', value: stats?.total_workouts ?? 0 },
     { label: 'Total sets', value: stats?.total_sets ?? 0 },
     { label: 'Total reps', value: (stats?.total_reps ?? 0).toLocaleString() },
-    { label: 'Cumulative weight moved', value: formatVolume(stats?.cumulative_volume_lb ?? cumulative) },
-    { label: 'Heaviest single set', value: stats?.heaviest_set_lb ? `${stats.heaviest_set_lb} lb` : '—' },
+    {
+      label: 'Total cardio time',
+      value: formatDuration(stats?.total_cardio_seconds ?? 0),
+    },
+    { label: 'Heaviest single set', value: stats?.heaviest_set_lb ? formatWeight(stats.heaviest_set_lb, unit) : '—' },
     { label: 'Current streak', value: `${stats?.streak_days ?? 0} days` },
   ]
 
@@ -76,8 +83,10 @@ export function StatsSection() {
 
       <Card>
         <h2 className="text-sm font-medium text-text-secondary mb-1">All-time volume</h2>
-        <p className="text-3xl font-semibold">{formatVolume(cumulative)}</p>
-        <p className="text-xs text-text-secondary mt-1">Sum of reps × weight across all workouts</p>
+        <p className="text-3xl font-semibold">{formatVolume(cumulative, unit)}</p>
+        <p className="text-xs text-text-secondary mt-1">
+          Sum of reps × weight across all workouts ({unit})
+        </p>
       </Card>
 
       {weekVolume.length > 0 && (
@@ -88,7 +97,7 @@ export function StatsSection() {
               <LineChart data={weekVolume}>
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} width={45} />
-                <Tooltip formatter={(v: number) => formatVolume(v)} />
+                <Tooltip formatter={(v: number) => formatVolume(v, unit)} />
                 <Line
                   type="monotone"
                   dataKey="volume_lb"
@@ -103,7 +112,7 @@ export function StatsSection() {
       )}
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-text-secondary">PR leaderboard (est. 1RM)</h2>
+        <h2 className="mb-2 text-sm font-medium text-text-secondary">PR leaderboard</h2>
         <div className="flex flex-col gap-2">
           {prs.slice(0, 20).map((pr, i) => (
             <Card key={pr.exercise_id} padding="sm">
@@ -112,12 +121,9 @@ export function StatsSection() {
                   <span className="text-text-secondary text-sm mr-2">#{i + 1}</span>
                   <span className="font-medium">{pr.exercise_name}</span>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold">{Math.round(pr.estimated_1rm_lb)} lb est.</p>
-                  <p className="text-xs text-text-secondary">
-                    {pr.best_weight_lb} × {pr.best_reps}
-                  </p>
-                </div>
+                <p className="font-semibold">
+                  {formatWeight(pr.best_weight_lb, unit)} × {pr.best_reps}
+                </p>
               </div>
             </Card>
           ))}

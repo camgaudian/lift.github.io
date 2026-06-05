@@ -4,10 +4,21 @@ import type { TemplateExercise, WorkoutTemplate } from '@/lib/types'
 export async function fetchTemplates(): Promise<WorkoutTemplate[]> {
   const { data, error } = await supabase
     .from('workout_templates')
-    .select('*')
+    .select('*, template_exercises(sort_order, exercise:exercises(name))')
     .order('name')
   if (error) throw error
-  return data ?? []
+
+  return (data ?? []).map((t) => ({
+    id: t.id,
+    user_id: t.user_id,
+    name: t.name,
+    created_at: t.created_at,
+    updated_at: t.updated_at,
+    exercise_names: (t.template_exercises ?? [])
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((te) => te.exercise?.name)
+      .filter((name): name is string => Boolean(name)),
+  }))
 }
 
 export async function fetchTemplateWithExercises(templateId: string) {
