@@ -6,6 +6,7 @@ import {
   fetchExercisePRs,
 } from '@/lib/stats'
 import { formatVolume } from '@/lib/format'
+import { useTheme } from '@/contexts/ThemeContext'
 import { Card } from '@/components/Card'
 import {
   LineChart,
@@ -18,7 +19,8 @@ import {
 import type { ExercisePR, FunStats, WeeklyVolume } from '@/lib/types'
 import { format, parseISO } from 'date-fns'
 
-export function StatsPage() {
+export function StatsSection() {
+  const { accentColor } = useTheme()
   const [stats, setStats] = useState<FunStats | null>(null)
   const [weekVolume, setWeekVolume] = useState<(WeeklyVolume & { label: string })[]>([])
   const [cumulative, setCumulative] = useState(0)
@@ -31,18 +33,20 @@ export function StatsPage() {
       fetchWeeklyVolume(12),
       fetchCumulativeVolume(),
       fetchExercisePRs(),
-    ]).then(([s, wv, cum, prList]) => {
-      setStats(s)
-      setWeekVolume(
-        wv.map((w) => ({
-          ...w,
-          label: format(parseISO(w.week_start), 'MMM d'),
-        })),
-      )
-      setCumulative(cum)
-      setPrs(prList)
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    ])
+      .then(([s, wv, cum, prList]) => {
+        setStats(s)
+        setWeekVolume(
+          wv.map((w) => ({
+            ...w,
+            label: format(parseISO(w.week_start), 'MMM d'),
+          })),
+        )
+        setCumulative(cum)
+        setPrs(prList)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
   if (loading) return <p className="text-text-secondary">Loading stats…</p>
@@ -58,8 +62,6 @@ export function StatsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Stats</h1>
-
       <section>
         <h2 className="mb-2 text-sm font-medium text-text-secondary">Fun numbers</h2>
         <div className="grid grid-cols-2 gap-3">
@@ -87,7 +89,13 @@ export function StatsPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} width={45} />
                 <Tooltip formatter={(v: number) => formatVolume(v)} />
-                <Line type="monotone" dataKey="volume_lb" stroke="#0071e3" strokeWidth={2} dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="volume_lb"
+                  stroke={accentColor}
+                  strokeWidth={2}
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>

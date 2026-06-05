@@ -33,6 +33,7 @@ Open **Authentication → URL configuration** and set:
    - `002_rls.sql`
    - `003_seed_exercises.sql`
    - `004_stats_functions.sql`
+   - `005_profile_appearance.sql`
 
 Alternatively, if you install the [Supabase CLI](https://supabase.com/docs/guides/cli), run:
 

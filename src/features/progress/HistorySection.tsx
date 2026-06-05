@@ -5,7 +5,7 @@ import { fetchCompletedWorkouts } from '@/features/workouts/workoutApi'
 import { Card } from '@/components/Card'
 import type { Workout } from '@/lib/types'
 
-export function HistoryPage() {
+export function HistorySection() {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState(new Date())
@@ -27,17 +27,13 @@ export function HistoryPage() {
   )
 
   const filtered = selectedDate
-    ? workouts.filter((w) =>
-        isSameDay(parseISO(w.completed_at!), selectedDate),
-      )
+    ? workouts.filter((w) => isSameDay(parseISO(w.completed_at!), selectedDate))
     : workouts.slice(0, 20)
 
   if (loading) return <p className="text-text-secondary">Loading history…</p>
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">History</h1>
-
       <Card>
         <div className="flex items-center justify-between mb-3">
           <button
@@ -57,8 +53,8 @@ export function HistoryPage() {
           </button>
         </div>
         <div className="grid grid-cols-7 gap-1 text-center text-xs text-text-secondary mb-1">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => (
-            <span key={d}>{d}</span>
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+            <span key={`${d}-${i}`}>{d}</span>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">

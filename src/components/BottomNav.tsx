@@ -3,9 +3,9 @@ import { NavLink } from 'react-router-dom'
 const tabs = [
   { to: '/', label: 'Home', icon: HomeIcon },
   { to: '/workout', label: 'Workout', icon: WorkoutIcon },
-  { to: '/history', label: 'History', icon: HistoryIcon },
-  { to: '/stats', label: 'Stats', icon: StatsIcon },
+  { to: '/progress', label: 'Progress', icon: ProgressIcon },
   { to: '/library', label: 'Library', icon: LibraryIcon },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
 export function BottomNav() {
@@ -53,19 +53,11 @@ function WorkoutIcon({ active }: { active: boolean }) {
   )
 }
 
-function HistoryIcon({ active }: { active: boolean }) {
+function ProgressIcon({ active }: { active: boolean }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
       <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function StatsIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
-      <path d="M4 18V10M10 18V6M16 18v-8M22 18V4" strokeLinecap="round" />
+      <path d="M12 7v5l3 2M4 18V10M20 18v-8" strokeLinecap="round" />
     </svg>
   )
 }
@@ -74,6 +66,15 @@ function LibraryIcon({ active }: { active: boolean }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
       <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function SettingsIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" strokeLinecap="round" />
     </svg>
   )
 }

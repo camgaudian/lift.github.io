@@ -1,10 +1,14 @@
 export type ExerciseType = 'strength' | 'bodyweight' | 'cardio'
 export type WorkoutStatus = 'in_progress' | 'completed'
 
+export type ThemeMode = 'light' | 'dark'
+
 export interface Profile {
   id: string
   display_name: string | null
   unit_preference: string
+  theme: ThemeMode
+  accent_color: string
   created_at: string
   updated_at: string
 }

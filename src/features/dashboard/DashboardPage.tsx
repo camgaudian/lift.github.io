@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { Button } from '@/components/Button'
 import {
   fetchFunStats,
@@ -22,7 +22,7 @@ import type { ExercisePR, FunStats, WeeklyVolume } from '@/lib/types'
 import { format, parseISO } from 'date-fns'
 
 export function DashboardPage() {
-  const { signOut } = useAuth()
+  const { accentColor } = useTheme()
   const [stats, setStats] = useState<FunStats | null>(null)
   const [weekVolume, setWeekVolume] = useState<WeeklyVolume[]>([])
   const [cumulative, setCumulative] = useState(0)
@@ -55,10 +55,9 @@ export function DashboardPage() {
     <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Lift</h1>
-        <div className="flex items-center gap-3">
-          <Link to="/stats" className="text-sm text-accent font-medium">All stats →</Link>
-          <Button variant="ghost" size="sm" onClick={() => signOut()}>Sign out</Button>
-        </div>
+        <Link to="/progress" className="text-sm text-accent font-medium">
+          Progress →
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -87,7 +86,7 @@ export function DashboardPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} width={40} />
                 <Tooltip formatter={(v: number) => formatVolume(v)} />
-                <Bar dataKey="volume_lb" fill="#0071e3" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="volume_lb" fill={accentColor} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
