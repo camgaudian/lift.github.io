@@ -10,8 +10,9 @@ export function Card({ padding = 'md', className = '', children, ...props }: Car
   return (
     <div
       className={[
-        'rounded-2xl bg-surface border border-border shadow-sm',
+        'rounded-2xl border border-border shadow-sm',
         paddingMap[padding],
+        className.includes('bg-') ? '' : 'bg-surface',
         className,
       ].join(' ')}
       {...props}

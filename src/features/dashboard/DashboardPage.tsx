@@ -52,7 +52,7 @@ export function DashboardPage() {
   if (loading) return <p className="text-text-secondary">Loading dashboard…</p>
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Lift</h1>
         <div className="flex items-center gap-3">
@@ -74,10 +74,8 @@ export function DashboardPage() {
         )}
       </div>
 
-      <Link to="/workout">
-        <Card className="bg-accent text-white border-accent text-center py-5">
-          <span className="text-lg font-semibold">Start workout</span>
-        </Card>
+      <Link to="/workout" className="block">
+        <Button fullWidth size="lg">Start workout</Button>
       </Link>
 
       {weekVolume.length > 0 && (
