@@ -8,7 +8,7 @@ export function ProgressPage() {
   const [tab, setTab] = useState<ProgressTab>('history')
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pt-3">
       <h1 className="text-2xl font-semibold">Progress</h1>
 
       <div className="flex rounded-xl bg-surface-secondary p-1">

@@ -184,7 +184,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pt-3">
       <h1 className="text-2xl font-semibold">Settings</h1>
 
       <section className="flex flex-col gap-2">

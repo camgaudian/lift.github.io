@@ -13,7 +13,7 @@ export function LibraryPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pt-3">
       <h1 className="text-2xl font-semibold">Library</h1>
       <div className="flex rounded-xl bg-surface-secondary p-1">
         <button
