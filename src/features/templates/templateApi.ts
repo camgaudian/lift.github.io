@@ -79,3 +79,27 @@ export async function removeExerciseFromTemplate(id: string): Promise<void> {
   const { error } = await supabase.from('template_exercises').delete().eq('id', id)
   if (error) throw error
 }
+
+export async function updateTemplateName(id: string, name: string): Promise<void> {
+  const { error } = await supabase
+    .from('workout_templates')
+    .update({ name })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function reorderTemplateExercises(
+  orderedIds: string[],
+): Promise<void> {
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from('template_exercises')
+        .update({ sort_order: index })
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) throw error
+        }),
+    ),
+  )
+}

@@ -1,8 +1,9 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type CSSProperties } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { fetchLastSessionForExercise } from '@/lib/stats'
 import { useProfile } from '@/contexts/ProfileContext'
 import { formatSetsList } from '@/lib/format'
 import { displayToLb, lbToDisplay } from '@/lib/units'
+import { useDragReorder, reorderList } from '@/lib/useDragReorder'
 import type { ExerciseType, LastSessionData, StrengthSet } from '@/lib/types'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
@@ -38,10 +39,7 @@ function hasSetData(set: StrengthSet): boolean {
 }
 
 function reorderSets(sets: SetRow[], from: number, to: number): SetRow[] {
-  const result = [...sets]
-  const [moved] = result.splice(from, 1)
-  result.splice(to, 0, moved)
-  return result.map((set, index) => ({
+  return reorderList(sets, from, to).map((set, index) => ({
     ...set,
     set_number: index + 1,
   }))
@@ -53,54 +51,6 @@ function toSetRows(sets: StrengthSet[], nextRowKey: () => string): SetRow[] {
     rowKey: nextRowKey(),
     lastPlaceholderIndex: index,
   }))
-}
-
-type RowMetrics = {
-  tops: number[]
-  heights: number[]
-  gap: number
-}
-
-function measureRows(container: HTMLElement | null): RowMetrics | null {
-  if (!container) return null
-  const rows = Array.from(container.querySelectorAll<HTMLElement>('[data-set-row]'))
-  if (!rows.length) return null
-
-  const tops = rows.map((row) => row.getBoundingClientRect().top)
-  const heights = rows.map((row) => row.getBoundingClientRect().height)
-  const gap =
-    rows.length > 1
-      ? Math.max(0, tops[1] - tops[0] - heights[0])
-      : 0
-
-  return { tops, heights, gap }
-}
-
-function computeHoverIndex(clientY: number, metrics: RowMetrics): number {
-  for (let i = 0; i < metrics.tops.length; i++) {
-    const mid = metrics.tops[i] + metrics.heights[i] / 2
-    if (clientY < mid) return i
-  }
-  return metrics.tops.length - 1
-}
-
-function getRowShift(
-  idx: number,
-  dragIndex: number,
-  hoverIndex: number,
-  metrics: RowMetrics,
-): number {
-  if (dragIndex === hoverIndex) return 0
-
-  const slotSize = metrics.heights[dragIndex] + metrics.gap
-
-  if (dragIndex < hoverIndex && idx > dragIndex && idx <= hoverIndex) {
-    return -slotSize
-  }
-  if (dragIndex > hoverIndex && idx >= hoverIndex && idx < dragIndex) {
-    return slotSize
-  }
-  return 0
 }
 
 function resolveSetsForSave(
@@ -139,10 +89,6 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   const { unit } = useProfile()
   const rowKeyRef = useRef(0)
   const nextRowKey = () => String(++rowKeyRef.current)
-  const setListRef = useRef<HTMLDivElement>(null)
-  const rowMetricsRef = useRef<RowMetrics | null>(null)
-  const hoverIndexRef = useRef<number | null>(null)
-  const dragStartYRef = useRef(0)
 
   const [lastSession, setLastSession] = useState<LastSessionData | null>(null)
   const [note, setNote] = useState(initialNote)
@@ -159,9 +105,6 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
           lastPlaceholderIndex: 0,
         }],
   )
-  const [draggingRowKey, setDraggingRowKey] = useState<string | null>(null)
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null)
-  const [dragOffset, setDragOffset] = useState(0)
   const [duration, setDuration] = useState(
     initialCardio ? formatDuration(initialCardio.duration_seconds) : '20:00',
   )
@@ -293,88 +236,12 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     )
   }
 
-  const finishDrag = (rowKey: string | null) => {
-    if (rowKey) {
-      const target = hoverIndexRef.current
-      setSets((prev) => {
-        const dragIndex = prev.findIndex((set) => set.rowKey === rowKey)
-        if (dragIndex < 0 || target === null || dragIndex === target) return prev
-        return reorderSets(prev, dragIndex, target)
-      })
-    }
-
-    rowMetricsRef.current = null
-    hoverIndexRef.current = null
-    setDraggingRowKey(null)
-    setHoverIndex(null)
-    setDragOffset(0)
-  }
-
-  const startDrag = (index: number, e: React.PointerEvent<HTMLButtonElement>) => {
-    if (readOnly) return
-    e.preventDefault()
-    e.stopPropagation()
-
-    const handle = e.currentTarget
-    handle.setPointerCapture(e.pointerId)
-
-    const metrics = measureRows(setListRef.current)
-    if (!metrics) return
-
-    const rowKey = sets[index]?.rowKey
-    if (!rowKey) return
-
-    rowMetricsRef.current = metrics
-    dragStartYRef.current = e.clientY
-    hoverIndexRef.current = index
-    setDraggingRowKey(rowKey)
-    setHoverIndex(index)
-    setDragOffset(0)
-
-    const onMove = (ev: PointerEvent) => {
-      ev.preventDefault()
-      const cached = rowMetricsRef.current
-      if (!cached) return
-
-      const nextHover = computeHoverIndex(ev.clientY, cached)
-      hoverIndexRef.current = nextHover
-      setDragOffset(ev.clientY - dragStartYRef.current)
-      setHoverIndex(nextHover)
-    }
-
-    const onEnd = (ev: PointerEvent) => {
-      ev.preventDefault()
-      handle.removeEventListener('pointermove', onMove)
-      handle.removeEventListener('pointerup', onEnd)
-      handle.removeEventListener('pointercancel', onEnd)
-      try {
-        handle.releasePointerCapture(ev.pointerId)
-      } catch {
-        // already released
-      }
-      finishDrag(rowKey)
-    }
-
-    handle.addEventListener('pointermove', onMove)
-    handle.addEventListener('pointerup', onEnd)
-    handle.addEventListener('pointercancel', onEnd)
-  }
-
-  const dragIndex = draggingRowKey ? sets.findIndex((set) => set.rowKey === draggingRowKey) : -1
-  const activeHoverIndex = hoverIndex ?? dragIndex
-  const rowMetrics = rowMetricsRef.current
-
-  const getRowStyle = (idx: number): CSSProperties | undefined => {
-    if (dragIndex < 0 || !rowMetrics) return undefined
-
-    if (idx === dragIndex) {
-      return { transform: `translateY(${dragOffset}px)`, zIndex: 10 }
-    }
-
-    const shift = getRowShift(idx, dragIndex, activeHoverIndex, rowMetrics)
-    if (shift === 0) return undefined
-    return { transform: `translateY(${shift}px)` }
-  }
+  const { listRef: setListRef, draggingKey, isDragging, startDrag, getRowStyle } = useDragReorder({
+    keys: sets.map((set) => set.rowKey),
+    disabled: readOnly,
+    onReorder: (from, to) =>
+      setSets((prev) => reorderSets(prev, from, to)),
+  })
 
   const saveButton = (defaultLabel: string, onSave: () => Promise<void>) => (
     <div className="flex flex-col gap-1">
@@ -470,13 +337,12 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
         {sets.map((set, idx) => (
           <div
             key={set.rowKey}
-            data-set-row
-            data-set-index={idx}
+            data-drag-row
             className={[
               'flex items-center gap-1 rounded-xl',
-              draggingRowKey === set.rowKey
+              draggingKey === set.rowKey
                 ? 'relative bg-surface shadow-lg ring-1 ring-accent/40'
-                : draggingRowKey
+                : isDragging
                   ? 'transition-transform duration-150 ease-out'
                   : '',
             ].join(' ')}
