@@ -1,10 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns'
-import { fetchCompletedWorkouts } from '@/features/workouts/workoutApi'
+import { cancelWorkout, fetchCompletedWorkouts } from '@/features/workouts/workoutApi'
+import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { TrashIcon } from '@/components/TrashIcon'
 import type { Workout } from '@/lib/types'
+
+function Modal({
+  title,
+  children,
+  onClose,
+}: {
+  title: string
+  children: ReactNode
+  onClose: () => void
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-workout-modal-title"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="delete-workout-modal-title" className="text-lg font-semibold">
+          {title}
+        </h2>
+        <div className="mt-4">{children}</div>
+      </div>
+    </div>
+  )
+}
 
 const RECENT_LIMIT = 3
 
@@ -19,6 +51,9 @@ export function HistorySection({
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Workout | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchCompletedWorkouts().then((w) => {
@@ -42,6 +77,21 @@ export function HistorySection({
       : workouts.slice(0, RECENT_LIMIT)
 
   const hasMoreRecent = !selectedDate && workouts.length > RECENT_LIMIT
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await cancelWorkout(deleteTarget.id)
+      setWorkouts((prev) => prev.filter((w) => w.id !== deleteTarget.id))
+      setDeleteTarget(null)
+    } catch {
+      setDeleteError('Failed to delete workout.')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   if (loading) return <LoadingSpinner size="section" />
 
@@ -112,8 +162,8 @@ export function HistorySection({
         <ul className="flex flex-col gap-2">
           {filtered.map((w) => (
             <li key={w.id}>
-              <Link to={`/workout/${w.id}`}>
-                <Card padding="sm" className="hover:border-accent/50 transition-colors">
+              <Card padding="sm" className="flex items-center gap-2 hover:border-accent/50 transition-colors">
+                <Link to={`/workout/${w.id}`} className="min-w-0 flex-1">
                   <p className="font-medium">
                     {format(parseISO(w.completed_at!), 'EEE, MMM d · h:mm a')}
                   </p>
@@ -121,8 +171,19 @@ export function HistorySection({
                     <p className="text-sm text-text-secondary truncate">{w.template.name}</p>
                   )}
                   {w.notes && <p className="text-sm text-text-secondary truncate">{w.notes}</p>}
-                </Card>
-              </Link>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError(null)
+                    setDeleteTarget(w)
+                  }}
+                  className="shrink-0 rounded-lg p-2 text-text-secondary hover:text-danger"
+                  aria-label={`Delete workout from ${format(parseISO(w.completed_at!), 'MMM d, yyyy')}`}
+                >
+                  <TrashIcon />
+                </button>
+              </Card>
             </li>
           ))}
           {filtered.length === 0 && (
@@ -141,6 +202,30 @@ export function HistorySection({
           </button>
         )}
       </section>
+
+      {deleteTarget && (
+        <Modal title="Delete workout?" onClose={() => !deleting && setDeleteTarget(null)}>
+          <p className="text-sm text-text-secondary">
+            Permanently delete this workout from{' '}
+            {format(parseISO(deleteTarget.completed_at!), 'EEE, MMM d · h:mm a')}? This cannot be
+            undone.
+          </p>
+          {deleteError && <p className="mt-2 text-sm text-danger text-center">{deleteError}</p>}
+          <div className="mt-5 flex gap-2">
+            <Button
+              variant="secondary"
+              fullWidth
+              disabled={deleting}
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button variant="danger" fullWidth disabled={deleting} onClick={confirmDelete}>
+              {deleting ? 'Deleting…' : 'Delete'}
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
