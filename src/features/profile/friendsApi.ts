@@ -1,10 +1,26 @@
 import { supabase } from '@/lib/supabase'
-import type { FriendSummary, SendFriendRequestResult } from '@/lib/types'
+import { isMilestoneCategoryId } from '@/lib/milestones'
+import { DEFAULT_ACCENT } from '@/lib/theme'
+import type { FriendEntry, FriendSummary, SendFriendRequestResult } from '@/lib/types'
+
+function normalizeFriendEntry(entry: FriendEntry): FriendEntry {
+  return {
+    ...entry,
+    accent_color: entry.accent_color || DEFAULT_ACCENT,
+    featured_milestone_category: isMilestoneCategoryId(entry.featured_milestone_category)
+      ? entry.featured_milestone_category
+      : null,
+  }
+}
 
 export async function fetchFriendSummary(): Promise<FriendSummary> {
   const { data, error } = await supabase.rpc('get_friend_summary')
   if (error) throw error
-  return data as FriendSummary
+  const summary = data as FriendSummary
+  return {
+    ...summary,
+    friends: (summary.friends ?? []).map(normalizeFriendEntry),
+  }
 }
 
 export async function sendFriendRequest(username: string): Promise<SendFriendRequestResult> {

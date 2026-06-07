@@ -3,8 +3,8 @@ import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { InfoPopover } from '@/components/InfoPopover'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { MusicPlayingIcon } from '@/components/MusicPlayingIcon'
 import { SearchInput } from '@/components/SearchInput'
+import { MusicPlayingIcon } from '@/components/MusicPlayingIcon'
 import { TrackArtwork } from '@/components/TrackArtwork'
 import {
   clearNowPlaying,
@@ -14,6 +14,7 @@ import {
   setNowPlaying,
 } from '@/features/profile/nowPlayingApi'
 import { useClickOutside } from '@/hooks/useClickOutside'
+import { trackTextFadeClass } from '@/lib/ui'
 import type { NowPlaying, SpotifySearchTrack } from '@/lib/types'
 
 function MusicIcon() {
@@ -46,27 +47,62 @@ function SpotifyLogo() {
 
 function CurrentTrackPreview({
   track,
-  clearing,
-  onClear,
+  removing,
+  editMenuOpen,
+  onToggleEditMenu,
+  onRemove,
+  onChange,
 }: {
   track: NowPlaying
-  clearing: boolean
-  onClear: () => void
+  removing: boolean
+  editMenuOpen: boolean
+  onToggleEditMenu: () => void
+  onRemove: () => void
+  onChange: () => void
 }) {
+  const editRef = useRef<HTMLDivElement>(null)
+
+  useClickOutside(editRef, () => editMenuOpen && onToggleEditMenu(), editMenuOpen)
+
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-surface-secondary/50 p-3">
-      <TrackArtwork url={track.album_art_url} size="lg" />
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 truncate text-sm font-medium">
-          <MusicPlayingIcon size="md" />
-          <span className="truncate">{track.title}</span>
+    <div className="flex items-center gap-3">
+      <TrackArtwork url={track.album_art_url} size="xl" />
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <MusicPlayingIcon className="shrink-0" size="md" />
+          <p className={`min-w-0 flex-1 text-sm font-medium ${trackTextFadeClass}`}>
+            {track.title}
+          </p>
+        </div>
+        <p className={`min-w-0 text-xs text-text-secondary ${trackTextFadeClass}`}>
+          {track.artist}
         </p>
-        <p className="truncate text-xs text-text-secondary">{track.artist}</p>
-        <p className="mt-0.5 text-xs text-text-secondary">{formatHoursLeft(track.expires_at)}</p>
+        <p className="text-xs text-text-secondary">{formatHoursLeft(track.expires_at)}</p>
       </div>
-      <Button variant="secondary" size="sm" disabled={clearing} onClick={onClear}>
-        {clearing ? '…' : 'Clear'}
-      </Button>
+      <div ref={editRef} className="relative flex shrink-0 items-center justify-center">
+        <Button variant="secondary" size="sm" onClick={onToggleEditMenu}>
+          Edit
+        </Button>
+        {editMenuOpen && (
+          <div className="absolute right-0 top-full z-10 mt-1.5 w-36 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
+            <button
+              type="button"
+              onClick={onChange}
+              className="w-full px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-surface-secondary"
+            >
+              Change
+            </button>
+            <button
+              type="button"
+              disabled={removing}
+              onClick={onRemove}
+              className="w-full border-t border-border px-3 py-2.5 text-left text-sm font-medium text-danger transition-colors hover:bg-surface-secondary disabled:opacity-50"
+            >
+              {removing ? 'Removing…' : 'Remove'}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -106,7 +142,9 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
   const [results, setResults] = useState<SpotifySearchTrack[]>([])
   const [searching, setSearching] = useState(false)
   const [setting, setSetting] = useState(false)
-  const [clearing, setClearing] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [editMenuOpen, setEditMenuOpen] = useState(false)
+  const [showChangeSearch, setShowChangeSearch] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -168,6 +206,8 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
       setCurrent(saved)
       setQuery('')
       setResults([])
+      setShowChangeSearch(false)
+      setEditMenuOpen(false)
     } catch {
       setActionError('Failed to set song.')
     } finally {
@@ -175,18 +215,22 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
     }
   }
 
-  const handleClear = async () => {
-    setClearing(true)
+  const handleRemove = async () => {
+    setRemoving(true)
     setActionError(null)
     try {
       await clearNowPlaying()
       setCurrent(null)
+      setShowChangeSearch(false)
+      setEditMenuOpen(false)
     } catch {
-      setActionError('Failed to clear song.')
+      setActionError('Failed to remove song.')
     } finally {
-      setClearing(false)
+      setRemoving(false)
     }
   }
+
+  const showSearch = !current || showChangeSearch
 
   return (
     <section className="flex flex-col gap-2">
@@ -195,10 +239,14 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
           <MusicIcon />
         </span>
         <h2 className="text-sm font-medium text-text-secondary">What&apos;s powering your lift?</h2>
-        <InfoPopover ariaLabel="How sharing works">
+        <InfoPopover ariaLabel="How sharing works" size="sm">
           <p className="text-sm text-text-secondary leading-relaxed">
             Search for a song to share with your friends. It appears next to your username on their
             friends list for 24 hours. You can change or clear it anytime.
+          </p>
+          <p className="mt-4 flex items-center gap-1.5 text-xs text-text-secondary">
+            <SpotifyLogo />
+            <span>Powered by Spotify</span>
           </p>
         </InfoPopover>
       </div>
@@ -211,45 +259,56 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
         ) : (
           <>
             {current && (
-              <CurrentTrackPreview track={current} clearing={clearing} onClear={handleClear} />
+              <CurrentTrackPreview
+                track={current}
+                removing={removing}
+                editMenuOpen={editMenuOpen}
+                onToggleEditMenu={() => setEditMenuOpen((open) => !open)}
+                onRemove={handleRemove}
+                onChange={() => {
+                  setShowChangeSearch(true)
+                  setEditMenuOpen(false)
+                }}
+              />
             )}
 
-            <div ref={searchRef}>
-              <SearchInput
-                label={current ? 'Change song' : 'Search Spotify'}
-                placeholder="Song or artist"
-                autoComplete="off"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                disabled={disabled || setting}
-              />
+            {showSearch && (
+              <div ref={searchRef}>
+                <SearchInput
+                  label={current ? 'Change song' : 'Search Spotify'}
+                  placeholder="Song or artist"
+                  autoComplete="off"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  disabled={disabled || setting}
+                />
 
-              {searching && (
-                <div className="flex justify-center py-2">
-                  <LoadingSpinner size="inline" />
-                </div>
-              )}
+                {searching && (
+                  <div className="flex justify-center py-2">
+                    <LoadingSpinner size="inline" />
+                  </div>
+                )}
 
-              {results.length > 0 && (
-                <div className="mt-3 -mx-3.5 overflow-hidden rounded-xl border border-border">
-                  <ul className="divide-y divide-border">
-                    {results.map((track) => (
-                      <li key={track.track_id}>
-                        <SearchResultRow track={track} setting={setting} onSelect={handleSelect} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+                {results.length > 0 && (
+                  <div className="mt-3 -mx-3.5 overflow-hidden rounded-xl border border-border">
+                    <ul className="divide-y divide-border">
+                      {results.map((track) => (
+                        <li key={track.track_id}>
+                          <SearchResultRow
+                            track={track}
+                            setting={setting}
+                            onSelect={handleSelect}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {searchError && <p className="text-sm text-danger text-center">{searchError}</p>}
             {actionError && <p className="text-sm text-danger text-center">{actionError}</p>}
-
-            <p className="flex items-center justify-center gap-1.5 text-xs text-text-secondary">
-              <SpotifyLogo />
-              <span>Powered by Spotify</span>
-            </p>
           </>
         )}
       </Card>

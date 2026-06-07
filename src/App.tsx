@@ -9,6 +9,7 @@ import { SignUpPage } from '@/features/auth/SignUpPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ActiveWorkoutPage } from '@/features/workouts/ActiveWorkoutPage'
 import { ProgressPage } from '@/features/progress/ProgressPage'
+import { HistoryPage } from '@/features/progress/HistoryPage'
 import { LibraryPage } from '@/features/library/LibraryPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { SettingsPage } from '@/features/settings/SettingsPage'
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/workout" element={<Navigate to="/" replace />} />
               <Route path="/workout/:id" element={<ActiveWorkoutPage />} />
               <Route path="/progress" element={<ProgressPage />} />
+              <Route path="/history" element={<HistoryPage />} />
               <Route path="/library" element={<LibraryPage />}>
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
               </Route>
@@ -38,7 +40,6 @@ export default function App() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/settings" element={<SettingsPage />} />
               <Route path="/settings" element={<Navigate to="/profile/settings" replace />} />
-              <Route path="/history" element={<Navigate to="/progress" replace />} />
               <Route path="/stats" element={<Navigate to="/progress" replace />} />
             </Route>
           </Route>

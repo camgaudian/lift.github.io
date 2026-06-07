@@ -1,38 +1,46 @@
-import { ReactNode, useRef, useState } from 'react'
+import { ReactNode, useState } from 'react'
 import { InfoIcon } from '@/components/InfoIcon'
+import { Modal } from '@/components/Modal'
 import { useTheme } from '@/contexts/ThemeContext'
-import { useClickOutside } from '@/hooks/useClickOutside'
+
+const triggerSizes = {
+  sm: { button: 'h-7 w-7', icon: 14 },
+  md: { button: 'h-8 w-8', icon: 16 },
+} as const
 
 export function InfoPopover({
   ariaLabel,
+  title,
+  size = 'md',
   children,
 }: {
   ariaLabel: string
+  title?: string
+  size?: keyof typeof triggerSizes
   children: ReactNode
 }) {
   const { accentColor } = useTheme()
   const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-
-  useClickOutside(rootRef, () => setOpen(false), open)
+  const modalTitle = title ?? ariaLabel
+  const trigger = triggerSizes[size]
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
+    <>
       <button
         type="button"
-        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-opacity hover:opacity-80"
+        className={`inline-flex ${trigger.button} shrink-0 cursor-pointer items-center justify-center rounded-lg transition-opacity hover:opacity-80`}
         style={{ backgroundColor: `${accentColor}18` }}
         aria-label={ariaLabel}
         aria-expanded={open}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setOpen(true)}
       >
-        <InfoIcon size={16} />
+        <InfoIcon size={trigger.icon} />
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-20 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-surface p-3 shadow-lg">
+        <Modal title={modalTitle} onClose={() => setOpen(false)} showCloseButton>
           {children}
-        </div>
+        </Modal>
       )}
-    </div>
+    </>
   )
 }

@@ -4,6 +4,14 @@ export type WorkoutStatus = 'in_progress' | 'completed'
 export type ThemeMode = 'light' | 'dark'
 export type WeightUnit = 'lb' | 'kg'
 
+export type MilestoneCategoryId =
+  | 'weight'
+  | 'workouts'
+  | 'sets'
+  | 'reps'
+  | 'cardio'
+  | 'streak'
+
 export interface Profile {
   id: string
   display_name: string | null
@@ -11,6 +19,7 @@ export interface Profile {
   theme: ThemeMode
   accent_color: string
   hide_add_friend_warning: boolean
+  featured_milestone_category: MilestoneCategoryId | null
   created_at: string
   updated_at: string
 }
@@ -34,6 +43,8 @@ export interface SpotifySearchTrack {
 export interface FriendEntry {
   user_id: string
   display_name: string | null
+  accent_color: string
+  featured_milestone_category: MilestoneCategoryId | null
   now_playing?: NowPlaying | null
 }
 

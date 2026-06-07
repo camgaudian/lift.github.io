@@ -96,7 +96,17 @@ export function StatsSection() {
               <LineChart data={weekVolume}>
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} width={45} />
-                <Tooltip formatter={(v: number) => formatVolume(v, unit)} />
+                <Tooltip
+                  formatter={(value: number) => [formatVolume(value, unit), 'Volume']}
+                  contentStyle={{
+                    backgroundColor: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 8,
+                    color: 'var(--color-text)',
+                  }}
+                  labelStyle={{ color: 'var(--color-text-secondary)' }}
+                  itemStyle={{ color: accentColor }}
+                />
                 <Line
                   type="monotone"
                   dataKey="volume_lb"

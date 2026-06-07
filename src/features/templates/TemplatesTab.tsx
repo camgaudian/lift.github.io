@@ -9,7 +9,10 @@ import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Modal } from '@/components/Modal'
+import { TrashIcon } from '@/components/TrashIcon'
 import { formatExercisePreview } from '@/lib/format'
+import { iconDeleteButtonClass } from '@/lib/ui'
 import type { WorkoutTemplate } from '@/lib/types'
 
 export function TemplatesTab() {
@@ -17,6 +20,9 @@ export function TemplatesTab() {
   const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
   const [showAdd, setShowAdd] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<WorkoutTemplate | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const reload = async () => {
     setLoading(true)
@@ -39,10 +45,19 @@ export function TemplatesTab() {
     reload()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this template?')) return
-    await deleteTemplate(id)
-    reload()
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await deleteTemplate(deleteTarget.id)
+      setDeleteTarget(null)
+      reload()
+    } catch {
+      setDeleteError('Failed to delete template.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   if (loading) return <LoadingSpinner size="section" />
@@ -80,8 +95,16 @@ export function TemplatesTab() {
                       : 'No exercises yet'}
                   </p>
                 </div>
-                <button type="button" onClick={() => handleDelete(t.id)} className="shrink-0 text-sm text-danger">
-                  Delete
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError(null)
+                    setDeleteTarget(t)
+                  }}
+                  className={iconDeleteButtonClass}
+                  aria-label={`Delete ${t.name}`}
+                >
+                  <TrashIcon />
                 </button>
               </div>
             </Card>
@@ -91,6 +114,29 @@ export function TemplatesTab() {
           <p className="text-sm text-text-secondary">No templates yet. Create one to reuse workouts.</p>
         )}
       </ul>
+
+      {deleteTarget && (
+        <Modal title="Delete template?" onClose={() => !deleting && setDeleteTarget(null)}>
+          <p className="text-sm text-text-secondary">
+            Permanently delete <span className="font-medium text-text">{deleteTarget.name}</span>?
+            This cannot be undone.
+          </p>
+          {deleteError && <p className="mt-2 text-sm text-danger text-center">{deleteError}</p>}
+          <div className="mt-5 flex gap-2">
+            <Button
+              variant="secondary"
+              fullWidth
+              disabled={deleting}
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button variant="danger" fullWidth disabled={deleting} onClick={confirmDelete}>
+              {deleting ? 'Deleting…' : 'Delete'}
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

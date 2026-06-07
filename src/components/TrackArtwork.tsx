@@ -21,6 +21,7 @@ const sizeClasses = {
   sm: { box: 'h-8 w-8', rounded: 'rounded', icon: 'h-4 w-4' },
   md: { box: 'h-10 w-10', rounded: 'rounded', icon: 'h-4 w-4' },
   lg: { box: 'h-12 w-12', rounded: 'rounded-md', icon: 'h-5 w-5' },
+  xl: { box: 'h-20 w-20', rounded: 'rounded-lg', icon: 'h-6 w-6' },
 } as const
 
 export function TrackArtwork({

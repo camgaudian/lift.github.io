@@ -1,5 +1,9 @@
 import { supabase } from './supabase'
 import { format, parseISO, subDays, startOfDay } from 'date-fns'
+
+export function getBrowserTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone
+}
 import type {
   ExercisePrRankings,
   FunStats,
@@ -73,11 +77,54 @@ export async function fetchFunStats(): Promise<FunStats | null> {
 
   if (statsResult.error) throw statsResult.error
 
+  const completedAts = (workoutsResult.data ?? []).map((w) => w.completed_at)
   const stats = statsResult.data as FunStats
   return {
     ...stats,
-    streak_days: computeWorkoutStreak((workoutsResult.data ?? []).map((w) => w.completed_at)),
+    streak_days: computeWorkoutStreak(completedAts),
   }
+}
+
+export interface MilestoneStats {
+  cumulative_volume_lb: number
+  total_workouts: number
+  total_sets: number
+  total_reps: number
+  total_cardio_seconds: number
+  longest_streak_days: number
+}
+
+function normalizeMilestoneStats(stats: MilestoneStats): MilestoneStats {
+  return {
+    cumulative_volume_lb: Number(stats.cumulative_volume_lb ?? 0),
+    total_workouts: Number(stats.total_workouts ?? 0),
+    total_sets: Number(stats.total_sets ?? 0),
+    total_reps: Number(stats.total_reps ?? 0),
+    total_cardio_seconds: Number(stats.total_cardio_seconds ?? 0),
+    longest_streak_days: Number(stats.longest_streak_days ?? 0),
+  }
+}
+
+export async function fetchMilestoneStats(): Promise<MilestoneStats> {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+  if (error) throw error
+  if (!user) throw new Error('Not authenticated')
+  return fetchFriendMilestoneStats(user.id)
+}
+
+export async function fetchFriendMilestoneStats(
+  userId: string,
+  timezone = getBrowserTimezone(),
+): Promise<MilestoneStats> {
+  const { data, error } = await supabase.rpc('get_user_milestone_stats', {
+    p_user_id: userId,
+    p_tz: timezone,
+  })
+  if (error) throw error
+  return normalizeMilestoneStats(data as MilestoneStats)
 }
 
 export async function fetchWeeklyVolume(weeks = 12): Promise<WeeklyVolume[]> {

@@ -1,42 +1,14 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns'
 import { cancelWorkout, fetchCompletedWorkouts } from '@/features/workouts/workoutApi'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Modal } from '@/components/Modal'
 import { TrashIcon } from '@/components/TrashIcon'
+import { iconDeleteButtonClass } from '@/lib/ui'
 import type { Workout } from '@/lib/types'
-
-function Modal({
-  title,
-  children,
-  onClose,
-}: {
-  title: string
-  children: ReactNode
-  onClose: () => void
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="delete-workout-modal-title"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 id="delete-workout-modal-title" className="text-lg font-semibold">
-          {title}
-        </h2>
-        <div className="mt-4">{children}</div>
-      </div>
-    </div>
-  )
-}
 
 const RECENT_LIMIT = 3
 
@@ -178,7 +150,7 @@ export function HistorySection({
                     setDeleteError(null)
                     setDeleteTarget(w)
                   }}
-                  className="shrink-0 rounded-lg p-2 text-text-secondary hover:text-danger"
+                  className={iconDeleteButtonClass}
                   aria-label={`Delete workout from ${format(parseISO(w.completed_at!), 'MMM d, yyyy')}`}
                 >
                   <TrashIcon />

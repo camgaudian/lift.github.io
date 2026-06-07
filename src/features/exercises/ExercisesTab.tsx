@@ -5,12 +5,15 @@ import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Modal } from '@/components/Modal'
+import { TrashIcon } from '@/components/TrashIcon'
 import { capitalize } from '@/lib/format'
 import {
   EXERCISE_CATEGORIES,
   EXERCISE_FILTER_CATEGORIES,
   groupExercisesByCategory,
 } from '@/lib/exerciseCategories'
+import { iconDeleteButtonClass } from '@/lib/ui'
 import type { Exercise, ExerciseType } from '@/lib/types'
 
 const TYPES: ExerciseType[] = ['strength', 'bodyweight', 'cardio']
@@ -31,6 +34,9 @@ export function ExercisesTab() {
   const [muscles, setMuscles] = useState('')
   const [equipment, setEquipment] = useState('')
   const [saving, setSaving] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<ExerciseItem | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const filtered = exercises.filter((e) => {
     const matchSearch = e.name.toLowerCase().includes(search.toLowerCase())
@@ -62,10 +68,24 @@ export function ExercisesTab() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this custom exercise?')) return
-    await deleteExercise(id)
-    reload()
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await deleteExercise(deleteTarget.id)
+      setDeleteTarget(null)
+      reload()
+    } catch (e) {
+      const code = e && typeof e === 'object' && 'code' in e ? String(e.code) : ''
+      setDeleteError(
+        code === '23503'
+          ? 'This exercise is used in workouts or templates and cannot be deleted.'
+          : 'Failed to delete exercise.',
+      )
+    } finally {
+      setDeleting(false)
+    }
   }
 
   if (loading) return <LoadingSpinner size="section" />
@@ -134,7 +154,10 @@ export function ExercisesTab() {
           <GroupedExerciseList
             groups={groupExercisesByCategory(custom)}
             showGroupHeaders={!category}
-            onDelete={handleDelete}
+            onDeleteRequest={(exercise) => {
+              setDeleteError(null)
+              setDeleteTarget(exercise)
+            }}
           />
         </section>
       )}
@@ -143,6 +166,29 @@ export function ExercisesTab() {
         <h3 className="mb-2 text-sm font-medium text-text-secondary">Built-in</h3>
         <GroupedExerciseList groups={groupExercisesByCategory(builtin)} showGroupHeaders={!category} />
       </section>
+
+      {deleteTarget && (
+        <Modal title="Delete exercise?" onClose={() => !deleting && setDeleteTarget(null)}>
+          <p className="text-sm text-text-secondary">
+            Permanently delete <span className="font-medium text-text">{deleteTarget.name}</span>?
+            This cannot be undone.
+          </p>
+          {deleteError && <p className="mt-2 text-sm text-danger text-center">{deleteError}</p>}
+          <div className="mt-5 flex gap-2">
+            <Button
+              variant="secondary"
+              fullWidth
+              disabled={deleting}
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button variant="danger" fullWidth disabled={deleting} onClick={confirmDelete}>
+              {deleting ? 'Deleting…' : 'Delete'}
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
@@ -150,11 +196,11 @@ export function ExercisesTab() {
 function GroupedExerciseList({
   groups,
   showGroupHeaders,
-  onDelete,
+  onDeleteRequest,
 }: {
   groups: { category: string; items: ExerciseItem[] }[]
   showGroupHeaders: boolean
-  onDelete?: (id: string) => void
+  onDeleteRequest?: (exercise: ExerciseItem) => void
 }) {
   if (groups.length === 0) {
     return <p className="text-sm text-text-secondary">No exercises found.</p>
@@ -167,7 +213,7 @@ function GroupedExerciseList({
           {showGroupHeaders && (
             <h4 className="mb-2 text-sm font-semibold capitalize">{category}</h4>
           )}
-          <ExerciseList items={items} onDelete={onDelete} />
+          <ExerciseList items={items} onDeleteRequest={onDeleteRequest} />
         </section>
       ))}
     </div>
@@ -176,10 +222,10 @@ function GroupedExerciseList({
 
 function ExerciseList({
   items,
-  onDelete,
+  onDeleteRequest,
 }: {
   items: ExerciseItem[]
-  onDelete?: (id: string) => void
+  onDeleteRequest?: (exercise: ExerciseItem) => void
 }) {
   return (
     <ul className="flex flex-col gap-2">
@@ -193,9 +239,14 @@ function ExerciseList({
                 {e.equipment ? ` · ${e.equipment}` : ''}
               </p>
             </div>
-            {onDelete && (
-              <button type="button" onClick={() => onDelete(e.id)} className="text-sm text-danger">
-                Delete
+            {onDeleteRequest && (
+              <button
+                type="button"
+                onClick={() => onDeleteRequest(e)}
+                className={iconDeleteButtonClass}
+                aria-label={`Delete ${e.name}`}
+              >
+                <TrashIcon />
               </button>
             )}
           </Card>

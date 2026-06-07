@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_ACCENT } from '@/lib/theme'
 import { normalizeUnit } from '@/lib/units'
-import type { Profile, ThemeMode, WeightUnit } from '@/lib/types'
+import type { Profile, ThemeMode, WeightUnit, MilestoneCategoryId } from '@/lib/types'
 
 export type { ThemeMode }
 
@@ -36,6 +36,7 @@ export async function updateProfileSettings(
     display_name?: string | null
     unit_preference?: WeightUnit
     hide_add_friend_warning?: boolean
+    featured_milestone_category?: MilestoneCategoryId | null
   },
 ): Promise<Profile> {
   const { data, error } = await supabase

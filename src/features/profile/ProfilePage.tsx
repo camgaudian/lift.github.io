@@ -1,11 +1,14 @@
-import { FormEvent, ReactNode, useCallback, useEffect, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
+import { AddFriendIcon } from '@/components/AddFriendIcon'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { Input } from '@/components/Input'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Modal } from '@/components/Modal'
+import { TrackArtwork } from '@/components/TrackArtwork'
 import {
   acceptFriendRequest,
   cancelFriendRequest,
@@ -16,6 +19,7 @@ import {
   sendFriendRequest,
 } from '@/features/profile/friendsApi'
 import { FriendNowPlayingInline } from '@/features/profile/FriendNowPlayingInline'
+import { FriendProfileModal } from '@/features/profile/FriendProfileModal'
 import { PoweringLiftSection } from '@/features/profile/PoweringLiftSection'
 import { fetchProfile, updateProfileSettings } from '@/features/settings/profileApi'
 import { formatUsername } from '@/lib/format'
@@ -47,36 +51,6 @@ function SettingsGearLink() {
   )
 }
 
-function Modal({
-  title,
-  children,
-  onClose,
-}: {
-  title: string
-  children: ReactNode
-  onClose: () => void
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 id="modal-title" className="text-lg font-semibold">
-          {title}
-        </h2>
-        <div className="mt-4">{children}</div>
-      </div>
-    </div>
-  )
-}
-
 export function ProfilePage() {
   const { user } = useAuth()
   const { displayName, loading: profileLoading } = useProfile()
@@ -88,10 +62,12 @@ export function ProfilePage() {
   const [adding, setAdding] = useState(false)
   const [showAddWarning, setShowAddWarning] = useState(false)
   const [dontShowAgain, setDontShowAgain] = useState(false)
+  const [selectedFriend, setSelectedFriend] = useState<FriendEntry | null>(null)
   const [unfriendTarget, setUnfriendTarget] = useState<FriendEntry | null>(null)
   const [unfriending, setUnfriending] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [pendingActionId, setPendingActionId] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
 
   const loadFriends = useCallback(async () => {
     if (!user) {
@@ -146,6 +122,7 @@ export function ProfilePage() {
       }
       setUsernameDraft('')
       setShowAddWarning(false)
+      setShowAddForm(false)
       await loadFriends()
     } catch {
       setAddError('Failed to send friend request.')
@@ -212,6 +189,7 @@ export function ProfilePage() {
     try {
       await removeFriend(unfriendTarget.user_id)
       setUnfriendTarget(null)
+      setSelectedFriend(null)
       await loadFriends()
     } catch {
       setActionError('Failed to unfriend.')
@@ -221,6 +199,10 @@ export function ProfilePage() {
   }
 
   const hasPending = summary.incoming.length > 0 || summary.outgoing.length > 0
+  const orderedFriends = [
+    ...summary.friends.filter((friend) => friend.now_playing),
+    ...summary.friends.filter((friend) => !friend.now_playing),
+  ]
 
   return (
     <div className="flex flex-col gap-6 pt-3">
@@ -241,131 +223,137 @@ export function ProfilePage() {
       <PoweringLiftSection disabled={!user} />
 
       <section className="flex flex-col gap-2">
-        <h2 className={sectionHeadingClass}>Friends</h2>
+        <div className="flex items-center justify-between gap-2 px-1">
+          <h2 className={sectionHeadingClass}>Friends</h2>
+          <button
+            type="button"
+            className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors hover:bg-surface-secondary disabled:opacity-50 ${
+              showAddForm ? 'text-accent' : 'text-text-secondary hover:text-text'
+            }`}
+            aria-label={showAddForm ? 'Hide add friend form' : 'Add friend'}
+            aria-expanded={showAddForm}
+            disabled={!user}
+            onClick={() => {
+              setShowAddForm((open) => !open)
+              setAddError(null)
+            }}
+          >
+            <span>Add</span>
+            <AddFriendIcon />
+          </button>
+        </div>
 
-        <Card padding="sm" className="flex flex-col gap-3">
-          <form onSubmit={handleAddSubmit} className="flex flex-col gap-3">
-            <Input
-              label="Add friend by username"
-              placeholder="@username"
-              autoComplete="off"
-              value={usernameDraft}
-              onChange={(e) => {
-                setUsernameDraft(e.target.value.replace(/^@+/, ''))
-                setAddError(null)
-              }}
-              disabled={adding || !user}
-            />
-            <Button type="submit" fullWidth disabled={adding || !user || !usernameDraft.trim()}>
-              {adding ? 'Sending…' : 'Add friend'}
-            </Button>
-            {addError && <p className="text-sm text-danger text-center">{addError}</p>}
-          </form>
+        <Card padding="sm" className="p-0 overflow-hidden">
+          {showAddForm && (
+            <div className="border-b border-border p-3.5">
+              <form onSubmit={handleAddSubmit} className="flex flex-col gap-3">
+                <Input
+                  label="Add friend by username"
+                  placeholder="@username"
+                  autoComplete="off"
+                  value={usernameDraft}
+                  onChange={(e) => {
+                    setUsernameDraft(e.target.value.replace(/^@+/, ''))
+                    setAddError(null)
+                  }}
+                  disabled={adding || !user}
+                />
+                <Button type="submit" fullWidth disabled={adding || !user || !usernameDraft.trim()}>
+                  {adding ? 'Sending…' : 'Add friend'}
+                </Button>
+                {addError && <p className="text-sm text-danger text-center">{addError}</p>}
+              </form>
+            </div>
+          )}
+
+          {friendsLoading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner size="inline" />
+            </div>
+          ) : summary.friends.length === 0 && !hasPending ? (
+            <p className="px-3.5 py-4 text-sm text-text-secondary text-center">No friends yet.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {summary.incoming.map((request) => (
+                <li key={request.request_id} className="px-3.5 py-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {formatUsername(request.display_name)}
+                      </p>
+                      <p className="text-xs text-text-secondary">Incoming request</p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        size="sm"
+                        disabled={pendingActionId === request.request_id}
+                        onClick={() => handleAccept(request)}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={pendingActionId === request.request_id}
+                        onClick={() => handleDecline(request)}
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+              {orderedFriends.map((friend) => (
+                <li
+                  key={friend.user_id}
+                  className={`flex items-center gap-2 pl-3.5 ${
+                    friend.now_playing ? 'py-1 pr-1' : 'px-3.5 py-2.5'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      className="block max-w-full truncate text-left text-sm font-medium transition-colors hover:text-accent"
+                      onClick={() => setSelectedFriend(friend)}
+                    >
+                      {formatUsername(friend.display_name)}
+                    </button>
+                    {friend.now_playing && (
+                      <FriendNowPlayingInline
+                        nowPlaying={friend.now_playing}
+                        accentColor={friend.accent_color}
+                      />
+                    )}
+                  </div>
+                  {friend.now_playing && (
+                    <TrackArtwork url={friend.now_playing.album_art_url} size="lg" />
+                  )}
+                </li>
+              ))}
+              {summary.outgoing.map((request) => (
+                <li
+                  key={request.request_id}
+                  className="flex items-center justify-between gap-3 px-3.5 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {formatUsername(request.display_name)}
+                    </p>
+                    <p className="text-xs text-text-secondary">Request sent</p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={pendingActionId === request.request_id}
+                    onClick={() => handleCancel(request)}
+                  >
+                    Cancel
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
-
-        {friendsLoading ? (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner size="inline" />
-          </div>
-        ) : (
-          <>
-            {summary.friends.length === 0 && !hasPending ? (
-              <Card padding="sm">
-                <p className="text-sm text-text-secondary text-center">No friends yet.</p>
-              </Card>
-            ) : (
-              summary.friends.length > 0 && (
-                <Card padding="sm" className="p-0 overflow-hidden">
-                  <ul className="divide-y divide-border">
-                    {summary.friends.map((friend) => (
-                      <li
-                        key={friend.user_id}
-                        className="flex items-center justify-between gap-3 px-3.5 py-2.5"
-                      >
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          <span className="shrink-0 text-sm font-medium">
-                            {formatUsername(friend.display_name)}
-                          </span>
-                          {friend.now_playing && (
-                            <FriendNowPlayingInline nowPlaying={friend.now_playing} />
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="shrink-0 text-danger"
-                          onClick={() => setUnfriendTarget(friend)}
-                        >
-                          Unfriend
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )
-            )}
-
-            {hasPending && (
-              <div className="flex flex-col gap-2">
-                <h3 className={`${sectionHeadingClass} mt-1`}>Pending</h3>
-                <Card padding="sm" className="p-0 overflow-hidden">
-                  <ul className="divide-y divide-border">
-                    {summary.incoming.map((request) => (
-                      <li key={request.request_id} className="px-3.5 py-2.5">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {formatUsername(request.display_name)}
-                            </p>
-                            <p className="text-xs text-text-secondary">Incoming request</p>
-                          </div>
-                          <div className="flex shrink-0 gap-2">
-                            <Button
-                              size="sm"
-                              disabled={pendingActionId === request.request_id}
-                              onClick={() => handleAccept(request)}
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              disabled={pendingActionId === request.request_id}
-                              onClick={() => handleDecline(request)}
-                            >
-                              Decline
-                            </Button>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                    {summary.outgoing.map((request) => (
-                      <li
-                        key={request.request_id}
-                        className="flex items-center justify-between gap-3 px-3.5 py-2.5"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {formatUsername(request.display_name)}
-                          </p>
-                          <p className="text-xs text-text-secondary">Request sent</p>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          disabled={pendingActionId === request.request_id}
-                          onClick={() => handleCancel(request)}
-                        >
-                          Cancel
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              </div>
-            )}
-          </>
-        )}
 
         {actionError && <p className="text-sm text-danger text-center">{actionError}</p>}
       </section>
@@ -400,6 +388,17 @@ export function ProfilePage() {
             </Button>
           </div>
         </Modal>
+      )}
+
+      {selectedFriend && (
+        <FriendProfileModal
+          friend={selectedFriend}
+          onClose={() => setSelectedFriend(null)}
+          onUnfriend={() => {
+            setUnfriendTarget(selectedFriend)
+            setSelectedFriend(null)
+          }}
+        />
       )}
 
       {unfriendTarget && (

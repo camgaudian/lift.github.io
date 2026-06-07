@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
 
 const tabs = [
+  { to: '/library', label: 'Library', icon: LibraryIcon },
+  { to: '/history', label: 'History', icon: HistoryIcon },
   { to: '/', label: 'Home', icon: HomeIcon },
   { to: '/progress', label: 'Progress', icon: ProgressIcon },
-  { to: '/library', label: 'Library', icon: LibraryIcon },
   { to: '/profile', label: 'Profile', icon: ProfileIcon },
 ]
 
@@ -15,7 +16,7 @@ export function BottomNav() {
           <NavLink
             key={to}
             to={to}
-            end={to === '/' || to === '/profile'}
+            end={to === '/' || to === '/history' || to === '/progress' || to === '/profile'}
             className={({ isActive }) =>
               [
                 'flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
@@ -40,6 +41,16 @@ function HomeIcon({ active }: { active: boolean }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
       <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
+    </svg>
+  )
+}
+
+function HistoryIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
+      <rect x="4" y="5" width="16" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 10h16M8 3v4M16 3v4" strokeLinecap="round" strokeLinejoin="round" />
+      {active && <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none" />}
     </svg>
   )
 }

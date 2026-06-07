@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useProfile } from '@/contexts/ProfileContext'
 import {
@@ -12,12 +12,12 @@ import { Button } from '@/components/Button'
 import {
   fetchFunStats,
 } from '@/lib/stats'
+import { StartWorkoutModal } from '@/features/dashboard/StartWorkoutModal'
 import { formatVolume } from '@/lib/format'
 import { Card } from '@/components/Card'
 import { Input } from '@/components/Input'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
-import { useClickOutside } from '@/hooks/useClickOutside'
 import type { FunStats, WorkoutTemplate } from '@/lib/types'
 
 export function DashboardPage() {
@@ -28,12 +28,11 @@ export function DashboardPage() {
   const [activeWorkout, setActiveWorkout] = useState<{ id: string } | null>(null)
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([])
   const [loading, setLoading] = useState(true)
-  const [showStartMenu, setShowStartMenu] = useState(false)
+  const [showStartModal, setShowStartModal] = useState(false)
   const [showPostLog, setShowPostLog] = useState(false)
   const [postStarted, setPostStarted] = useState('')
   const [postCompleted, setPostCompleted] = useState('')
   const [startingWorkout, setStartingWorkout] = useState(false)
-  const startMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     Promise.all([
@@ -58,10 +57,8 @@ export function DashboardPage() {
       .finally(() => setStartingWorkout(false))
   }, [searchParams, loading, activeWorkout, navigate])
 
-  useClickOutside(startMenuRef, () => setShowStartMenu(false), showStartMenu && !startingWorkout)
-
   const handleStart = async (templateId?: string) => {
-    setShowStartMenu(false)
+    setShowStartModal(false)
     setStartingWorkout(true)
     try {
       const id = templateId
@@ -86,7 +83,7 @@ export function DashboardPage() {
 
   return (
     <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-1">
         <h1 className="text-2xl font-semibold">Lift</h1>
         <Link
           to="/profile"
@@ -114,38 +111,18 @@ export function DashboardPage() {
           Continue workout
         </Button>
       ) : (
-        <div ref={startMenuRef} className="relative">
-          <Button fullWidth size="lg" onClick={() => setShowStartMenu((open) => !open)}>
+        <>
+          <Button fullWidth size="lg" onClick={() => setShowStartModal(true)}>
             Start workout
           </Button>
-          {showStartMenu && (
-            <Card padding="sm" className="absolute left-0 right-0 top-full z-10 mt-2 flex flex-col gap-1 shadow-lg">
-              <button
-                type="button"
-                onClick={() => handleStart()}
-                className="rounded-xl px-4 py-3 text-left text-base font-medium text-accent hover:bg-surface-secondary transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <span aria-hidden className="text-lg leading-none">+</span>
-                  Empty workout
-                </span>
-              </button>
-              {templates.length > 0 && (
-                <div role="separator" className="my-1 border-t border-border" />
-              )}
-              {templates.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => handleStart(t.id)}
-                  className="rounded-xl px-4 py-3 text-left text-base font-medium hover:bg-surface-secondary transition-colors"
-                >
-                  {t.name}
-                </button>
-              ))}
-            </Card>
+          {showStartModal && (
+            <StartWorkoutModal
+              templates={templates}
+              onClose={() => setShowStartModal(false)}
+              onStart={handleStart}
+            />
           )}
-        </div>
+        </>
       )}
 
       <Button variant="secondary" fullWidth onClick={() => setShowPostLog(!showPostLog)}>

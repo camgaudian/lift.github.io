@@ -1,37 +1,17 @@
-import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { HistorySection } from './HistorySection'
+import { useState } from 'react'
 import { StatsSection } from './StatsSection'
+import { MilestonesSection } from './MilestonesSection'
 
-type ProgressTab = 'history' | 'stats'
+type ProgressTab = 'stats' | 'milestones'
 
 export function ProgressPage() {
-  const [tab, setTab] = useState<ProgressTab>('history')
-  const [showAllRecent, setShowAllRecent] = useState(false)
-  const location = useLocation()
-
-  useEffect(() => {
-    setShowAllRecent(false)
-  }, [location.pathname])
-
-  useEffect(() => {
-    if (tab !== 'history') setShowAllRecent(false)
-  }, [tab])
+  const [tab, setTab] = useState<ProgressTab>('stats')
 
   return (
     <div className="flex flex-col gap-4 pt-3">
       <h1 className="text-2xl font-semibold">Progress</h1>
 
       <div className="flex rounded-xl bg-surface-secondary p-1">
-        <button
-          type="button"
-          onClick={() => setTab('history')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium ${
-            tab === 'history' ? 'bg-surface shadow-sm text-text' : 'text-text-secondary'
-          }`}
-        >
-          History
-        </button>
         <button
           type="button"
           onClick={() => setTab('stats')}
@@ -41,16 +21,18 @@ export function ProgressPage() {
         >
           Stats
         </button>
+        <button
+          type="button"
+          onClick={() => setTab('milestones')}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium ${
+            tab === 'milestones' ? 'bg-surface shadow-sm text-text' : 'text-text-secondary'
+          }`}
+        >
+          Milestones
+        </button>
       </div>
 
-      {tab === 'history' ? (
-        <HistorySection
-          showAllRecent={showAllRecent}
-          onShowAllRecentChange={setShowAllRecent}
-        />
-      ) : (
-        <StatsSection />
-      )}
+      {tab === 'stats' ? <StatsSection /> : <MilestonesSection />}
     </div>
   )
 }

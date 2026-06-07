@@ -107,15 +107,10 @@ function RankingRow({
   }
 
   return (
-    <Card padding="sm" style={{ backgroundColor: `${entry.accent_color}18` }}>
+    <Card padding="sm" style={{ backgroundColor: `${entry.accent_color}23` }}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-text-secondary text-sm">#{rank}</span>
-          <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: entry.accent_color }}
-            aria-hidden
-          />
           <span className="font-medium truncate">{formatUsername(entry.display_name)}</span>
         </div>
         <p className="shrink-0 font-semibold">

@@ -1,17 +1,20 @@
 import { MusicPlayingIcon } from '@/components/MusicPlayingIcon'
-import { TrackArtwork } from '@/components/TrackArtwork'
+import { trackTextFadeClass } from '@/lib/ui'
 import type { NowPlaying } from '@/lib/types'
 
-export function FriendNowPlayingInline({ nowPlaying }: { nowPlaying: NowPlaying }) {
+export function FriendNowPlayingInline({
+  nowPlaying,
+  accentColor,
+}: {
+  nowPlaying: NowPlaying
+  accentColor: string
+}) {
   return (
-    <>
-      <MusicPlayingIcon />
-      {nowPlaying.album_art_url && (
-        <TrackArtwork url={nowPlaying.album_art_url} size="sm" />
-      )}
-      <span className="min-w-0 truncate text-xs text-text-secondary">
+    <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
+      <MusicPlayingIcon className="shrink-0" accentColor={accentColor} />
+      <p className={`min-w-0 flex-1 text-xs text-text-secondary ${trackTextFadeClass}`}>
         {nowPlaying.title} · {nowPlaying.artist}
-      </span>
-    </>
+      </p>
+    </div>
   )
 }
