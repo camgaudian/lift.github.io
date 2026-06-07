@@ -32,7 +32,11 @@ export async function updateProfileAppearance(
 
 export async function updateProfileSettings(
   userId: string,
-  updates: { display_name?: string | null; unit_preference?: WeightUnit },
+  updates: {
+    display_name?: string | null
+    unit_preference?: WeightUnit
+    hide_add_friend_warning?: boolean
+  },
 ): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')

@@ -10,9 +10,48 @@ export interface Profile {
   unit_preference: WeightUnit
   theme: ThemeMode
   accent_color: string
+  hide_add_friend_warning: boolean
   created_at: string
   updated_at: string
 }
+
+export interface NowPlaying {
+  track_id: string
+  title: string
+  artist: string
+  album_art_url: string | null
+  expires_at: string
+}
+
+export interface SpotifySearchTrack {
+  track_id: string
+  title: string
+  artist: string
+  album: string
+  album_art_url: string | null
+}
+
+export interface FriendEntry {
+  user_id: string
+  display_name: string | null
+  now_playing?: NowPlaying | null
+}
+
+export interface PendingFriendRequest {
+  request_id: string
+  user_id: string
+  display_name: string | null
+}
+
+export interface FriendSummary {
+  friends: FriendEntry[]
+  incoming: PendingFriendRequest[]
+  outgoing: PendingFriendRequest[]
+}
+
+export type SendFriendRequestResult =
+  | { ok: true; request_id: string; auto_accepted?: boolean }
+  | { ok: false; error: string }
 
 export interface Exercise {
   id: string
@@ -99,12 +138,27 @@ export interface LastSessionData {
   completed_at: string | null
 }
 
-export interface ExercisePR {
+export interface PrLeaderboardEntry {
   exercise_id: string
   exercise_name: string
+  exercise_slug: string
   best_weight_lb: number
   best_reps: number
-  achieved_at: string
+  friend_count: number
+}
+
+export interface ExercisePrRankingEntry {
+  user_id: string
+  display_name: string | null
+  accent_color: string
+  is_self: boolean
+  best_weight_lb: number
+  best_reps: number
+}
+
+export interface ExercisePrRankings {
+  exercise_name: string | null
+  rankings: ExercisePrRankingEntry[]
 }
 
 export interface FunStats {

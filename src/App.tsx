@@ -7,11 +7,13 @@ import { AppLayout } from '@/components/AppLayout'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { SignUpPage } from '@/features/auth/SignUpPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
-import { WorkoutPage } from '@/features/workouts/WorkoutPage'
 import { ActiveWorkoutPage } from '@/features/workouts/ActiveWorkoutPage'
 import { ProgressPage } from '@/features/progress/ProgressPage'
 import { LibraryPage } from '@/features/library/LibraryPage'
+import { ProfilePage } from '@/features/profile/ProfilePage'
 import { SettingsPage } from '@/features/settings/SettingsPage'
+import { PrLeaderboardPage } from '@/features/pr-leaderboard/PrLeaderboardPage'
+import { ExercisePrDetailPage } from '@/features/pr-leaderboard/ExercisePrDetailPage'
 import { TemplateDetailPage } from '@/features/templates/TemplateDetailPage'
 
 export default function App() {
@@ -25,13 +27,17 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/" element={<DashboardPage />} />
-              <Route path="/workout" element={<WorkoutPage />} />
+              <Route path="/workout" element={<Navigate to="/" replace />} />
               <Route path="/workout/:id" element={<ActiveWorkoutPage />} />
               <Route path="/progress" element={<ProgressPage />} />
               <Route path="/library" element={<LibraryPage />}>
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
               </Route>
-              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/pr-leaderboard" element={<PrLeaderboardPage />} />
+              <Route path="/pr-leaderboard/:slug" element={<ExercisePrDetailPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile/settings" element={<SettingsPage />} />
+              <Route path="/settings" element={<Navigate to="/profile/settings" replace />} />
               <Route path="/history" element={<Navigate to="/progress" replace />} />
               <Route path="/stats" element={<Navigate to="/progress" replace />} />
             </Route>

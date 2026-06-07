@@ -1,12 +1,36 @@
 import { supabase } from './supabase'
+import { format, parseISO, subDays, startOfDay } from 'date-fns'
 import type {
-  ExercisePR,
+  ExercisePrRankings,
   FunStats,
   LastSessionData,
+  PrLeaderboardEntry,
   WeeklyVolume,
   WorkoutExercise,
   WorkoutFunStats,
 } from './types'
+
+export function computeWorkoutStreak(completedAts: (string | null | undefined)[]): number {
+  const days = new Set(
+    completedAts
+      .filter((iso): iso is string => Boolean(iso))
+      .map((iso) => format(parseISO(iso), 'yyyy-MM-dd')),
+  )
+
+  let streak = 0
+  let check = startOfDay(new Date())
+
+  if (!days.has(format(check, 'yyyy-MM-dd'))) {
+    check = subDays(check, 1)
+  }
+
+  while (days.has(format(check, 'yyyy-MM-dd'))) {
+    streak++
+    check = subDays(check, 1)
+  }
+
+  return streak
+}
 
 export function computeWorkoutFunStats(exercises: WorkoutExercise[]): WorkoutFunStats {
   let total_sets = 0
@@ -42,9 +66,18 @@ export function computeWorkoutFunStats(exercises: WorkoutExercise[]): WorkoutFun
 }
 
 export async function fetchFunStats(): Promise<FunStats | null> {
-  const { data, error } = await supabase.rpc('get_fun_stats')
-  if (error) throw error
-  return data as FunStats
+  const [statsResult, workoutsResult] = await Promise.all([
+    supabase.rpc('get_fun_stats'),
+    supabase.from('workouts').select('completed_at').eq('status', 'completed'),
+  ])
+
+  if (statsResult.error) throw statsResult.error
+
+  const stats = statsResult.data as FunStats
+  return {
+    ...stats,
+    streak_days: computeWorkoutStreak((workoutsResult.data ?? []).map((w) => w.completed_at)),
+  }
 }
 
 export async function fetchWeeklyVolume(weeks = 12): Promise<WeeklyVolume[]> {
@@ -61,22 +94,29 @@ export async function fetchCumulativeVolume(since?: string): Promise<number> {
   return Number(data ?? 0)
 }
 
-export async function fetchExercisePRs(): Promise<ExercisePR[]> {
-  const { data, error } = await supabase.rpc('get_exercise_prs')
+export async function fetchPrLeaderboard(): Promise<PrLeaderboardEntry[]> {
+  const { data, error } = await supabase.rpc('get_pr_leaderboard')
   if (error) throw error
-  return ((data ?? []) as ExercisePR[])
-    .map((pr) => ({
-      ...pr,
-      best_weight_lb: Number(pr.best_weight_lb),
-      best_reps: Number(pr.best_reps),
-    }))
-    .sort((a, b) => b.best_weight_lb - a.best_weight_lb || b.best_reps - a.best_reps)
+  return ((data ?? []) as PrLeaderboardEntry[]).map((entry) => ({
+    ...entry,
+    best_weight_lb: Number(entry.best_weight_lb),
+    best_reps: Number(entry.best_reps),
+    friend_count: Number(entry.friend_count),
+  }))
 }
 
-export async function fetchWorkoutStreak(): Promise<number> {
-  const { data, error } = await supabase.rpc('get_workout_streak')
+export async function fetchExercisePrRankings(slug: string): Promise<ExercisePrRankings> {
+  const { data, error } = await supabase.rpc('get_exercise_pr_rankings', { p_slug: slug })
   if (error) throw error
-  return Number(data ?? 0)
+  const result = data as ExercisePrRankings
+  return {
+    exercise_name: result.exercise_name,
+    rankings: (result.rankings ?? []).map((entry) => ({
+      ...entry,
+      best_weight_lb: Number(entry.best_weight_lb),
+      best_reps: Number(entry.best_reps),
+    })),
+  }
 }
 
 export async function fetchLastSessionForExercise(exerciseId: string): Promise<LastSessionData> {

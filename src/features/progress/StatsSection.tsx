@@ -3,7 +3,6 @@ import {
   fetchFunStats,
   fetchWeeklyVolume,
   fetchCumulativeVolume,
-  fetchExercisePRs,
 } from '@/lib/stats'
 import { formatDuration, formatVolume } from '@/lib/format'
 import { formatWeight } from '@/lib/units'
@@ -11,6 +10,7 @@ import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
 import {
   LineChart,
   Line,
@@ -19,7 +19,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import type { ExercisePR, FunStats, WeeklyVolume } from '@/lib/types'
+import type { FunStats, WeeklyVolume } from '@/lib/types'
 import { format, parseISO } from 'date-fns'
 
 export function StatsSection() {
@@ -28,7 +28,6 @@ export function StatsSection() {
   const [stats, setStats] = useState<FunStats | null>(null)
   const [weekVolume, setWeekVolume] = useState<(WeeklyVolume & { label: string })[]>([])
   const [cumulative, setCumulative] = useState(0)
-  const [prs, setPrs] = useState<ExercisePR[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -36,9 +35,8 @@ export function StatsSection() {
       fetchFunStats(),
       fetchWeeklyVolume(12),
       fetchCumulativeVolume(),
-      fetchExercisePRs(),
     ])
-      .then(([s, wv, cum, prList]) => {
+      .then(([s, wv, cum]) => {
         setStats(s)
         setWeekVolume(
           wv.map((w) => ({
@@ -47,7 +45,6 @@ export function StatsSection() {
           })),
         )
         setCumulative(cum)
-        setPrs(prList)
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -69,6 +66,8 @@ export function StatsSection() {
 
   return (
     <div className="flex flex-col gap-4">
+      <PrLeaderboardLink />
+
       <section>
         <h2 className="mb-2 text-sm font-medium text-text-secondary">Fun numbers</h2>
         <div className="grid grid-cols-2 gap-3">
@@ -111,27 +110,6 @@ export function StatsSection() {
         </Card>
       )}
 
-      <section>
-        <h2 className="mb-2 text-sm font-medium text-text-secondary">PR leaderboard</h2>
-        <div className="flex flex-col gap-2">
-          {prs.slice(0, 20).map((pr, i) => (
-            <Card key={pr.exercise_id} padding="sm">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-text-secondary text-sm mr-2">#{i + 1}</span>
-                  <span className="font-medium">{pr.exercise_name}</span>
-                </div>
-                <p className="font-semibold">
-                  {formatWeight(pr.best_weight_lb, unit)} × {pr.best_reps}
-                </p>
-              </div>
-            </Card>
-          ))}
-          {prs.length === 0 && (
-            <p className="text-sm text-text-secondary">Complete workouts to see PRs.</p>
-          )}
-        </div>
-      </section>
     </div>
   )
 }

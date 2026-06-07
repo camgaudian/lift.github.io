@@ -36,6 +36,7 @@ Open **Authentication → URL configuration** and set:
    - `005_profile_appearance.sql`
    - `006_pr_by_weight.sql`
    - `007_fun_stats_cardio.sql`
+   - …through `013_user_now_playing.sql` (see [SPOTIFY_SETUP.md](SPOTIFY_SETUP.md) for Spotify-specific steps)
 
 Alternatively, if you install the [Supabase CLI](https://supabase.com/docs/guides/cli), run:
 

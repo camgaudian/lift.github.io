@@ -46,6 +46,11 @@ export function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+export function formatUsername(displayName: string | null, fallback = 'Unknown user'): string {
+  if (!displayName?.trim()) return fallback
+  return `@${displayName.trim()}`
+}
+
 export function formatExercisePreview(names: string[], maxVisible = 3): string {
   if (names.length === 0) return ''
   const visible = names.slice(0, maxVisible)

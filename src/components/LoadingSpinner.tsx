@@ -1,12 +1,13 @@
 type LoadingSpinnerProps = {
-  /** 'screen' = full viewport; 'page' = below nav; 'section' = tab/section content */
-  size?: 'screen' | 'page' | 'section'
+  /** 'screen' = full viewport; 'page' = below nav; 'section' = tab/section content; 'inline' = no min-height */
+  size?: 'screen' | 'page' | 'section' | 'inline'
 }
 
 const sizeClasses = {
   screen: 'min-h-dvh',
   page: 'min-h-[calc(100dvh-7rem)]',
   section: 'min-h-[40vh]',
+  inline: '',
 } as const
 
 export function LoadingSpinner({ size = 'page' }: LoadingSpinnerProps) {

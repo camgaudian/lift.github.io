@@ -6,7 +6,15 @@ import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import type { Workout } from '@/lib/types'
 
-export function HistorySection() {
+const RECENT_LIMIT = 3
+
+export function HistorySection({
+  showAllRecent,
+  onShowAllRecentChange,
+}: {
+  showAllRecent: boolean
+  onShowAllRecentChange: (open: boolean) => void
+}) {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState(new Date())
@@ -29,7 +37,11 @@ export function HistorySection() {
 
   const filtered = selectedDate
     ? workouts.filter((w) => isSameDay(parseISO(w.completed_at!), selectedDate))
-    : workouts.slice(0, 20)
+    : showAllRecent
+      ? workouts
+      : workouts.slice(0, RECENT_LIMIT)
+
+  const hasMoreRecent = !selectedDate && workouts.length > RECENT_LIMIT
 
   if (loading) return <LoadingSpinner size="section" />
 
@@ -117,6 +129,17 @@ export function HistorySection() {
             <p className="text-sm text-text-secondary">No workouts for this period.</p>
           )}
         </ul>
+        {hasMoreRecent && (
+          <button
+            type="button"
+            className="mt-2 text-sm text-accent"
+            onClick={() => onShowAllRecentChange(!showAllRecent)}
+          >
+            {showAllRecent
+              ? 'Show less'
+              : `Show older workouts (${workouts.length - RECENT_LIMIT} more)`}
+          </button>
+        )}
       </section>
     </div>
   )

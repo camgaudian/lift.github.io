@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -9,13 +10,11 @@ import { DisplayNameInput } from '@/components/DisplayNameInput'
 import { Input } from '@/components/Input'
 import { eraseAllWorkoutData, isDisplayNameTaken } from '@/features/settings/profileApi'
 import { capitalize } from '@/lib/format'
+import { sectionHeadingClass } from '@/lib/ui'
 import type { ThemeMode, WeightUnit } from '@/lib/types'
 
 const selectClass =
   'mt-1 w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base'
-
-const sectionHeadingClass =
-  'px-1 text-xs font-semibold uppercase tracking-wide'
 
 function accentLabel(color: string) {
   return ACCENT_PRESETS.find((p) => p.color.toLowerCase() === color.toLowerCase())?.label ?? 'Custom'
@@ -185,7 +184,18 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6 pt-3">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <div className="flex items-center gap-3">
+        <Link
+          to="/profile"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text"
+          aria-label="Back to profile"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+        <h1 className="text-2xl font-semibold">Settings</h1>
+      </div>
 
       <section className="flex flex-col gap-2">
         <h2 className={`${sectionHeadingClass} text-text-secondary`}>Account</h2>
@@ -367,7 +377,7 @@ export function SettingsPage() {
 
               <div>
                 <label className="text-sm font-medium" htmlFor="accent-select">
-                  Accent color
+                  Your color
                 </label>
                 <select
                   id="accent-select"

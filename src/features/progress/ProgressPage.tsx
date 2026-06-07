@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { HistorySection } from './HistorySection'
 import { StatsSection } from './StatsSection'
 
@@ -6,6 +7,16 @@ type ProgressTab = 'history' | 'stats'
 
 export function ProgressPage() {
   const [tab, setTab] = useState<ProgressTab>('history')
+  const [showAllRecent, setShowAllRecent] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    setShowAllRecent(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (tab !== 'history') setShowAllRecent(false)
+  }, [tab])
 
   return (
     <div className="flex flex-col gap-4 pt-3">
@@ -32,7 +43,14 @@ export function ProgressPage() {
         </button>
       </div>
 
-      {tab === 'history' ? <HistorySection /> : <StatsSection />}
+      {tab === 'history' ? (
+        <HistorySection
+          showAllRecent={showAllRecent}
+          onShowAllRecentChange={setShowAllRecent}
+        />
+      ) : (
+        <StatsSection />
+      )}
     </div>
   )
 }
