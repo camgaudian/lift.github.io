@@ -6,6 +6,7 @@ export function MilestoneHighlight({
   categoryName,
   tierIndex,
   hasTier,
+  detailLabel,
   size = 40,
   accentColor,
   className = 'flex items-center gap-3 rounded-xl border border-border bg-surface-secondary/50 p-3',
@@ -14,6 +15,7 @@ export function MilestoneHighlight({
   categoryName: string
   tierIndex: number
   hasTier: boolean
+  detailLabel?: string
   size?: number
   accentColor?: string
   className?: string
@@ -28,12 +30,17 @@ export function MilestoneHighlight({
           accentColor={accentColor}
         />
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="font-medium leading-tight">{categoryName}</p>
         <p className="mt-0.5 text-sm leading-tight text-text-secondary">
           {hasTier ? `Tier ${tierIndex + 1}` : 'Locked'}
         </p>
       </div>
+      {detailLabel && (
+        <p className="shrink-0 text-right text-sm font-medium leading-tight text-text-secondary">
+          {detailLabel}
+        </p>
+      )}
     </div>
   )
 }

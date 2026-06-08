@@ -24,7 +24,7 @@ export function WorkoutFunStatsSection({
       value: stats.total_cardio_seconds > 0 ? formatDuration(stats.total_cardio_seconds) : '—',
     },
     {
-      label: 'Heaviest set',
+      label: 'Heaviest rep',
       value: stats.heaviest_set_lb ? formatWeight(stats.heaviest_set_lb, unit) : '—',
     },
   ]

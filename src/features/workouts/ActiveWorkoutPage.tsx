@@ -13,6 +13,7 @@ import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ExercisePickerPanel } from '@/features/exercises/ExercisePicker'
 import { WorkoutFunStatsSection } from './WorkoutFunStatsSection'
+import { WorkoutAchievementsSection } from './WorkoutAchievementsSection'
 import { SaveEntriesNotice } from './SaveEntriesNotice'
 import type { Workout, WorkoutExercise } from '@/lib/types'
 
@@ -97,6 +98,7 @@ export function ActiveWorkoutPage() {
     return (
       <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
         <h1 className="text-2xl font-semibold">Workout complete!</h1>
+        <WorkoutAchievementsSection workoutId={id} exercises={items} />
         <WorkoutFunStatsSection exercises={items} />
         <Button fullWidth size="lg" onClick={handleDone}>
           Done
@@ -120,7 +122,10 @@ export function ActiveWorkoutPage() {
       </div>
 
       {isCompleted && (
-        <WorkoutFunStatsSection exercises={items} />
+        <>
+          <WorkoutAchievementsSection workoutId={id} exercises={items} />
+          <WorkoutFunStatsSection exercises={items} />
+        </>
       )}
 
       {!isCompleted && (

@@ -7,6 +7,7 @@ export function Modal({
   onClose,
   headerAction,
   showCloseButton = false,
+  scrollable = false,
   bodyClassName = 'mt-4',
   accentColor,
 }: {
@@ -15,6 +16,7 @@ export function Modal({
   onClose: () => void
   headerAction?: ReactNode
   showCloseButton?: boolean
+  scrollable?: boolean
   bodyClassName?: string
   accentColor?: string
 }) {
@@ -29,7 +31,10 @@ export function Modal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-lg"
+        className={[
+          'w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-lg',
+          scrollable ? 'flex max-h-[min(90dvh,calc(100dvh-2rem))] flex-col' : '',
+        ].join(' ')}
         style={accentColor ? ({ '--color-accent': accentColor } as CSSProperties) : undefined}
         onClick={(e) => e.stopPropagation()}
       >
@@ -45,9 +50,21 @@ export function Modal({
             {title}
           </h2>
         )}
-        <div className={bodyClassName}>{children}</div>
+        <div
+          className={[
+            bodyClassName,
+            scrollable ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain' : '',
+          ].join(' ')}
+        >
+          {children}
+        </div>
         {showCloseButton && (
-          <Button variant="secondary" fullWidth className="mt-5" onClick={onClose}>
+          <Button
+            variant="secondary"
+            fullWidth
+            className={scrollable ? 'mt-4 shrink-0' : 'mt-5'}
+            onClick={onClose}
+          >
             Close
           </Button>
         )}

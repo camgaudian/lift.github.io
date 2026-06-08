@@ -157,6 +157,36 @@ export function isMilestoneCategoryId(value: string | null | undefined): value i
   return Boolean(value && MILESTONE_CATEGORIES.some((entry) => entry.id === value))
 }
 
+const TIME_UNIT_ABBREVIATIONS: Array<[string, string]> = [
+  ['hour', 'h'],
+  ['day', 'd'],
+  ['week', 'w'],
+  ['month', 'mo'],
+  ['year', 'y'],
+]
+
+/**
+ * Short, badge-friendly label for a milestone tier.
+ * Categories with a single consistent unit (weight, workouts, sets, reps) return
+ * just the amount; time-based categories (cardio, streak) keep an abbreviated unit
+ * so tiers across different units stay distinguishable.
+ */
+export function getMilestoneShortLabel(
+  categoryId: MilestoneCategoryId,
+  tierIndex: number,
+): string {
+  const category = getMilestoneCategory(categoryId)
+  const tier = category.tiers[tierIndex]
+  if (!tier) return ''
+
+  const [amount, ...unitParts] = tier.label.split(' ')
+  if (categoryId !== 'cardio' && categoryId !== 'streak') return amount
+
+  const unit = unitParts.join(' ')
+  const match = TIME_UNIT_ABBREVIATIONS.find(([word]) => unit.startsWith(word))
+  return match ? `${amount}${match[1]}` : amount
+}
+
 export function formatMilestoneValue(
   categoryId: MilestoneCategoryId,
   value: number,

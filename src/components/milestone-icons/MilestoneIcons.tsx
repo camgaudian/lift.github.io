@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
-import type { MilestoneCategoryId } from '@/lib/milestones'
+import { getMilestoneShortLabel, type MilestoneCategoryId } from '@/lib/milestones'
 
 interface MilestoneIconProps {
   category: MilestoneCategoryId
@@ -12,6 +12,43 @@ interface MilestoneIconProps {
 }
 
 const BORDER_WIDTH = 3
+
+/**
+ * Vertical gap between the glyph and achievement label, as a multiple of `size`.
+ * Negative = pull the label up; positive = push it down.
+ * Tune these per category to keep the icon + number group visually centered.
+ */
+const LABEL_MARGIN_TOP_MULTIPLIERS: Record<MilestoneCategoryId, number> = {
+  weight: -0.08,
+  workouts: 0.02,
+  sets: -0.06,
+  reps: -0.08,
+  cardio: -0.08,
+  streak: -0.1,
+}
+
+/** Scale factor for the glyph SVG, relative to the default `size * 0.8`. */
+const ICON_SIZE_MULTIPLIERS: Record<MilestoneCategoryId, number> = {
+  weight: 1.1,
+  workouts: 0.9,
+  sets: 1.1,
+  reps: 1.1,
+  cardio: 1,
+  streak: 1,
+}
+
+/**
+ * Shift the icon + label group up/down together, as a multiple of `size`.
+ * Negative = move both up; positive = move both down.
+ */
+const CONTENT_OFFSET_MULTIPLIERS: Record<MilestoneCategoryId, number> = {
+  weight: -0.12,
+  workouts: -0.02,
+  sets: -0.1,
+  reps: -0.08,
+  cardio: -0.08,
+  streak: -0.04,
+}
 
 const METAL_GRADIENTS: Record<'bronze' | 'silver' | 'gold', string> = {
   bronze:
@@ -61,10 +98,22 @@ export function MilestoneIcon({
   const locked = tier < 0
   const shiny = !locked && visualTier >= 3
   const tierStyle: TierStyle = locked ? { kind: 'none' } : getTierStyle(visualTier)
+  const displayLabel = locked ? 'Locked' : getMilestoneShortLabel(category, visualTier)
 
-  const pad = Math.round(size * 0.3)
+  const boxSize = Math.round(size * 1.6)
+  const iconSize = Math.round(size * 0.8 * ICON_SIZE_MULTIPLIERS[category])
   const innerRadius = Math.round(size * 0.28)
   const outerRadius = innerRadius + BORDER_WIDTH
+
+  // Prominent label that scales down for longer strings (e.g. "250K") so it
+  // always stays within the frame. "." takes less horizontal space than a digit.
+  const labelCharUnits =
+    [...displayLabel].reduce((n, ch) => n + (ch === '.' ? 0.45 : 1), 0) || 1
+  const maxLabelFont = locked ? size * 0.28 : size * 0.46
+  const widthLabelFont = (boxSize * 0.72) / (labelCharUnits * 0.62)
+  const labelFontSize = Math.max(9, Math.min(maxLabelFont, widthLabelFont))
+  const labelMarginTop = size * LABEL_MARGIN_TOP_MULTIPLIERS[category]
+  const contentOffsetY = size * CONTENT_OFFSET_MULTIPLIERS[category]
 
   const hasBorder = tierStyle.kind !== 'none'
 
@@ -86,34 +135,57 @@ export function MilestoneIcon({
   return (
     <div className={['block', className].join(' ')} style={outerStyle}>
       <div
-        className={['relative overflow-hidden bg-surface-secondary', metalClass].join(' ')}
-        style={{ borderRadius: innerRadius, padding: pad }}
+        className={[
+          'relative flex flex-col items-center justify-center overflow-hidden bg-surface-secondary',
+          metalClass,
+        ].join(' ')}
+        style={{ borderRadius: innerRadius, width: boxSize, height: boxSize }}
       >
         {!locked && (
           <span
             aria-hidden
             className="pointer-events-none absolute inset-0 flex items-center justify-center font-bold leading-none select-none"
             style={{
-              color: '#ffffff',
-              opacity: 0.07,
+              color: iconColor,
+              opacity: 0.12,
               fontSize: size * 1.7,
-              transform: `translateY(${size * -0.08}px)`,
+              transform: `translateY(${size * -0.1}px)`,
             }}
           >
             {visualTier + 1}
           </span>
         )}
-        <svg
-          width={size}
-          height={size}
-          viewBox="0 0 48 48"
-          fill="none"
-          aria-hidden
-          className={['relative', locked ? 'opacity-40' : ''].join(' ')}
-          style={{ display: 'block', color: iconColor }}
+        <div
+          className="relative flex flex-col items-center"
+          style={{ transform: `translateY(${contentOffsetY}px)` }}
         >
-          <BaseIcon category={category} locked={locked} shiny={shiny} />
-        </svg>
+          <svg
+            width={iconSize}
+            height={iconSize}
+            viewBox="0 0 48 48"
+            fill="none"
+            aria-hidden
+            className={['relative', locked ? 'opacity-40' : ''].join(' ')}
+            style={{ display: 'block', color: iconColor }}
+          >
+            <BaseIcon category={category} locked={locked} shiny={shiny} />
+          </svg>
+          {displayLabel && (
+            <span
+              className={['relative leading-none select-none', locked ? 'font-medium' : 'font-bold'].join(' ')}
+              style={{
+                color: iconColor,
+                fontSize: labelFontSize,
+                marginTop: labelMarginTop,
+                letterSpacing: locked ? '0' : '-0.02em',
+                whiteSpace: 'nowrap',
+                opacity: locked ? 0.7 : 1,
+              }}
+            >
+              {displayLabel}
+            </span>
+          )}
+        </div>
         {shiny && <span className="milestone-shine" />}
       </div>
     </div>

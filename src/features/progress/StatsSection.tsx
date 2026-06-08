@@ -60,7 +60,7 @@ export function StatsSection() {
       label: 'Total cardio time',
       value: formatDuration(stats?.total_cardio_seconds ?? 0),
     },
-    { label: 'Heaviest single set', value: stats?.heaviest_set_lb ? formatWeight(stats.heaviest_set_lb, unit) : '—' },
+    { label: 'Heaviest single rep', value: stats?.heaviest_set_lb ? formatWeight(stats.heaviest_set_lb, unit) : '—' },
     { label: 'Current streak', value: `${stats?.streak_days ?? 0} days` },
   ]
 
