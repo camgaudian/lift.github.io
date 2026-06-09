@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { MusicPlayingIcon } from '@/components/MusicPlayingIcon'
 import { Modal } from '@/components/Modal'
+import { ShareIcon } from '@/components/ShareIcon'
 import { TrashIcon } from '@/components/TrashIcon'
+import { ShareContentModal } from '@/features/sharing/ShareContentModal'
 import { TrackArtwork } from '@/components/TrackArtwork'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { MilestoneHighlight } from '@/components/milestone-icons/MilestoneHighlight'
@@ -49,6 +51,7 @@ export function FriendProfileModal({
 }) {
   const [milestoneStats, setMilestoneStats] = useState<MilestoneStats | null>(null)
   const [milestoneLoading, setMilestoneLoading] = useState(false)
+  const [showShare, setShowShare] = useState(false)
 
   useEffect(() => {
     if (!friend.featured_milestone_category) {
@@ -75,6 +78,7 @@ export function FriendProfileModal({
       : null
 
   return (
+    <>
     <Modal
       title={formatUsername(friend.display_name)}
       onClose={onClose}
@@ -82,14 +86,25 @@ export function FriendProfileModal({
       accentColor={friend.accent_color}
       bodyClassName="mt-4 flex flex-col gap-4"
       headerAction={
-        <button
-          type="button"
-          className={iconDeleteButtonClass}
-          aria-label="Unfriend"
-          onClick={onUnfriend}
-        >
-          <TrashIcon />
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            aria-label="Share with friend"
+            onClick={() => setShowShare(true)}
+          >
+            <ShareIcon size={16} />
+            <span>Share</span>
+          </button>
+          <button
+            type="button"
+            className={iconDeleteButtonClass}
+            aria-label="Unfriend"
+            onClick={onUnfriend}
+          >
+            <TrashIcon />
+          </button>
+        </div>
       }
     >
       <section className="flex flex-col gap-1.5">
@@ -119,6 +134,7 @@ export function FriendProfileModal({
             categoryName={featuredMilestone.name}
             tierIndex={featuredProgress.tierIndex}
             hasTier={featuredProgress.currentTier !== null}
+            detailLabel={featuredProgress.currentTier?.label}
             accentColor={friend.accent_color}
           />
         ) : (
@@ -126,5 +142,7 @@ export function FriendProfileModal({
         )}
       </section>
     </Modal>
+    {showShare && <ShareContentModal friend={friend} onClose={() => setShowShare(false)} />}
+    </>
   )
 }

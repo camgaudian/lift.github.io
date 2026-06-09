@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useProfile } from '@/contexts/ProfileContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import {
   fetchActiveWorkout,
   startEmptyWorkout,
@@ -8,11 +9,13 @@ import {
   createCompletedWorkout,
 } from '@/features/workouts/workoutApi'
 import { fetchTemplates } from '@/features/templates/templateApi'
+import { AppIcon } from '@/components/AppIcon'
 import { Button } from '@/components/Button'
 import {
   fetchFunStats,
 } from '@/lib/stats'
 import { StartWorkoutModal } from '@/features/dashboard/StartWorkoutModal'
+import { InstallBanner } from '@/features/dashboard/InstallBanner'
 import { formatVolume } from '@/lib/format'
 import { Card } from '@/components/Card'
 import { Input } from '@/components/Input'
@@ -22,6 +25,7 @@ import type { FunStats, WorkoutTemplate } from '@/lib/types'
 
 export function DashboardPage() {
   const { unit, displayName, loading: profileLoading } = useProfile()
+  const { accentColor } = useTheme()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [stats, setStats] = useState<FunStats | null>(null)
@@ -84,7 +88,10 @@ export function DashboardPage() {
   return (
     <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
-        <h1 className="text-2xl font-semibold">Lift</h1>
+        <div className="flex items-center gap-2">
+          <AppIcon size={26} color={accentColor} />
+          <h1 className="text-2xl font-semibold">Lift</h1>
+        </div>
         <Link
           to="/profile"
           className="text-sm font-medium text-text-secondary truncate max-w-[45%] shrink-0"
@@ -92,6 +99,8 @@ export function DashboardPage() {
           {profileLoading ? '…' : displayName ? `@${displayName}` : 'Set username'}
         </Link>
       </div>
+
+      <InstallBanner />
 
       <PrLeaderboardLink />
 

@@ -3,6 +3,8 @@ import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { AppIcon } from '@/components/AppIcon'
+import { AuthPageLayout } from '@/components/AuthPageLayout'
 import { Card } from '@/components/Card'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
@@ -25,10 +27,13 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col justify-center py-8">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Lift</h1>
-        <p className="mt-1 text-text-secondary">Track your workouts</p>
+    <AuthPageLayout>
+      <div className="mb-4 text-center">
+        <div className="flex items-center justify-center gap-1.5">
+          <AppIcon size={30} />
+          <h1 className="text-3xl font-semibold tracking-tight">Lift</h1>
+        </div>
+        <p className="mt-1 text-text-secondary">Train together</p>
       </div>
 
       {!isSupabaseConfigured && (
@@ -71,6 +76,6 @@ export function LoginPage() {
           </Link>
         </p>
       </Card>
-    </div>
+    </AuthPageLayout>
   )
 }

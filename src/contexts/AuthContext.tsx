@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { getAuthRedirectUrl, supabase } from '@/lib/supabase'
 
 interface AuthContextValue {
   user: User | null
   session: Session | null
   loading: boolean
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>
+  resendConfirmationEmail: (email: string) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   verifyPassword: (password: string) => Promise<{ error: Error | null }>
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ error: Error | null }>
@@ -40,7 +41,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { display_name: displayName } },
+      options: {
+        data: { display_name: displayName },
+        emailRedirectTo: getAuthRedirectUrl(),
+      },
+    })
+    return { error: error as Error | null }
+  }
+
+  const resendConfirmationEmail = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: getAuthRedirectUrl() },
     })
     return { error: error as Error | null }
   }
@@ -69,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, verifyPassword, changePassword, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, resendConfirmationEmail, signIn, verifyPassword, changePassword, signOut }}>
       {children}
     </AuthContext.Provider>
   )

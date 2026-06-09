@@ -1,7 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { useProfile } from '@/contexts/ProfileContext'
 import { AddFriendIcon } from '@/components/AddFriendIcon'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
@@ -9,22 +8,43 @@ import { Input } from '@/components/Input'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
 import { TrackArtwork } from '@/components/TrackArtwork'
+import { TrackArtworkPlaceholder } from '@/components/TrackArtworkPlaceholder'
 import {
-  acceptFriendRequest,
   cancelFriendRequest,
-  declineFriendRequest,
   fetchFriendSummary,
   friendRequestErrorMessage,
   removeFriend,
   sendFriendRequest,
 } from '@/features/profile/friendsApi'
+import { FriendNoTrackInline } from '@/features/profile/FriendNoTrackInline'
 import { FriendNowPlayingInline } from '@/features/profile/FriendNowPlayingInline'
 import { FriendProfileModal } from '@/features/profile/FriendProfileModal'
+import { NotificationCenter } from '@/features/profile/NotificationCenter'
 import { PoweringLiftSection } from '@/features/profile/PoweringLiftSection'
 import { fetchProfile, updateProfileSettings } from '@/features/settings/profileApi'
 import { formatUsername } from '@/lib/format'
-import { sectionHeadingClass } from '@/lib/ui'
 import type { FriendEntry, FriendSummary, PendingFriendRequest } from '@/lib/types'
+
+function FriendsIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  )
+}
 
 function SettingsGearLink() {
   return (
@@ -53,7 +73,6 @@ function SettingsGearLink() {
 
 export function ProfilePage() {
   const { user } = useAuth()
-  const { displayName, loading: profileLoading } = useProfile()
   const [summary, setSummary] = useState<FriendSummary>({ friends: [], incoming: [], outgoing: [] })
   const [friendsLoading, setFriendsLoading] = useState(true)
   const [hideAddFriendWarning, setHideAddFriendWarning] = useState(false)
@@ -143,32 +162,6 @@ export function ProfilePage() {
     await submitFriendRequest(trimmed)
   }
 
-  const handleAccept = async (request: PendingFriendRequest) => {
-    setPendingActionId(request.request_id)
-    setActionError(null)
-    try {
-      await acceptFriendRequest(request.request_id)
-      await loadFriends()
-    } catch {
-      setActionError('Failed to accept request.')
-    } finally {
-      setPendingActionId(null)
-    }
-  }
-
-  const handleDecline = async (request: PendingFriendRequest) => {
-    setPendingActionId(request.request_id)
-    setActionError(null)
-    try {
-      await declineFriendRequest(request.request_id)
-      await loadFriends()
-    } catch {
-      setActionError('Failed to decline request.')
-    } finally {
-      setPendingActionId(null)
-    }
-  }
-
   const handleCancel = async (request: PendingFriendRequest) => {
     setPendingActionId(request.request_id)
     setActionError(null)
@@ -198,7 +191,7 @@ export function ProfilePage() {
     }
   }
 
-  const hasPending = summary.incoming.length > 0 || summary.outgoing.length > 0
+  const hasPending = summary.outgoing.length > 0
   const orderedFriends = [
     ...summary.friends.filter((friend) => friend.now_playing),
     ...summary.friends.filter((friend) => !friend.now_playing),
@@ -211,23 +204,21 @@ export function ProfilePage() {
         <SettingsGearLink />
       </div>
 
-      <section className="flex flex-col gap-2">
-        <h2 className={sectionHeadingClass}>Username</h2>
-        <Card padding="sm">
-          <p className="text-base font-medium">
-            {profileLoading ? '…' : displayName ? `@${displayName}` : 'Not set'}
-          </p>
-        </Card>
-      </section>
+      <NotificationCenter disabled={!user} onFriendsChanged={loadFriends} />
 
       <PoweringLiftSection disabled={!user} />
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2 px-1">
-          <h2 className={sectionHeadingClass}>Friends</h2>
+          <div className="flex items-center gap-1.5">
+            <span className="text-accent">
+              <FriendsIcon />
+            </span>
+            <h2 className="text-sm font-medium text-text-secondary">Friends</h2>
+          </div>
           <button
             type="button"
-            className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors hover:bg-surface-secondary disabled:opacity-50 ${
+            className={`-my-2 inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors hover:bg-surface-secondary disabled:opacity-50 ${
               showAddForm ? 'text-accent' : 'text-text-secondary hover:text-text'
             }`}
             aria-label={showAddForm ? 'Hide add friend form' : 'Add friend'}
@@ -273,70 +264,46 @@ export function ProfilePage() {
           ) : summary.friends.length === 0 && !hasPending ? (
             <p className="px-3.5 py-4 text-sm text-text-secondary text-center">No friends yet.</p>
           ) : (
-            <ul className="divide-y divide-border">
-              {summary.incoming.map((request) => (
-                <li key={request.request_id} className="px-3.5 py-2.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {formatUsername(request.display_name)}
-                      </p>
-                      <p className="text-xs text-text-secondary">Incoming request</p>
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <Button
-                        size="sm"
-                        disabled={pendingActionId === request.request_id}
-                        onClick={() => handleAccept(request)}
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={pendingActionId === request.request_id}
-                        onClick={() => handleDecline(request)}
-                      >
-                        Decline
-                      </Button>
-                    </div>
-                  </div>
-                </li>
-              ))}
+            <ul className="flex flex-col gap-1.5">
               {orderedFriends.map((friend) => (
-                <li
-                  key={friend.user_id}
-                  className={`flex items-center gap-2 pl-3.5 ${
-                    friend.now_playing ? 'py-1 pr-1' : 'px-3.5 py-2.5'
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <button
-                      type="button"
-                      className="block max-w-full truncate text-left text-sm font-medium transition-colors hover:text-accent"
-                      onClick={() => setSelectedFriend(friend)}
-                    >
-                      {formatUsername(friend.display_name)}
-                    </button>
-                    {friend.now_playing && (
-                      <FriendNowPlayingInline
-                        nowPlaying={friend.now_playing}
-                        accentColor={friend.accent_color}
-                      />
-                    )}
-                  </div>
-                  {friend.now_playing && (
-                    <TrackArtwork url={friend.now_playing.album_art_url} size="lg" />
-                  )}
+                <li key={friend.user_id} className="w-full">
+                  <button
+                    type="button"
+                    className="flex w-full cursor-pointer items-center gap-3 rounded-xl py-2 pl-3.5 pr-2 text-left transition-[filter] hover:brightness-[0.97] active:brightness-[0.94]"
+                    style={{ backgroundColor: `${friend.accent_color}18` }}
+                    aria-label={`View ${formatUsername(friend.display_name)} profile`}
+                    onClick={() => setSelectedFriend(friend)}
+                  >
+                    <div className="pointer-events-none min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {formatUsername(friend.display_name)}
+                      </p>
+                      {friend.now_playing ? (
+                        <FriendNowPlayingInline
+                          nowPlaying={friend.now_playing}
+                          accentColor={friend.accent_color}
+                        />
+                      ) : (
+                        <FriendNoTrackInline accentColor={friend.accent_color} />
+                      )}
+                    </div>
+                    <div className="pointer-events-none shrink-0">
+                      {friend.now_playing ? (
+                        <TrackArtwork url={friend.now_playing.album_art_url} size="lg" />
+                      ) : (
+                        <TrackArtworkPlaceholder accentColor={friend.accent_color} size="lg" />
+                      )}
+                    </div>
+                  </button>
                 </li>
               ))}
               {summary.outgoing.map((request) => (
                 <li
                   key={request.request_id}
-                  className="flex items-center justify-between gap-3 px-3.5 py-2.5"
+                  className="flex items-center gap-3 rounded-xl px-3.5 py-2 transition-colors hover:bg-surface-secondary"
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
                       {formatUsername(request.display_name)}
                     </p>
                     <p className="text-xs text-text-secondary">Request sent</p>

@@ -142,18 +142,26 @@ export function MilestoneIcon({
         style={{ borderRadius: innerRadius, width: boxSize, height: boxSize }}
       >
         {!locked && (
-          <span
+          <svg
             aria-hidden
-            className="pointer-events-none absolute inset-0 flex items-center justify-center font-bold leading-none select-none"
-            style={{
-              color: iconColor,
-              opacity: 0.12,
-              fontSize: size * 1.7,
-              transform: `translateY(${size * -0.1}px)`,
-            }}
+            className="pointer-events-none absolute inset-0 select-none"
+            width={boxSize}
+            height={boxSize}
+            viewBox={`0 0 ${boxSize} ${boxSize}`}
           >
-            {visualTier + 1}
-          </span>
+            <text
+              x="50%"
+              y="50%"
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={size * 1.7}
+              fontWeight={700}
+              fill={iconColor}
+              opacity={0.12}
+            >
+              {visualTier + 1}
+            </text>
+          </svg>
         )}
         <div
           className="relative flex flex-col items-center"

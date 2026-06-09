@@ -2,7 +2,7 @@
 
 A mobile-first PWA workout tracker. Log strength, bodyweight, and cardio sessions with templates, per-exercise notes, and stats-heavy dashboards.
 
-Live at [gaudian.dev/lift.github.io](https://gaudian.dev/lift.github.io) (also [camgaudian.github.io/lift.github.io](https://camgaudian.github.io/lift.github.io)).
+Live at [lift.gaudian.dev](https://lift.gaudian.dev).
 
 ## Features
 
@@ -36,10 +36,11 @@ Open [http://localhost:5173](http://localhost:5173).
 ### 3. Deploy to GitHub Pages
 
 1. In your repo **Settings → Pages**, set source to **GitHub Actions**.
-2. Add repository secrets:
+2. Set custom domain to `lift.gaudian.dev` (requires a CNAME record pointing to `YOUR_USERNAME.github.io`).
+3. Add repository secrets:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-3. Push to `main`. The workflow in `.github/workflows/deploy.yml` builds and deploys.
+4. Push to `main`. The workflow in `.github/workflows/deploy.yml` builds and deploys.
 
 ## Tech stack
 

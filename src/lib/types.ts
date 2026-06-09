@@ -64,6 +64,48 @@ export type SendFriendRequestResult =
   | { ok: true; request_id: string; auto_accepted?: boolean }
   | { ok: false; error: string }
 
+export type ShareKind = 'exercise' | 'template'
+
+export interface ExerciseSharePayload {
+  name: string
+  exercise_type: ExerciseType
+  category: string
+  primary_muscles: string[]
+  equipment: string | null
+}
+
+export interface TemplateSharePayloadExercise extends ExerciseSharePayload {
+  is_custom: boolean
+  sort_order: number
+  target_sets: number | null
+  target_reps: number | null
+  target_weight_lb: number | null
+}
+
+export interface TemplateSharePayload {
+  name: string
+  exercises: TemplateSharePayloadExercise[]
+}
+
+interface NotificationBase {
+  id: string
+  sender_id: string
+  sender_name: string | null
+  created_at: string
+}
+
+export type NotificationItem =
+  | (NotificationBase & { type: 'friend_request'; payload: null })
+  | (NotificationBase & { type: 'exercise_share'; payload: ExerciseSharePayload })
+  | (NotificationBase & { type: 'template_share'; payload: TemplateSharePayload })
+
+export interface NotificationsResult {
+  items: NotificationItem[]
+  unread_count: number
+}
+
+export type ShareResult = { ok: true } | { ok: false; error: string }
+
 export interface Exercise {
   id: string
   user_id: string | null

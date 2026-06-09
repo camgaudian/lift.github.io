@@ -10,7 +10,9 @@ import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
+import { ShareIcon } from '@/components/ShareIcon'
 import { TrashIcon } from '@/components/TrashIcon'
+import { FriendPickerModal } from '@/features/sharing/FriendPickerModal'
 import { formatExercisePreview } from '@/lib/format'
 import { iconDeleteButtonClass } from '@/lib/ui'
 import type { WorkoutTemplate } from '@/lib/types'
@@ -23,6 +25,7 @@ export function TemplatesTab() {
   const [deleteTarget, setDeleteTarget] = useState<WorkoutTemplate | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [shareTarget, setShareTarget] = useState<WorkoutTemplate | null>(null)
 
   const reload = async () => {
     setLoading(true)
@@ -82,19 +85,32 @@ export function TemplatesTab() {
 
       <ul className="flex flex-col gap-2">
         {templates.map((t) => (
-          <li key={t.id}>
-            <Card padding="sm">
-              <div className="flex items-start justify-between gap-2">
+          <li key={t.id} className="w-full">
+            <Card padding="sm" className="relative">
+              <Link
+                to={`/library/templates/${t.id}`}
+                className="absolute inset-0 z-0 rounded-2xl transition-[filter] hover:brightness-[0.97] active:brightness-[0.94]"
+                aria-label={`View ${t.name} template`}
+              />
+              <div className="pointer-events-none relative z-[1] flex items-center justify-between gap-2 pr-16">
                 <div className="min-w-0 flex-1">
-                  <Link to={`/library/templates/${t.id}`} className="font-medium text-accent">
-                    {t.name}
-                  </Link>
+                  <p className="font-medium text-accent">{t.name}</p>
                   <p className="mt-0.5 text-sm text-text-secondary truncate">
                     {t.exercise_names?.length
                       ? formatExercisePreview(t.exercise_names)
                       : 'No exercises yet'}
                   </p>
                 </div>
+              </div>
+              <div className="absolute top-1/2 right-2 z-[2] flex -translate-y-1/2 items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setShareTarget(t)}
+                  className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-accent"
+                  aria-label={`Share ${t.name}`}
+                >
+                  <ShareIcon />
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -136,6 +152,15 @@ export function TemplatesTab() {
             </Button>
           </div>
         </Modal>
+      )}
+
+      {shareTarget && (
+        <FriendPickerModal
+          kind="template"
+          itemId={shareTarget.id}
+          itemName={shareTarget.name}
+          onClose={() => setShareTarget(null)}
+        />
       )}
     </div>
   )

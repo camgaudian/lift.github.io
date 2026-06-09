@@ -234,11 +234,11 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
 
   return (
     <section className="flex flex-col gap-2">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <span className="text-accent">
           <MusicIcon />
         </span>
-        <h2 className="text-sm font-medium text-text-secondary">What&apos;s powering your lift?</h2>
+        <h2 className="text-sm font-medium text-text-secondary">What&apos;s powering your Lift?</h2>
         <InfoPopover ariaLabel="How sharing works" size="sm">
           <p className="text-sm text-text-secondary leading-relaxed">
             Search for a song to share with your friends. It appears next to your username on their

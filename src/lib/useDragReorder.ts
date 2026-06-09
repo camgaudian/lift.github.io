@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 
 type RowMetrics = {
   tops: number[]
@@ -8,7 +8,7 @@ type RowMetrics = {
 
 function measureRows(container: HTMLElement | null): RowMetrics | null {
   if (!container) return null
-  const rows = Array.from(container.querySelectorAll<HTMLElement>('[data-drag-row]'))
+  const rows = Array.from(container.querySelectorAll<HTMLElement>(':scope > [data-drag-row]'))
   if (!rows.length) return null
 
   const tops = rows.map((row) => row.getBoundingClientRect().top)
@@ -48,6 +48,14 @@ function getRowShift(
   return 0
 }
 
+const LONG_PRESS_MS = 500
+const LONG_PRESS_MOVE_CANCEL_PX = 10
+
+function isInteractiveDragTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false
+  return Boolean(target.closest('button, a, input, textarea, select, label, [contenteditable="true"]'))
+}
+
 /**
  * Pointer-based drag-to-reorder for a vertical list. Rows must be rendered
  * inside `listRef` and carry a `data-drag-row` attribute so they can be
@@ -66,6 +74,8 @@ export function useDragReorder({
   const rowMetricsRef = useRef<RowMetrics | null>(null)
   const hoverIndexRef = useRef<number | null>(null)
   const dragStartYRef = useRef(0)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressCleanupRef = useRef<(() => void) | null>(null)
   const keysRef = useRef(keys)
   keysRef.current = keys
 
@@ -89,13 +99,19 @@ export function useDragReorder({
     setDragOffset(0)
   }
 
-  const startDrag = (index: number, e: React.PointerEvent<HTMLElement>) => {
-    if (disabled) return
-    e.preventDefault()
-    e.stopPropagation()
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    longPressCleanupRef.current?.()
+    longPressCleanupRef.current = null
+  }
 
-    const handle = e.currentTarget
-    handle.setPointerCapture(e.pointerId)
+  const beginDrag = (index: number, handle: HTMLElement, pointerId: number, clientY: number) => {
+    if (disabled) return
+
+    handle.setPointerCapture(pointerId)
 
     const metrics = measureRows(listRef.current)
     if (!metrics) return
@@ -104,7 +120,7 @@ export function useDragReorder({
     if (!rowKey) return
 
     rowMetricsRef.current = metrics
-    dragStartYRef.current = e.clientY
+    dragStartYRef.current = clientY
     hoverIndexRef.current = index
     setDraggingKey(rowKey)
     setHoverIndex(index)
@@ -139,6 +155,62 @@ export function useDragReorder({
     handle.addEventListener('pointercancel', onEnd)
   }
 
+  const startDrag = (index: number, e: React.PointerEvent<HTMLElement>) => {
+    if (disabled) return
+    e.preventDefault()
+    e.stopPropagation()
+    beginDrag(index, e.currentTarget, e.pointerId, e.clientY)
+  }
+
+  const startLongPress = (index: number, e: React.PointerEvent<HTMLElement>) => {
+    if (disabled) return
+    if (e.button !== 0) return
+    if (isInteractiveDragTarget(e.target)) return
+
+    cancelLongPress()
+
+    const handle = e.currentTarget
+    const pointerId = e.pointerId
+    const startX = e.clientX
+    const startY = e.clientY
+
+    const cleanupListeners = () => {
+      window.removeEventListener('pointermove', onMoveCancel)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointercancel', onPointerUp)
+    }
+
+    const onMoveCancel = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return
+      if (Math.hypot(ev.clientX - startX, ev.clientY - startY) > LONG_PRESS_MOVE_CANCEL_PX) {
+        cancelLongPress()
+      }
+    }
+
+    const onPointerUp = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return
+      cancelLongPress()
+    }
+
+    window.addEventListener('pointermove', onMoveCancel)
+    window.addEventListener('pointerup', onPointerUp)
+    window.addEventListener('pointercancel', onPointerUp)
+    longPressCleanupRef.current = cleanupListeners
+
+    longPressTimerRef.current = setTimeout(() => {
+      cleanupListeners()
+      longPressTimerRef.current = null
+      longPressCleanupRef.current = null
+      beginDrag(index, handle, pointerId, startY)
+    }, LONG_PRESS_MS)
+  }
+
+  const getLongPressProps = (index: number) => ({
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => startLongPress(index, e),
+  })
+
+  useEffect(() => () => cancelLongPress(), [])
+
   const dragIndex = draggingKey ? keys.findIndex((k) => k === draggingKey) : -1
   const activeHoverIndex = hoverIndex ?? dragIndex
   const rowMetrics = rowMetricsRef.current
@@ -160,6 +232,7 @@ export function useDragReorder({
     draggingKey,
     isDragging: draggingKey !== null,
     startDrag,
+    getLongPressProps,
     getRowStyle,
   }
 }

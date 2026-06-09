@@ -8,11 +8,13 @@ import type { ExerciseType, LastSessionData, StrengthSet } from '@/lib/types'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
+import { Modal } from '@/components/Modal'
+import { TrashIcon } from '@/components/TrashIcon'
+import { iconDeleteButtonClass } from '@/lib/ui'
 import {
   upsertStrengthSets,
   upsertCardioEntry,
   upsertSessionNote,
-  removeWorkoutExercise,
 } from './workoutApi'
 import { formatDuration, parseDuration } from '@/lib/format'
 
@@ -28,8 +30,62 @@ interface ExerciseBlockProps {
   initialSets?: StrengthSet[]
   initialNote?: string
   initialCardio?: { duration_seconds: number; distance_miles: number | null; calories: number | null }
-  onRemove?: () => void
+  onRemove?: () => void | Promise<void>
   readOnly?: boolean
+}
+
+function ExerciseRemoveButton({
+  exerciseName,
+  onRemove,
+}: {
+  exerciseName: string
+  onRemove: () => void | Promise<void>
+}) {
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [removing, setRemoving] = useState(false)
+
+  const confirmRemove = async () => {
+    setRemoving(true)
+    try {
+      await onRemove()
+      setShowConfirm(false)
+    } finally {
+      setRemoving(false)
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setShowConfirm(true)}
+        className={iconDeleteButtonClass}
+        aria-label={`Remove ${exerciseName}`}
+      >
+        <TrashIcon />
+      </button>
+      {showConfirm && (
+        <Modal title="Remove exercise?" onClose={() => !removing && setShowConfirm(false)}>
+          <p className="text-sm text-text-secondary">
+            Remove <span className="font-medium text-text">{exerciseName}</span> from this workout?
+          </p>
+          <div className="mt-5 flex gap-2">
+            <Button
+              variant="secondary"
+              fullWidth
+              disabled={removing}
+              onClick={() => setShowConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="danger" fullWidth disabled={removing} onClick={confirmRemove}>
+              {removing ? 'Removing…' : 'Remove'}
+            </Button>
+          </div>
+        </Modal>
+      )}
+    </>
+  )
 }
 
 type SetRow = StrengthSet & { rowKey: string; lastPlaceholderIndex?: number }
@@ -263,7 +319,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
         <div className="flex justify-between items-start">
           <h3 className="font-semibold">{exerciseName}</h3>
           {!readOnly && onRemove && (
-            <button type="button" onClick={onRemove} className="text-sm text-danger">Remove</button>
+            <ExerciseRemoveButton exerciseName={exerciseName} onRemove={onRemove} />
           )}
         </div>
         <Input
@@ -297,7 +353,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
       <div className="flex justify-between items-start">
         <h3 className="font-semibold">{exerciseName}</h3>
         {!readOnly && onRemove && (
-          <button type="button" onClick={onRemove} className="text-sm text-danger">Remove</button>
+          <ExerciseRemoveButton exerciseName={exerciseName} onRemove={onRemove} />
         )}
       </div>
 
@@ -438,8 +494,3 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     </Card>
   )
 })
-
-export async function handleRemoveExercise(workoutExerciseId: string, onDone: () => void) {
-  await removeWorkoutExercise(workoutExerciseId)
-  onDone()
-}

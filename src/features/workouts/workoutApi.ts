@@ -155,6 +155,20 @@ export async function removeWorkoutExercise(id: string): Promise<void> {
   if (error) throw error
 }
 
+export async function reorderWorkoutExercises(orderedIds: string[]): Promise<void> {
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from('workout_exercises')
+        .update({ sort_order: index })
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) throw error
+        }),
+    ),
+  )
+}
+
 export async function upsertStrengthSets(
   workoutExerciseId: string,
   sets: Omit<StrengthSet, 'id' | 'workout_exercise_id'>[],

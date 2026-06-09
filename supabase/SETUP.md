@@ -20,12 +20,39 @@ Open **Authentication → URL configuration** and set:
 
 | Setting | Value |
 |---------|-------|
-| Site URL | `https://gaudian.dev/lift.github.io` |
+| Site URL | `https://lift.gaudian.dev` |
 | Redirect URLs | `http://localhost:5173/**` |
-| | `https://gaudian.dev/lift.github.io/**` |
-| | `https://camgaudian.github.io/lift.github.io/**` |
+| | `https://lift.gaudian.dev/**` |
 
-## 4. Run database migrations
+The app passes `emailRedirectTo` on sign-up and resend, so confirmation links land on `/login`.
+
+## 4. Configure email delivery (recommended for production)
+
+Supabase's built-in email service is rate-limited (~2–4 emails/hour) and is intended for testing only. For real sign-ups, connect a custom SMTP provider.
+
+### Resend (recommended)
+
+1. Create an account at [resend.com](https://resend.com).
+2. Add and verify a sending subdomain (e.g. `auth.gaudian.dev`) by adding the DNS records Resend provides to your domain registrar.
+3. Create an API key with sending access.
+4. In Supabase → **Authentication → Email → SMTP Settings**, enable custom SMTP:
+
+   | Field | Value |
+   |-------|-------|
+   | Sender email | `noreply@auth.gaudian.dev` |
+   | Sender name | `Lift` |
+   | Host | `smtp.resend.com` |
+   | Port | `465` |
+   | Username | `resend` |
+   | Password | your Resend API key |
+
+   Alternatively, use Resend's [Supabase integration](https://resend.com/docs/knowledge-base/getting-started-with-resend-and-supabase) to configure this automatically.
+
+5. In **Authentication → Rate Limits**, raise **Rate limit for sending emails** (e.g. 30–100/hour).
+
+Resend free tier: 3,000 emails/month, 100/day. See [resend.com/pricing](https://resend.com/pricing).
+
+## 5. Run database migrations
 
 1. Open **SQL Editor** in the Supabase dashboard.
 2. Run each file in order from [`supabase/migrations/`](migrations/):
@@ -36,7 +63,15 @@ Open **Authentication → URL configuration** and set:
    - `005_profile_appearance.sql`
    - `006_pr_by_weight.sql`
    - `007_fun_stats_cardio.sql`
-   - …through `013_user_now_playing.sql` (see [SPOTIFY_SETUP.md](SPOTIFY_SETUP.md) for Spotify-specific steps)
+   - `008_exercise_categories.sql`
+   - `009_display_name_uniqueness.sql`
+   - `010_streak_timezone.sql`
+   - `011_friends.sql`
+   - `012_pr_leaderboard_friends.sql`
+   - `013_user_now_playing.sql` (see [SPOTIFY_SETUP.md](SPOTIFY_SETUP.md) for Spotify-specific steps)
+   - `014_profile_featured_milestone.sql`
+   - `015_longest_streak_timezone.sql`
+   - `016_content_sharing.sql`
 
 Alternatively, if you install the [Supabase CLI](https://supabase.com/docs/guides/cli), run:
 
@@ -45,7 +80,7 @@ supabase link --project-ref YOUR_PROJECT_REF
 supabase db push
 ```
 
-## 5. Copy API credentials
+## 6. Copy API credentials
 
 Open **Project Settings → API** and copy:
 
@@ -64,7 +99,7 @@ For GitHub Pages deployment, add the same values as repository secrets:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
-## 6. Verify
+## 7. Verify
 
 1. Run `npm install && npm run dev`.
 2. Sign up with your email.

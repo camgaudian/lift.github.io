@@ -5,16 +5,22 @@ import {
   addExerciseToWorkout,
   completeWorkout,
   cancelWorkout,
+  reorderWorkoutExercises,
+  removeWorkoutExercise,
 } from './workoutApi'
-import { ExerciseBlock, handleRemoveExercise, type ExerciseBlockHandle } from './ExerciseBlock'
+import { ExerciseBlock, type ExerciseBlockHandle } from './ExerciseBlock'
 import { useExercises } from '@/features/exercises/useExercises'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Modal } from '@/components/Modal'
+import { TrashIcon } from '@/components/TrashIcon'
+import { iconDeleteButtonClass } from '@/lib/ui'
 import { ExercisePickerPanel } from '@/features/exercises/ExercisePicker'
 import { WorkoutFunStatsSection } from './WorkoutFunStatsSection'
 import { WorkoutAchievementsSection } from './WorkoutAchievementsSection'
 import { SaveEntriesNotice } from './SaveEntriesNotice'
+import { useDragReorder, reorderList } from '@/lib/useDragReorder'
 import type { Workout, WorkoutExercise } from '@/lib/types'
 
 export function ActiveWorkoutPage() {
@@ -29,6 +35,9 @@ export function ActiveWorkoutPage() {
   const [completing, setCompleting] = useState(false)
   const [showCompletionSummary, setShowCompletionSummary] = useState(false)
   const [completeError, setCompleteError] = useState<string | null>(null)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const [discarding, setDiscarding] = useState(false)
+  const [discardError, setDiscardError] = useState<string | null>(null)
   const exerciseRefs = useRef<Record<string, ExerciseBlockHandle | null>>({})
 
   const reload = async () => {
@@ -83,15 +92,35 @@ export function ActiveWorkoutPage() {
 
   const handleDone = () => navigate('/history')
 
-  const handleCancel = async () => {
-    if (!id || !confirm('Discard this workout?')) return
-    await cancelWorkout(id)
-    navigate('/')
+  const confirmDiscard = async () => {
+    if (!id) return
+    setDiscarding(true)
+    setDiscardError(null)
+    try {
+      await cancelWorkout(id)
+      navigate('/')
+    } catch {
+      setDiscardError('Failed to discard workout.')
+    } finally {
+      setDiscarding(false)
+    }
   }
 
-  if (loading) return <LoadingSpinner />
-
   const isCompleted = workout?.status === 'completed'
+
+  const handleReorder = (from: number, to: number) => {
+    const next = reorderList(items, from, to)
+    setItems(next)
+    void reorderWorkoutExercises(next.map((item) => item.id))
+  }
+
+  const { listRef, draggingKey, isDragging, getLongPressProps, getRowStyle } = useDragReorder({
+    keys: items.map((item) => item.id),
+    onReorder: handleReorder,
+    disabled: isCompleted,
+  })
+
+  if (loading) return <LoadingSpinner />
   const alreadyAdded = new Set(items.map((i) => i.exercise_id))
 
   if (showCompletionSummary) {
@@ -115,8 +144,16 @@ export function ActiveWorkoutPage() {
           {!isCompleted && items.length > 0 && <SaveEntriesNotice />}
         </div>
         {!isCompleted && (
-          <button type="button" onClick={handleCancel} className="shrink-0 text-sm text-danger">
-            Discard
+          <button
+            type="button"
+            onClick={() => {
+              setDiscardError(null)
+              setShowDiscardConfirm(true)
+            }}
+            className={iconDeleteButtonClass}
+            aria-label="Discard workout"
+          >
+            <TrashIcon />
           </button>
         )}
       </div>
@@ -145,27 +182,43 @@ export function ActiveWorkoutPage() {
         </>
       )}
 
-      <div className="flex flex-col gap-4">
-        {items.map((item) => (
-          <ExerciseBlock
+      <div ref={listRef} className="flex flex-col gap-4">
+        {items.map((item, idx) => (
+          <div
             key={item.id}
-            ref={(el) => {
-              exerciseRefs.current[item.id] = el
-            }}
-            workoutExerciseId={item.id}
-            exerciseId={item.exercise_id}
-            exerciseName={(item.exercise as { name: string } | undefined)?.name ?? 'Exercise'}
-            exerciseType={item.exercise_type}
-            initialSets={item.strength_sets}
-            initialNote={item.session_note?.note_for_next_time ?? ''}
-            initialCardio={item.cardio_entry ?? undefined}
-            readOnly={isCompleted}
-            onRemove={
-              isCompleted
-                ? undefined
-                : () => handleRemoveExercise(item.id, reload)
-            }
-          />
+            data-drag-row
+            {...(!isCompleted ? getLongPressProps(idx) : {})}
+            className={[
+              draggingKey === item.id
+                ? 'relative z-10 select-none rounded-2xl shadow-lg ring-1 ring-accent/40'
+                : isDragging
+                  ? 'transition-transform duration-150 ease-out'
+                  : '',
+            ].join(' ')}
+            style={getRowStyle(idx)}
+          >
+            <ExerciseBlock
+              ref={(el) => {
+                exerciseRefs.current[item.id] = el
+              }}
+              workoutExerciseId={item.id}
+              exerciseId={item.exercise_id}
+              exerciseName={(item.exercise as { name: string } | undefined)?.name ?? 'Exercise'}
+              exerciseType={item.exercise_type}
+              initialSets={item.strength_sets}
+              initialNote={item.session_note?.note_for_next_time ?? ''}
+              initialCardio={item.cardio_entry ?? undefined}
+              readOnly={isCompleted}
+              onRemove={
+                isCompleted
+                  ? undefined
+                  : async () => {
+                      await removeWorkoutExercise(item.id)
+                      reload()
+                    }
+              }
+            />
+          </div>
         ))}
         {items.length === 0 && (
           <Card>
@@ -189,6 +242,28 @@ export function ActiveWorkoutPage() {
         <Button variant="secondary" fullWidth onClick={() => navigate('/history')}>
           Back to history
         </Button>
+      )}
+
+      {showDiscardConfirm && (
+        <Modal title="Discard workout?" onClose={() => !discarding && setShowDiscardConfirm(false)}>
+          <p className="text-sm text-text-secondary">
+            Discard this workout and all logged exercises? This cannot be undone.
+          </p>
+          {discardError && <p className="mt-2 text-sm text-danger text-center">{discardError}</p>}
+          <div className="mt-5 flex gap-2">
+            <Button
+              variant="secondary"
+              fullWidth
+              disabled={discarding}
+              onClick={() => setShowDiscardConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="danger" fullWidth disabled={discarding} onClick={confirmDiscard}>
+              {discarding ? 'Discarding…' : 'Discard'}
+            </Button>
+          </div>
+        </Modal>
       )}
     </div>
   )

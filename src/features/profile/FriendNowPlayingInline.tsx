@@ -10,7 +10,7 @@ export function FriendNowPlayingInline({
   accentColor: string
 }) {
   return (
-    <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
+    <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
       <MusicPlayingIcon className="shrink-0" accentColor={accentColor} />
       <p className={`min-w-0 flex-1 text-xs text-text-secondary ${trackTextFadeClass}`}>
         {nowPlaying.title} · {nowPlaying.artist}

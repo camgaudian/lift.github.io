@@ -6,7 +6,9 @@ import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
+import { ShareIcon } from '@/components/ShareIcon'
 import { TrashIcon } from '@/components/TrashIcon'
+import { FriendPickerModal } from '@/features/sharing/FriendPickerModal'
 import { capitalize } from '@/lib/format'
 import {
   EXERCISE_CATEGORIES,
@@ -37,6 +39,7 @@ export function ExercisesTab() {
   const [deleteTarget, setDeleteTarget] = useState<ExerciseItem | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [shareTarget, setShareTarget] = useState<ExerciseItem | null>(null)
 
   const filtered = exercises.filter((e) => {
     const matchSearch = e.name.toLowerCase().includes(search.toLowerCase())
@@ -158,6 +161,7 @@ export function ExercisesTab() {
               setDeleteError(null)
               setDeleteTarget(exercise)
             }}
+            onShareRequest={setShareTarget}
           />
         </section>
       )}
@@ -189,6 +193,15 @@ export function ExercisesTab() {
           </div>
         </Modal>
       )}
+
+      {shareTarget && (
+        <FriendPickerModal
+          kind="exercise"
+          itemId={shareTarget.id}
+          itemName={shareTarget.name}
+          onClose={() => setShareTarget(null)}
+        />
+      )}
     </div>
   )
 }
@@ -197,10 +210,12 @@ function GroupedExerciseList({
   groups,
   showGroupHeaders,
   onDeleteRequest,
+  onShareRequest,
 }: {
   groups: { category: string; items: ExerciseItem[] }[]
   showGroupHeaders: boolean
   onDeleteRequest?: (exercise: ExerciseItem) => void
+  onShareRequest?: (exercise: ExerciseItem) => void
 }) {
   if (groups.length === 0) {
     return <p className="text-sm text-text-secondary">No exercises found.</p>
@@ -213,7 +228,11 @@ function GroupedExerciseList({
           {showGroupHeaders && (
             <h4 className="mb-2 text-sm font-semibold capitalize">{category}</h4>
           )}
-          <ExerciseList items={items} onDeleteRequest={onDeleteRequest} />
+          <ExerciseList
+            items={items}
+            onDeleteRequest={onDeleteRequest}
+            onShareRequest={onShareRequest}
+          />
         </section>
       ))}
     </div>
@@ -223,32 +242,46 @@ function GroupedExerciseList({
 function ExerciseList({
   items,
   onDeleteRequest,
+  onShareRequest,
 }: {
   items: ExerciseItem[]
   onDeleteRequest?: (exercise: ExerciseItem) => void
+  onShareRequest?: (exercise: ExerciseItem) => void
 }) {
   return (
     <ul className="flex flex-col gap-2">
       {items.map((e) => (
         <li key={e.id}>
           <Card padding="sm" className="flex items-center justify-between gap-2">
-            <div>
-              <p className="font-medium">{e.name}</p>
+            <div className="min-w-0">
+              <p className="font-medium truncate">{e.name}</p>
               <p className="text-xs text-text-secondary capitalize">
                 {e.exercise_type}
                 {e.equipment ? ` · ${e.equipment}` : ''}
               </p>
             </div>
-            {onDeleteRequest && (
-              <button
-                type="button"
-                onClick={() => onDeleteRequest(e)}
-                className={iconDeleteButtonClass}
-                aria-label={`Delete ${e.name}`}
-              >
-                <TrashIcon />
-              </button>
-            )}
+            <div className="flex shrink-0 items-center gap-0.5">
+              {onShareRequest && (
+                <button
+                  type="button"
+                  onClick={() => onShareRequest(e)}
+                  className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-accent"
+                  aria-label={`Share ${e.name}`}
+                >
+                  <ShareIcon />
+                </button>
+              )}
+              {onDeleteRequest && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteRequest(e)}
+                  className={iconDeleteButtonClass}
+                  aria-label={`Delete ${e.name}`}
+                >
+                  <TrashIcon />
+                </button>
+              )}
+            </div>
           </Card>
         </li>
       ))}

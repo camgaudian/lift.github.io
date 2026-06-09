@@ -14,3 +14,10 @@ export const supabase = createClient(
 
 export const isSupabaseConfigured =
   Boolean(supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('YOUR_PROJECT'))
+
+export function getAuthRedirectUrl(path = 'login') {
+  const base = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`
+  return `${window.location.origin}${base}${path}`
+}
