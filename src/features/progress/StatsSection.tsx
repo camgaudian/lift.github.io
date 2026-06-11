@@ -84,7 +84,7 @@ export function StatsSection() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PrLeaderboardLink />
+      <PrLeaderboardLink from="progress" />
 
       <section>
         <h2 className="mb-2 text-sm font-medium text-text-secondary">Fun numbers</h2>

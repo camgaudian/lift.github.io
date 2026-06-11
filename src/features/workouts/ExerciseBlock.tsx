@@ -6,6 +6,7 @@ import { displayToLb, lbToDisplay } from '@/lib/units'
 import { useDragReorder, reorderList } from '@/lib/useDragReorder'
 import type { ExerciseType, LastSessionData, StrengthSet } from '@/lib/types'
 import { Button } from '@/components/Button'
+import { DragGripIcon } from '@/components/DragGripIcon'
 import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
 import { Modal } from '@/components/Modal'
@@ -499,14 +500,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                 style={{ touchAction: 'none' }}
                 aria-label={`Reorder set ${idx + 1}`}
               >
-                <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden>
-                  <circle cx="3" cy="3" r="1.5" />
-                  <circle cx="9" cy="3" r="1.5" />
-                  <circle cx="3" cy="8" r="1.5" />
-                  <circle cx="9" cy="8" r="1.5" />
-                  <circle cx="3" cy="13" r="1.5" />
-                  <circle cx="9" cy="13" r="1.5" />
-                </svg>
+                <DragGripIcon />
               </button>
             )}
             <span className="shrink-0 mr-2 text-sm text-text-secondary whitespace-nowrap">Set {idx + 1}</span>

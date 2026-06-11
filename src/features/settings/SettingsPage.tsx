@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { ACCENT_PRESETS } from '@/lib/theme'
+import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { DisplayNameInput } from '@/components/DisplayNameInput'
@@ -187,15 +187,7 @@ export function SettingsPage() {
   return (
     <div className="flex flex-col gap-6 pt-3">
       <div className="flex items-center gap-3">
-        <Link
-          to="/profile"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text"
-          aria-label="Back to profile"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
+        <BackButton to="/profile" label="Back to profile" />
         <h1 className="text-2xl font-semibold">Settings</h1>
       </div>
 

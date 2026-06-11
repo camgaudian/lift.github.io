@@ -1,37 +1,43 @@
-import { NavLink } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import {
+  getStoredNavFrom,
+  isNavTabActive,
+  navFromState,
+  type NavTab,
+} from '@/lib/nav'
 
-const tabs = [
-  { to: '/library', label: 'Library', icon: LibraryIcon },
-  { to: '/history', label: 'History', icon: HistoryIcon },
-  { to: '/', label: 'Home', icon: HomeIcon },
-  { to: '/progress', label: 'Progress', icon: ProgressIcon },
-  { to: '/profile', label: 'Profile', icon: ProfileIcon },
+const tabs: { to: string; id: NavTab; label: string; icon: typeof HomeIcon }[] = [
+  { to: '/library', id: 'library', label: 'Library', icon: LibraryIcon },
+  { to: '/history', id: 'history', label: 'History', icon: HistoryIcon },
+  { to: '/', id: 'home', label: 'Home', icon: HomeIcon },
+  { to: '/progress', id: 'progress', label: 'Progress', icon: ProgressIcon },
+  { to: '/profile', id: 'profile', label: 'Profile', icon: ProfileIcon },
 ]
 
 export function BottomNav() {
+  const { pathname, state } = useLocation()
+  const navFrom = navFromState(state) ?? getStoredNavFrom()
+
   return (
     <nav className="shrink-0 border-t border-border bg-surface/95 backdrop-blur safe-bottom">
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pt-1">
-        {tabs.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/' || to === '/history' || to === '/progress' || to === '/profile'}
-            className={({ isActive }) =>
-              [
+        {tabs.map(({ to, id, label, icon: Icon }) => {
+          const active = isNavTabActive(id, pathname, navFrom)
+          return (
+            <Link
+              key={to}
+              to={to}
+              aria-current={active ? 'page' : undefined}
+              className={[
                 'flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
-                isActive ? 'text-accent' : 'text-text-secondary',
-              ].join(' ')
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <Icon active={isActive} />
-                <span>{label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+                active ? 'text-accent' : 'text-text-secondary',
+              ].join(' ')}
+            >
+              <Icon active={active} />
+              <span>{label}</span>
+            </Link>
+          )
+        })}
       </div>
     </nav>
   )

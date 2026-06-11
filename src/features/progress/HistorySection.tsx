@@ -181,7 +181,7 @@ export function HistorySection({
           {filtered.map((w) => (
             <li key={w.id}>
               <Card padding="sm" className="flex items-center gap-2 hover:border-accent/50 transition-colors">
-                <Link to={`/workout/${w.id}`} className="min-w-0 flex-1">
+                <Link to={`/workout/${w.id}`} state={{ navFrom: 'history' }} className="min-w-0 flex-1">
                   <p className="font-medium">
                     {format(parseISO(w.completed_at!), 'EEE, MMM d · h:mm a')}
                   </p>

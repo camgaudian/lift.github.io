@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
+import { BackButton } from '@/components/BackButton'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Card } from '@/components/Card'
@@ -11,6 +12,7 @@ import type { ExercisePrRankingEntry } from '@/lib/types'
 
 export function ExercisePrDetailPage() {
   const { slug } = useParams<{ slug: string }>()
+  const location = useLocation()
   const { unit } = useProfile()
   const { accentColor } = useTheme()
   const [exerciseName, setExerciseName] = useState<string | null>(null)
@@ -35,15 +37,11 @@ export function ExercisePrDetailPage() {
   return (
     <div className="flex flex-col gap-4 pt-3">
       <div className="flex items-center gap-3">
-        <Link
+        <BackButton
           to="/pr-leaderboard"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text"
-          aria-label="Back to PR leaderboard"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
+          state={location.state}
+          label="Back to PR leaderboard"
+        />
         <h1 className="text-2xl font-semibold truncate">
           {exerciseName ?? 'Exercise PRs'}
         </h1>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTheme } from '@/contexts/ThemeContext'
+import type { NavTab } from '@/lib/nav'
 
 function PodiumIcon() {
   return (
@@ -39,12 +40,13 @@ function ChevronIcon() {
   )
 }
 
-export function PrLeaderboardLink() {
+export function PrLeaderboardLink({ from }: { from: NavTab }) {
   const { accentColor } = useTheme()
 
   return (
     <Link
       to="/pr-leaderboard"
+      state={{ navFrom: from }}
       className="inline-flex w-full min-h-[52px] items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium transition-opacity hover:opacity-90 active:opacity-80"
       style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
     >

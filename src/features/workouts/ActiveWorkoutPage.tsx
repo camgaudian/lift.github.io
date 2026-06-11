@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   fetchWorkout,
   addExerciseToWorkout,
@@ -10,22 +10,27 @@ import {
 } from './workoutApi'
 import { ExerciseBlock, type ExerciseBlockHandle } from './ExerciseBlock'
 import { useExercises } from '@/features/exercises/useExercises'
+import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { Confetti } from '@/components/Confetti'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
+import { DragGripIcon } from '@/components/DragGripIcon'
+import { ReorderModeIcon } from '@/components/ReorderModeIcon'
 import { TrashIcon } from '@/components/TrashIcon'
-import { iconDeleteButtonClass } from '@/lib/ui'
+import { iconDeleteButtonClass, iconToolbarButtonClass } from '@/lib/ui'
 import { ExercisePickerPanel } from '@/features/exercises/ExercisePicker'
 import { WorkoutFunStatsSection } from './WorkoutFunStatsSection'
 import { WorkoutAchievementsSection } from './WorkoutAchievementsSection'
 import { SaveEntriesNotice } from './SaveEntriesNotice'
 import { useDragReorder, reorderList } from '@/lib/useDragReorder'
+import { navFromState, setStoredNavFrom } from '@/lib/nav'
 import type { Workout, WorkoutExercise } from '@/lib/types'
 
 export function ActiveWorkoutPage() {
   const { id } = useParams<{ id: string }>()
+  const location = useLocation()
   const navigate = useNavigate()
   const { exercises: allExercises } = useExercises()
   const [workout, setWorkout] = useState<Workout | null>(null)
@@ -39,6 +44,7 @@ export function ActiveWorkoutPage() {
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [discarding, setDiscarding] = useState(false)
   const [discardError, setDiscardError] = useState<string | null>(null)
+  const [reorderMode, setReorderMode] = useState(false)
   const exerciseRefs = useRef<Record<string, ExerciseBlockHandle | null>>({})
 
   const reload = async () => {
@@ -56,6 +62,17 @@ export function ActiveWorkoutPage() {
   useEffect(() => {
     reload()
   }, [id])
+
+  useEffect(() => {
+    const fromState = navFromState(location.state)
+    if (fromState) {
+      setStoredNavFrom(fromState)
+      return
+    }
+    if (workout) {
+      setStoredNavFrom(workout.status === 'completed' ? 'history' : 'home')
+    }
+  }, [location.state, workout?.status])
 
   // Celebratory haptic buzz when the completion summary appears (progressive
   // enhancement; iOS Safari ignores navigator.vibrate).
@@ -100,7 +117,7 @@ export function ActiveWorkoutPage() {
     }
   }
 
-  const handleDone = () => navigate('/history')
+  const handleDone = () => navigate('/history', { state: { navFrom: 'history' } })
 
   const confirmDiscard = async () => {
     if (!id) return
@@ -124,11 +141,22 @@ export function ActiveWorkoutPage() {
     void reorderWorkoutExercises(next.map((item) => item.id))
   }
 
-  const { listRef, draggingKey, isDragging, getLongPressProps, getRowStyle } = useDragReorder({
+  const { listRef, draggingKey, isDragging, startDrag, getRowStyle } = useDragReorder({
     keys: items.map((item) => item.id),
     onReorder: handleReorder,
-    disabled: isCompleted,
+    disabled: isCompleted || !reorderMode,
   })
+
+  const toggleReorderMode = () => {
+    setReorderMode((on) => {
+      if (on) return false
+      setShowPicker(false)
+      return true
+    })
+  }
+
+  const exerciseName = (item: WorkoutExercise) =>
+    (item.exercise as { name: string } | undefined)?.name ?? 'Exercise'
 
   if (loading) return <LoadingSpinner />
   const alreadyAdded = new Set(items.map((i) => i.exercise_id))
@@ -151,21 +179,42 @@ export function ActiveWorkoutPage() {
     <div className="flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <h1 className="text-2xl font-semibold">{isCompleted ? 'Workout' : 'Active workout'}</h1>
-          {!isCompleted && items.length > 0 && <SaveEntriesNotice />}
+          {isCompleted && (
+            <BackButton to="/history" label="Back to history" state={{ navFrom: 'history' }} />
+          )}
+          <h1 className="text-2xl font-semibold">
+            {isCompleted ? 'Workout' : reorderMode ? 'Reorder exercises' : 'Active workout'}
+          </h1>
+          {!isCompleted && !reorderMode && items.length > 0 && <SaveEntriesNotice />}
         </div>
         {!isCompleted && (
-          <button
-            type="button"
-            onClick={() => {
-              setDiscardError(null)
-              setShowDiscardConfirm(true)
-            }}
-            className={iconDeleteButtonClass}
-            aria-label="Discard workout"
-          >
-            <TrashIcon />
-          </button>
+          <div className="flex shrink-0 items-center gap-0.5">
+            {items.length > 1 && (
+              <button
+                type="button"
+                onClick={toggleReorderMode}
+                className={[
+                  iconToolbarButtonClass,
+                  reorderMode ? 'bg-accent/15 text-accent' : 'hover:text-text',
+                ].join(' ')}
+                aria-label={reorderMode ? 'Done reordering' : 'Reorder exercises'}
+                aria-pressed={reorderMode}
+              >
+                <ReorderModeIcon />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setDiscardError(null)
+                setShowDiscardConfirm(true)
+              }}
+              className={iconDeleteButtonClass}
+              aria-label="Discard workout"
+            >
+              <TrashIcon />
+            </button>
+          </div>
         )}
       </div>
 
@@ -176,7 +225,7 @@ export function ActiveWorkoutPage() {
         </>
       )}
 
-      {!isCompleted && (
+      {!isCompleted && !reorderMode && (
         <>
           <Button variant="secondary" fullWidth onClick={() => setShowPicker(!showPicker)}>
             {showPicker ? 'Cancel' : '+ Add exercise'}
@@ -193,34 +242,50 @@ export function ActiveWorkoutPage() {
         </>
       )}
 
-      <div ref={listRef} className="flex flex-col gap-4">
-        {items.map((item, idx) => (
-          <div
-            key={item.id}
-            data-drag-row
-            {...(!isCompleted ? getLongPressProps(idx) : {})}
-            onContextMenu={!isCompleted ? (e) => e.preventDefault() : undefined}
-            className={[
-              // Suppress text selection / iOS callout during the long press, but
-              // keep form fields selectable so logging still works.
-              !isCompleted
-                ? 'select-none [-webkit-touch-callout:none] [&_input]:select-auto [&_textarea]:select-auto'
-                : '',
-              draggingKey === item.id
-                ? 'relative z-10 select-none rounded-2xl shadow-lg ring-1 ring-accent/40'
-                : isDragging
-                  ? 'transition-transform duration-150 ease-out'
-                  : '',
-            ].join(' ')}
-            style={getRowStyle(idx)}
-          >
+      {reorderMode ? (
+        <div ref={listRef} className="flex flex-col gap-2">
+          <p className="px-1 text-sm text-text-secondary">
+            Drag exercises into a new order, then tap the reorder icon again when done.
+          </p>
+          {items.map((item, idx) => (
+            <div
+              key={item.id}
+              data-drag-row
+              className={[
+                draggingKey === item.id
+                  ? 'relative z-10 rounded-2xl shadow-lg ring-1 ring-accent/40'
+                  : isDragging
+                    ? 'transition-transform duration-150 ease-out'
+                    : '',
+              ].join(' ')}
+              style={getRowStyle(idx)}
+            >
+              <Card padding="sm" className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onPointerDown={(e) => startDrag(idx, e)}
+                  className="flex shrink-0 touch-none cursor-grab select-none py-1 pl-0.5 pr-2 text-text-secondary active:cursor-grabbing"
+                  style={{ touchAction: 'none' }}
+                  aria-label={`Reorder ${exerciseName(item)}`}
+                >
+                  <DragGripIcon />
+                </button>
+                <span className="min-w-0 flex-1 truncate font-medium">{exerciseName(item)}</span>
+              </Card>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {items.map((item) => (
             <ExerciseBlock
+              key={item.id}
               ref={(el) => {
                 exerciseRefs.current[item.id] = el
               }}
               workoutExerciseId={item.id}
               exerciseId={item.exercise_id}
-              exerciseName={(item.exercise as { name: string } | undefined)?.name ?? 'Exercise'}
+              exerciseName={exerciseName(item)}
               exerciseType={item.exercise_type}
               initialSets={item.strength_sets}
               initialNote={item.session_note?.note_for_next_time ?? ''}
@@ -235,16 +300,16 @@ export function ActiveWorkoutPage() {
                     }
               }
             />
-          </div>
-        ))}
-        {items.length === 0 && (
-          <Card>
-            <p className="text-text-secondary text-center">Add exercises to log your workout.</p>
-          </Card>
-        )}
-      </div>
+          ))}
+          {items.length === 0 && (
+            <Card>
+              <p className="text-text-secondary text-center">Add exercises to log your workout.</p>
+            </Card>
+          )}
+        </div>
+      )}
 
-      {!isCompleted && items.length > 0 && (
+      {!isCompleted && !reorderMode && items.length > 0 && (
         <div className="flex flex-col gap-2">
           <Button fullWidth size="lg" onClick={handleComplete} disabled={completing}>
             {completing ? 'Finishing…' : 'Complete workout'}
@@ -253,12 +318,6 @@ export function ActiveWorkoutPage() {
             <p className="text-sm text-danger text-center">{completeError}</p>
           )}
         </div>
-      )}
-
-      {isCompleted && (
-        <Button variant="secondary" fullWidth onClick={() => navigate('/history')}>
-          Back to history
-        </Button>
       )}
 
       {showDiscardConfirm && (

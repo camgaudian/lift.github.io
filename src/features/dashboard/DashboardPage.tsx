@@ -58,7 +58,7 @@ export function DashboardPage() {
 
     setStartingWorkout(true)
     startWorkoutFromTemplate(templateId)
-      .then((id) => navigate(`/workout/${id}`, { replace: true }))
+      .then((id) => navigate(`/workout/${id}`, { replace: true, state: { navFrom: 'home' } }))
       .finally(() => setStartingWorkout(false))
   }, [searchParams, loading, activeWorkout, navigate])
 
@@ -69,7 +69,7 @@ export function DashboardPage() {
       const id = templateId
         ? await startWorkoutFromTemplate(templateId)
         : await startEmptyWorkout()
-      navigate(`/workout/${id}`)
+      navigate(`/workout/${id}`, { state: { navFrom: 'home' } })
     } finally {
       setStartingWorkout(false)
     }
@@ -81,7 +81,7 @@ export function DashboardPage() {
       new Date(postStarted).toISOString(),
       new Date(postCompleted).toISOString(),
     )
-    navigate(`/workout/${w.id}`)
+    navigate(`/workout/${w.id}`, { state: { navFrom: 'home' } })
   }
 
   if (loading) return <DashboardSkeleton />
@@ -103,7 +103,7 @@ export function DashboardPage() {
 
       <InstallBanner />
 
-      <PrLeaderboardLink />
+      <PrLeaderboardLink from="home" />
 
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Streak" value={`${stats?.streak_days ?? 0} days`} />
@@ -117,7 +117,11 @@ export function DashboardPage() {
           <p className="text-sm text-text-secondary">Starting workout…</p>
         </div>
       ) : activeWorkout ? (
-        <Button fullWidth size="lg" onClick={() => navigate(`/workout/${activeWorkout.id}`)}>
+        <Button
+          fullWidth
+          size="lg"
+          onClick={() => navigate(`/workout/${activeWorkout.id}`, { state: { navFrom: 'home' } })}
+        >
           Continue workout
         </Button>
       ) : (

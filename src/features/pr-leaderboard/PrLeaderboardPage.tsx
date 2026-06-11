@@ -1,17 +1,28 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { BackButton } from '@/components/BackButton'
 import { useProfile } from '@/contexts/ProfileContext'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { CustomExerciseMatchingNotice } from '@/features/pr-leaderboard/CustomExerciseMatchingNotice'
 import { fetchPrLeaderboard } from '@/lib/stats'
+import { navFromState, resolveNavFrom, setStoredNavFrom } from '@/lib/nav'
 import { formatWeight } from '@/lib/units'
 import type { PrLeaderboardEntry } from '@/lib/types'
 
 export function PrLeaderboardPage() {
   const { unit } = useProfile()
+  const location = useLocation()
+  const navFrom = resolveNavFrom(location.state, 'home')
+  const backTo = navFrom === 'progress' ? '/progress' : '/'
+  const backLabel = navFrom === 'progress' ? 'Back to progress' : 'Back to home'
   const [entries, setEntries] = useState<PrLeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const from = navFromState(location.state) ?? 'home'
+    setStoredNavFrom(from)
+  }, [location.state])
 
   useEffect(() => {
     fetchPrLeaderboard()
@@ -22,7 +33,10 @@ export function PrLeaderboardPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-3">
-      <h1 className="text-2xl font-semibold">PR Leaderboard</h1>
+      <div className="flex items-center gap-3">
+        <BackButton to={backTo} label={backLabel} />
+        <h1 className="text-2xl font-semibold">PR Leaderboard</h1>
+      </div>
 
       <CustomExerciseMatchingNotice />
 
@@ -36,7 +50,11 @@ export function PrLeaderboardPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {entries.map((entry, i) => (
-              <Link key={entry.exercise_id} to={`/pr-leaderboard/${entry.exercise_slug}`}>
+              <Link
+                key={entry.exercise_id}
+                to={`/pr-leaderboard/${entry.exercise_slug}`}
+                state={{ navFrom }}
+              >
                 <Card padding="sm" className="transition-colors hover:bg-surface-secondary">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">

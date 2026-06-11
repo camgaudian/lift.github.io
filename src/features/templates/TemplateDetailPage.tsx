@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { BackButton } from '@/components/BackButton'
 import {
   fetchTemplateWithExercises,
   addExerciseToTemplate,
@@ -93,18 +94,20 @@ export function TemplateDetailPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Link to="/library" className="text-sm text-accent">← Library</Link>
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onBlur={commitName}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur()
-        }}
-        aria-label="Template name"
-        placeholder="Template name"
-        className="w-full rounded-xl border border-transparent bg-transparent px-2 -mx-2 py-1 text-2xl font-semibold text-text placeholder:text-text-secondary hover:border-border focus:border-accent focus:bg-surface focus:outline-none focus:ring-2 focus:ring-accent/30"
-      />
+      <div className="flex items-center gap-3">
+        <BackButton to="/library" label="Back to library" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={commitName}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur()
+          }}
+          aria-label="Template name"
+          placeholder="Template name"
+          className="min-w-0 flex-1 rounded-xl border border-transparent bg-transparent px-2 -mx-2 py-1 text-2xl font-semibold text-text placeholder:text-text-secondary hover:border-border focus:border-accent focus:bg-surface focus:outline-none focus:ring-2 focus:ring-accent/30"
+        />
+      </div>
 
       <Button fullWidth onClick={() => navigate(`/?template=${id}`)}>
         Start workout from template
