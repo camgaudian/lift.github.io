@@ -111,6 +111,10 @@ export function useDragReorder({
   const beginDrag = (index: number, handle: HTMLElement, pointerId: number, clientY: number) => {
     if (disabled) return
 
+    // A long press can begin a native text selection before the drag starts;
+    // clear it so dragging a row doesn't leave highlighted text behind.
+    window.getSelection?.()?.removeAllRanges()
+
     handle.setPointerCapture(pointerId)
 
     const metrics = measureRows(listRef.current)

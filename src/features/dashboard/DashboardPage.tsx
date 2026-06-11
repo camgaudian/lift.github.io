@@ -20,6 +20,7 @@ import { formatVolume } from '@/lib/format'
 import { Card } from '@/components/Card'
 import { Input } from '@/components/Input'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
 import type { FunStats, WorkoutTemplate } from '@/lib/types'
 
@@ -83,10 +84,10 @@ export function DashboardPage() {
     navigate(`/workout/${w.id}`)
   }
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
+    <div className="flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <AppIcon size={26} color={accentColor} />
@@ -158,6 +159,28 @@ export function DashboardPage() {
         </Card>
       )}
     </div>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <SkeletonGroup className="flex min-h-full flex-col justify-center gap-5 py-6">
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-7 w-7 rounded-lg" />
+          <Skeleton className="h-7 w-16" />
+        </div>
+        <Skeleton className="h-4 w-20" />
+      </div>
+      <Skeleton className="h-14 w-full rounded-2xl" />
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton className="h-[4.5rem] rounded-2xl" />
+        <Skeleton className="h-[4.5rem] rounded-2xl" />
+        <Skeleton className="col-span-2 h-[4.5rem] rounded-2xl" />
+      </div>
+      <Skeleton className="h-14 w-full rounded-2xl" />
+      <Skeleton className="h-12 w-full rounded-2xl" />
+    </SkeletonGroup>
   )
 }
 

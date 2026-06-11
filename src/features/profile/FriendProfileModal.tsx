@@ -14,6 +14,8 @@ import {
   getMilestoneCategory,
   getMilestoneProgress,
 } from '@/lib/milestones'
+import { reactToNowPlaying } from '@/features/profile/nowPlayingApi'
+import { ReactionPicker } from '@/features/profile/NowPlayingReactions'
 import { fetchFriendMilestoneStats, type MilestoneStats } from '@/lib/stats'
 import { sectionHeadingClass, iconDeleteButtonClass } from '@/lib/ui'
 import type { FriendEntry, NowPlaying } from '@/lib/types'
@@ -21,9 +23,15 @@ import type { FriendEntry, NowPlaying } from '@/lib/types'
 function FriendNowPlayingPreview({
   nowPlaying,
   accentColor,
+  myReaction,
+  reacting,
+  onReact,
 }: {
   nowPlaying: NowPlaying
   accentColor: string
+  myReaction: string | null
+  reacting: boolean
+  onReact: (emoji: string) => void
 }) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-accent/30 bg-surface-secondary/50 p-4">
@@ -36,6 +44,7 @@ function FriendNowPlayingPreview({
         <p className="truncate text-sm text-text-secondary">{nowPlaying.artist}</p>
         <p className="mt-1 text-xs text-text-secondary">{formatHoursLeft(nowPlaying.expires_at)}</p>
       </div>
+      <ReactionPicker current={myReaction} disabled={reacting} onSelect={onReact} />
     </div>
   )
 }
@@ -52,6 +61,11 @@ export function FriendProfileModal({
   const [milestoneStats, setMilestoneStats] = useState<MilestoneStats | null>(null)
   const [milestoneLoading, setMilestoneLoading] = useState(false)
   const [showShare, setShowShare] = useState(false)
+  const [myReaction, setMyReaction] = useState<string | null>(
+    friend.now_playing?.my_reaction ?? null,
+  )
+  const [reacting, setReacting] = useState(false)
+  const [reactionError, setReactionError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!friend.featured_milestone_category) {
@@ -65,6 +79,29 @@ export function FriendProfileModal({
       .catch(() => setMilestoneStats(null))
       .finally(() => setMilestoneLoading(false))
   }, [friend.user_id, friend.featured_milestone_category])
+
+  const handleReact = async (emoji: string) => {
+    if (reacting) return
+    setReacting(true)
+    setReactionError(null)
+    const previous = myReaction
+    // Optimistic toggle: same emoji clears it, a different one replaces it.
+    setMyReaction(previous === emoji ? null : emoji)
+    try {
+      const result = await reactToNowPlaying(friend.user_id, emoji)
+      if (!result.ok) {
+        setMyReaction(previous)
+        setReactionError('Could not save your reaction.')
+        return
+      }
+      setMyReaction(result.reaction)
+    } catch {
+      setMyReaction(previous)
+      setReactionError('Could not save your reaction.')
+    } finally {
+      setReacting(false)
+    }
+  }
 
   const featuredMilestone = friend.featured_milestone_category
     ? getMilestoneCategory(friend.featured_milestone_category)
@@ -113,9 +150,15 @@ export function FriendProfileModal({
           <FriendNowPlayingPreview
             nowPlaying={friend.now_playing}
             accentColor={friend.accent_color}
+            myReaction={myReaction}
+            reacting={reacting}
+            onReact={handleReact}
           />
         ) : (
           <p className="px-1 text-sm text-text-secondary">No song chosen.</p>
+        )}
+        {reactionError && (
+          <p className="px-1 text-sm text-danger">{reactionError}</p>
         )}
       </section>
 

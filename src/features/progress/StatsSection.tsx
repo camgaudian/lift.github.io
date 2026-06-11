@@ -9,7 +9,7 @@ import { formatWeight } from '@/lib/units'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Card } from '@/components/Card'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
 import {
   LineChart,
@@ -21,6 +21,24 @@ import {
 } from 'recharts'
 import type { FunStats, WeeklyVolume } from '@/lib/types'
 import { format, parseISO } from 'date-fns'
+
+function StatsSkeleton() {
+  return (
+    <SkeletonGroup className="flex flex-col gap-4">
+      <Skeleton className="h-12 w-full rounded-2xl" />
+      <section>
+        <Skeleton className="mb-2 h-4 w-24" />
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 rounded-2xl" />
+          ))}
+        </div>
+      </section>
+      <Skeleton className="h-24 w-full rounded-2xl" />
+      <Skeleton className="h-56 w-full rounded-2xl" />
+    </SkeletonGroup>
+  )
+}
 
 export function StatsSection() {
   const { accentColor } = useTheme()
@@ -50,7 +68,7 @@ export function StatsSection() {
       .catch(() => setLoading(false))
   }, [])
 
-  if (loading) return <LoadingSpinner size="section" />
+  if (loading) return <StatsSkeleton />
 
   const funCards = [
     { label: 'Total workouts', value: stats?.total_workouts ?? 0 },

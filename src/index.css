@@ -148,7 +148,27 @@ button {
   animation: milestone-metal-shimmer 4.5s linear infinite;
 }
 
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.skeleton {
+  background-color: var(--color-border);
+  border-radius: 0.5rem;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+
   .music-bar {
     animation: none;
     transform: scaleY(0.65);

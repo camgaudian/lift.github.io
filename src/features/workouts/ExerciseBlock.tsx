@@ -18,6 +18,8 @@ import {
 } from './workoutApi'
 import { formatDuration, parseDuration } from '@/lib/format'
 
+const AUTOSAVE_DELAY_MS = 1200
+
 export interface ExerciseBlockHandle {
   save: () => Promise<void>
 }
@@ -170,8 +172,29 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // Refs mirror the latest values so debounced autosave and flush-on-exit never
+  // persist stale state from an old closure.
+  const lastSessionRef = useRef<LastSessionData | null>(null)
+  const setsRef = useRef(sets)
+  const noteRef = useRef(note)
+  const durationRef = useRef(duration)
+  const distanceRef = useRef(distance)
+  const caloriesRef = useRef(calories)
+  const readOnlyRef = useRef(readOnly)
+  const dirtyRef = useRef(false)
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  setsRef.current = sets
+  noteRef.current = note
+  durationRef.current = duration
+  distanceRef.current = distance
+  caloriesRef.current = calories
+  readOnlyRef.current = readOnly
+
   useEffect(() => {
-    fetchLastSessionForExercise(exerciseId).then(setLastSession)
+    fetchLastSessionForExercise(exerciseId).then((data) => {
+      lastSessionRef.current = data
+      setLastSession(data)
+    })
   }, [exerciseId])
 
   useEffect(() => {
@@ -217,32 +240,38 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     onUpdate(displayToLb(Number(raw), unit))
   }
 
-  const saveStrength = async () => {
-    setSaving(true)
-    setSaved(false)
-    setSaveError(null)
-    try {
-      await upsertStrengthSets(workoutExerciseId, resolveSetsForSave(sets, lastSession))
-      await upsertSessionNote(workoutExerciseId, note)
-      setSaved(true)
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save')
-      throw err
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const saveCardio = async () => {
-    setSaving(true)
-    setSaved(false)
-    setSaveError(null)
-    try {
+  // Persist current values without touching React state, so it is safe to call
+  // during unmount / tab-hide.
+  const persist = async () => {
+    if (exerciseType === 'cardio') {
       await upsertCardioEntry(workoutExerciseId, {
-        duration_seconds: parseDuration(duration),
-        distance_miles: distance ? Number(distance) : null,
-        calories: calories ? Number(calories) : null,
+        duration_seconds: parseDuration(durationRef.current),
+        distance_miles: distanceRef.current ? Number(distanceRef.current) : null,
+        calories: caloriesRef.current ? Number(caloriesRef.current) : null,
       })
+    } else {
+      await upsertStrengthSets(
+        workoutExerciseId,
+        resolveSetsForSave(setsRef.current, lastSessionRef.current),
+      )
+      await upsertSessionNote(workoutExerciseId, noteRef.current)
+    }
+  }
+  const persistRef = useRef(persist)
+  persistRef.current = persist
+
+  // Stateful save used by autosave and by the parent's "Complete workout" flow.
+  const save = async () => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
+    }
+    setSaving(true)
+    setSaved(false)
+    setSaveError(null)
+    try {
+      await persistRef.current()
+      dirtyRef.current = false
       setSaved(true)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save')
@@ -251,16 +280,53 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
       setSaving(false)
     }
   }
+  const saveRef = useRef(save)
+  saveRef.current = save
 
-  const save = exerciseType === 'cardio' ? saveCardio : saveStrength
+  useImperativeHandle(ref, () => ({ save: () => saveRef.current() }), [])
 
-  useImperativeHandle(ref, () => ({ save }), [save])
-
-  const saveButtonLabel = (defaultLabel: string) => {
-    if (saving) return 'Saving…'
-    if (saved) return '✓ Saved'
-    return defaultLabel
+  const scheduleAutosave = () => {
+    if (readOnly) return
+    dirtyRef.current = true
+    setSaved(false)
+    setSaveError(null)
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null
+      void saveRef.current().catch(() => {})
+    }, AUTOSAVE_DELAY_MS)
   }
+
+  const flushAutosave = () => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
+    }
+    if (readOnly || !dirtyRef.current) return
+    void saveRef.current().catch(() => {})
+  }
+
+  // Flush pending edits when the tab is backgrounded (PWA) or the block unmounts.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState !== 'hidden') return
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current)
+        autosaveTimerRef.current = null
+      }
+      if (!readOnlyRef.current && dirtyRef.current) {
+        void persistRef.current().catch(() => {})
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
+      if (!readOnlyRef.current && dirtyRef.current) {
+        void persistRef.current().catch(() => {})
+      }
+    }
+  }, [])
 
   const addSet = () => {
     setSets((prev) => [
@@ -275,6 +341,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
         lastPlaceholderIndex: prev.length,
       },
     ])
+    scheduleAutosave()
   }
 
   const removeSet = (index: number) => {
@@ -284,48 +351,62 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
         .filter((_, i) => i !== index)
         .map((set, i) => ({ ...set, set_number: i + 1 }))
     })
+    scheduleAutosave()
   }
 
   const updateSet = (index: number, field: keyof StrengthSet, value: number | boolean | null) => {
     setSets((prev) =>
       prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)),
     )
+    scheduleAutosave()
   }
 
   const { listRef: setListRef, draggingKey, isDragging, startDrag, getRowStyle } = useDragReorder({
     keys: sets.map((set) => set.rowKey),
     disabled: readOnly,
-    onReorder: (from, to) =>
-      setSets((prev) => reorderSets(prev, from, to)),
+    onReorder: (from, to) => {
+      setSets((prev) => reorderSets(prev, from, to))
+      scheduleAutosave()
+    },
   })
 
-  const saveButton = (defaultLabel: string, onSave: () => Promise<void>) => (
-    <div className="flex flex-col gap-1">
-      <Button
-        variant="secondary"
-        onClick={onSave}
-        disabled={saving}
-        className={saved ? 'pointer-events-none' : ''}
-      >
-        {saveButtonLabel(defaultLabel)}
-      </Button>
-      {saveError && <p className="text-sm text-danger text-center">{saveError}</p>}
+  const autosaveStatus =
+    !readOnly && (saveError || saving || saved) ? (
+      <span className="shrink-0 text-xs">
+        {saveError ? (
+          <span className="text-danger">{saveError}</span>
+        ) : saving ? (
+          <span className="text-text-secondary">Saving…</span>
+        ) : (
+          <span className="text-accent">✓ Saved</span>
+        )}
+      </span>
+    ) : null
+
+  const exerciseHeader = (
+    <div className="flex items-start justify-between gap-2">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <h3 className="truncate font-semibold">{exerciseName}</h3>
+        {autosaveStatus}
+      </div>
+      {!readOnly && onRemove && (
+        <ExerciseRemoveButton exerciseName={exerciseName} onRemove={onRemove} />
+      )}
     </div>
   )
 
   if (exerciseType === 'cardio') {
     return (
       <Card className="flex flex-col gap-3">
-        <div className="flex justify-between items-start">
-          <h3 className="font-semibold">{exerciseName}</h3>
-          {!readOnly && onRemove && (
-            <ExerciseRemoveButton exerciseName={exerciseName} onRemove={onRemove} />
-          )}
-        </div>
+        {exerciseHeader}
         <Input
           label="Duration (mm:ss)"
           value={duration}
-          onChange={(e) => setDuration(e.target.value)}
+          onChange={(e) => {
+            setDuration(e.target.value)
+            scheduleAutosave()
+          }}
+          onBlur={flushAutosave}
           disabled={readOnly}
         />
         <Input
@@ -333,29 +414,31 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
           type="number"
           inputMode="decimal"
           value={distance}
-          onChange={(e) => setDistance(e.target.value)}
+          onChange={(e) => {
+            setDistance(e.target.value)
+            scheduleAutosave()
+          }}
+          onBlur={flushAutosave}
           disabled={readOnly}
         />
         <Input
           label="Calories"
           type="number"
           value={calories}
-          onChange={(e) => setCalories(e.target.value)}
+          onChange={(e) => {
+            setCalories(e.target.value)
+            scheduleAutosave()
+          }}
+          onBlur={flushAutosave}
           disabled={readOnly}
         />
-        {!readOnly && saveButton('Save cardio', saveCardio)}
       </Card>
     )
   }
 
   return (
     <Card className="flex flex-col gap-3">
-      <div className="flex justify-between items-start">
-        <h3 className="font-semibold">{exerciseName}</h3>
-        {!readOnly && onRemove && (
-          <ExerciseRemoveButton exerciseName={exerciseName} onRemove={onRemove} />
-        )}
-      </div>
+      {exerciseHeader}
 
       {lastSetsSummary && (
         <p className="text-sm text-text-secondary">
@@ -376,7 +459,11 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
           <textarea
             className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-3 text-base min-h-[72px] focus:outline-none focus:ring-2 focus:ring-accent/30"
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            onChange={(e) => {
+              setNote(e.target.value)
+              scheduleAutosave()
+            }}
+            onBlur={flushAutosave}
             placeholder="How did it feel? What to remember?"
           />
         </div>
@@ -431,6 +518,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                   placeholder={placeholderFromLast(set, 'reps') ?? 'reps'}
                   value={set.reps || ''}
                   onChange={(e) => updateSet(idx, 'reps', Number(e.target.value))}
+                  onBlur={flushAutosave}
                   disabled={readOnly}
                   className="flex-1"
                 />
@@ -444,6 +532,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                       updateSet(idx, 'added_weight_lb', lb > 0 ? lb : null),
                     )
                   }
+                  onBlur={flushAutosave}
                   disabled={readOnly}
                   className="w-24"
                 />
@@ -456,6 +545,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                   placeholder={placeholderFromLast(set, 'weight') ?? unit}
                   value={weightInputValue(set.weight_lb)}
                   onChange={(e) => handleWeightInput(e.target.value, (lb) => updateSet(idx, 'weight_lb', lb))}
+                  onBlur={flushAutosave}
                   disabled={readOnly}
                   className="flex-1"
                 />
@@ -466,6 +556,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                   placeholder={placeholderFromLast(set, 'reps') ?? 'reps'}
                   value={set.reps || ''}
                   onChange={(e) => updateSet(idx, 'reps', Number(e.target.value))}
+                  onBlur={flushAutosave}
                   disabled={readOnly}
                   className="w-20"
                 />
@@ -486,10 +577,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
       </div>
 
       {!readOnly && (
-        <>
-          <Button variant="ghost" onClick={addSet}>+ Add set</Button>
-          {saveButton('Save', saveStrength)}
-        </>
+        <Button variant="ghost" onClick={addSet}>+ Add set</Button>
       )}
     </Card>
   )

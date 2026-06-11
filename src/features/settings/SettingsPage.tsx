@@ -9,6 +9,7 @@ import { Card } from '@/components/Card'
 import { DisplayNameInput } from '@/components/DisplayNameInput'
 import { Input } from '@/components/Input'
 import { eraseAllWorkoutData, isDisplayNameTaken } from '@/features/settings/profileApi'
+import { FeedbackSection } from '@/features/settings/FeedbackSection'
 import { InstallGuide } from '@/features/settings/InstallGuide'
 import { capitalize } from '@/lib/format'
 import { sectionHeadingClass } from '@/lib/ui'
@@ -460,6 +461,7 @@ export function SettingsPage() {
 
       <section className="flex flex-col gap-2">
         <h2 className={`${sectionHeadingClass} text-text-secondary`}>Help</h2>
+        <FeedbackSection />
         <InstallGuide />
       </section>
 

@@ -9,13 +9,16 @@ import { TrackArtwork } from '@/components/TrackArtwork'
 import {
   clearNowPlaying,
   fetchMyNowPlaying,
+  fetchMyNowPlayingReactions,
   formatHoursLeft,
   searchSpotifyTracks,
   setNowPlaying,
 } from '@/features/profile/nowPlayingApi'
+import { ReactionStack, ReactionsListModal } from '@/features/profile/NowPlayingReactions'
+import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { trackTextFadeClass } from '@/lib/ui'
-import type { NowPlaying, SpotifySearchTrack } from '@/lib/types'
+import type { NowPlaying, NowPlayingReaction, SpotifySearchTrack } from '@/lib/types'
 
 function MusicIcon() {
   return (
@@ -47,25 +50,42 @@ function SpotifyLogo() {
 
 function CurrentTrackPreview({
   track,
+  reactions,
   removing,
   editMenuOpen,
   onToggleEditMenu,
   onRemove,
   onChange,
+  onOpenReactions,
 }: {
   track: NowPlaying
+  reactions: NowPlayingReaction[]
   removing: boolean
   editMenuOpen: boolean
   onToggleEditMenu: () => void
   onRemove: () => void
   onChange: () => void
+  onOpenReactions: () => void
 }) {
   const editRef = useRef<HTMLDivElement>(null)
 
   useClickOutside(editRef, () => editMenuOpen && onToggleEditMenu(), editMenuOpen)
 
+  // Tapping the track anywhere (including the reaction emojis) opens the list of
+  // who reacted. The Edit control stops propagation so it keeps its own menu.
   return (
-    <div className="flex items-center gap-3">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpenReactions}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpenReactions()
+        }
+      }}
+      className="flex cursor-pointer items-center gap-3 rounded-xl transition-[filter] hover:brightness-[0.98] active:brightness-[0.96]"
+    >
       <TrackArtwork url={track.album_art_url} size="xl" />
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -79,29 +99,36 @@ function CurrentTrackPreview({
         </p>
         <p className="text-xs text-text-secondary">{formatHoursLeft(track.expires_at)}</p>
       </div>
-      <div ref={editRef} className="relative flex shrink-0 items-center justify-center">
-        <Button variant="secondary" size="sm" onClick={onToggleEditMenu}>
-          Edit
-        </Button>
-        {editMenuOpen && (
-          <div className="absolute right-0 top-full z-10 mt-1.5 w-36 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
-            <button
-              type="button"
-              onClick={onChange}
-              className="w-full px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-surface-secondary"
-            >
-              Change
-            </button>
-            <button
-              type="button"
-              disabled={removing}
-              onClick={onRemove}
-              className="w-full border-t border-border px-3 py-2.5 text-left text-sm font-medium text-danger transition-colors hover:bg-surface-secondary disabled:opacity-50"
-            >
-              {removing ? 'Removing…' : 'Remove'}
-            </button>
-          </div>
-        )}
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <div
+          ref={editRef}
+          className="relative flex items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Button variant="secondary" size="sm" onClick={onToggleEditMenu}>
+            Edit
+          </Button>
+          {editMenuOpen && (
+            <div className="absolute right-0 top-full z-10 mt-1.5 w-36 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
+              <button
+                type="button"
+                onClick={onChange}
+                className="w-full px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-surface-secondary"
+              >
+                Change
+              </button>
+              <button
+                type="button"
+                disabled={removing}
+                onClick={onRemove}
+                className="w-full border-t border-border px-3 py-2.5 text-left text-sm font-medium text-danger transition-colors hover:bg-surface-secondary disabled:opacity-50"
+              >
+                {removing ? 'Removing…' : 'Remove'}
+              </button>
+            </div>
+          )}
+        </div>
+        {reactions.length > 0 && <ReactionStack reactions={reactions} />}
       </div>
     </div>
   )
@@ -137,6 +164,8 @@ function SearchResultRow({
 export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
   const searchRef = useRef<HTMLDivElement>(null)
   const [current, setCurrent] = useState<NowPlaying | null>(null)
+  const [reactions, setReactions] = useState<NowPlayingReaction[]>([])
+  const [showReactions, setShowReactions] = useState(false)
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SpotifySearchTrack[]>([])
@@ -155,6 +184,7 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
   const loadCurrent = useCallback(async () => {
     if (disabled) {
       setCurrent(null)
+      setReactions([])
       setLoading(false)
       return
     }
@@ -162,6 +192,12 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
     try {
       const data = await fetchMyNowPlaying()
       setCurrent(data)
+      if (data) {
+        const reactionData = await fetchMyNowPlayingReactions()
+        setReactions(reactionData)
+      } else {
+        setReactions([])
+      }
     } catch {
       setActionError('Failed to load your song.')
     } finally {
@@ -204,6 +240,7 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
     try {
       const saved = await setNowPlaying(track)
       setCurrent(saved)
+      setReactions([])
       setQuery('')
       setResults([])
       setShowChangeSearch(false)
@@ -221,6 +258,8 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
     try {
       await clearNowPlaying()
       setCurrent(null)
+      setReactions([])
+      setShowReactions(false)
       setShowChangeSearch(false)
       setEditMenuOpen(false)
     } catch {
@@ -253,14 +292,21 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
 
       <Card padding="sm" className="flex flex-col gap-3">
         {loading ? (
-          <div className="flex justify-center py-4">
-            <LoadingSpinner size="inline" />
-          </div>
+          <SkeletonGroup className="flex items-center gap-3">
+            <Skeleton className="h-20 w-20 rounded-lg" />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <Skeleton className="h-9 w-14 rounded-xl" />
+          </SkeletonGroup>
         ) : (
           <>
             {current && (
               <CurrentTrackPreview
                 track={current}
+                reactions={reactions}
                 removing={removing}
                 editMenuOpen={editMenuOpen}
                 onToggleEditMenu={() => setEditMenuOpen((open) => !open)}
@@ -269,6 +315,7 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
                   setShowChangeSearch(true)
                   setEditMenuOpen(false)
                 }}
+                onOpenReactions={() => setShowReactions(true)}
               />
             )}
 
@@ -312,6 +359,10 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
           </>
         )}
       </Card>
+
+      {showReactions && (
+        <ReactionsListModal reactions={reactions} onClose={() => setShowReactions(false)} />
+      )}
     </section>
   )
 }

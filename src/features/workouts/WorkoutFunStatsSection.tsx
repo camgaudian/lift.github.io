@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Card } from '@/components/Card'
+import { CountUp } from '@/components/CountUp'
 import { useProfile } from '@/contexts/ProfileContext'
 import { formatDuration, formatVolume } from '@/lib/format'
 import { formatWeight } from '@/lib/units'
@@ -8,24 +9,32 @@ import type { WorkoutExercise } from '@/lib/types'
 
 export function WorkoutFunStatsSection({
   exercises,
+  animate = false,
 }: {
   exercises: WorkoutExercise[]
+  animate?: boolean
 }) {
   const { unit } = useProfile()
   const stats = useMemo(() => computeWorkoutFunStats(exercises), [exercises])
 
-  const cards = [
-    { label: 'Exercises', value: stats.exercise_count },
-    { label: 'Sets', value: stats.total_sets },
-    { label: 'Reps', value: stats.total_reps.toLocaleString() },
-    { label: 'Volume', value: stats.volume_lb > 0 ? formatVolume(stats.volume_lb, unit) : '—' },
+  const cards: { label: string; value: number; format: (n: number) => string }[] = [
+    { label: 'Exercises', value: stats.exercise_count, format: (n) => String(n) },
+    { label: 'Sets', value: stats.total_sets, format: (n) => String(n) },
+    { label: 'Reps', value: stats.total_reps, format: (n) => n.toLocaleString() },
+    {
+      label: 'Volume',
+      value: stats.volume_lb,
+      format: (n) => (n > 0 ? formatVolume(n, unit) : '—'),
+    },
     {
       label: 'Cardio time',
-      value: stats.total_cardio_seconds > 0 ? formatDuration(stats.total_cardio_seconds) : '—',
+      value: stats.total_cardio_seconds,
+      format: (n) => (n > 0 ? formatDuration(n) : '—'),
     },
     {
       label: 'Heaviest rep',
-      value: stats.heaviest_set_lb ? formatWeight(stats.heaviest_set_lb, unit) : '—',
+      value: stats.heaviest_set_lb ?? 0,
+      format: (n) => (n > 0 ? formatWeight(n, unit) : '—'),
     },
   ]
 
@@ -36,7 +45,9 @@ export function WorkoutFunStatsSection({
         {cards.map((c) => (
           <Card key={c.label} padding="sm">
             <p className="text-xs text-text-secondary">{c.label}</p>
-            <p className="mt-1 font-semibold">{c.value}</p>
+            <p className="mt-1 font-semibold">
+              <CountUp value={c.value} format={c.format} animate={animate} />
+            </p>
           </Card>
         ))}
       </div>

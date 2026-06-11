@@ -5,7 +5,7 @@ type LoadingSpinnerProps = {
 
 const sizeClasses = {
   screen: 'min-h-dvh',
-  page: 'min-h-[calc(100dvh-7rem)]',
+  page: 'min-h-full',
   section: 'min-h-[40vh]',
   inline: '',
 } as const

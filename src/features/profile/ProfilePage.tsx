@@ -5,7 +5,7 @@ import { AddFriendIcon } from '@/components/AddFriendIcon'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { Input } from '@/components/Input'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { Modal } from '@/components/Modal'
 import { TrackArtwork } from '@/components/TrackArtwork'
 import { TrackArtworkPlaceholder } from '@/components/TrackArtworkPlaceholder'
@@ -196,6 +196,8 @@ export function ProfilePage() {
     ...summary.friends.filter((friend) => friend.now_playing),
     ...summary.friends.filter((friend) => !friend.now_playing),
   ]
+  const listItemCount = orderedFriends.length + summary.outgoing.length
+  const isFriendsListScrollable = listItemCount > 4
 
   return (
     <div className="flex flex-col gap-6 pt-3">
@@ -258,18 +260,33 @@ export function ProfilePage() {
           )}
 
           {friendsLoading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner size="inline" />
-            </div>
+            <SkeletonGroup className="flex flex-col gap-1.5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex min-h-16 items-center gap-3 rounded-xl px-3.5 py-2">
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-40" />
+                  </div>
+                  <Skeleton className="h-12 w-12 rounded-md" />
+                </div>
+              ))}
+            </SkeletonGroup>
           ) : summary.friends.length === 0 && !hasPending ? (
             <p className="px-3.5 py-4 text-sm text-text-secondary text-center">No friends yet.</p>
           ) : (
-            <ul className="flex flex-col gap-1.5">
+            <ul
+              className={[
+                'flex flex-col gap-1.5',
+                isFriendsListScrollable
+                  ? 'max-h-[calc(4*4rem+3*0.375rem+0.875rem)] overflow-y-auto overscroll-contain'
+                  : '',
+              ].join(' ')}
+            >
               {orderedFriends.map((friend) => (
-                <li key={friend.user_id} className="w-full">
+                <li key={friend.user_id} className="w-full min-h-16">
                   <button
                     type="button"
-                    className="flex w-full cursor-pointer items-center gap-3 rounded-xl py-2 pl-3.5 pr-2 text-left transition-[filter] hover:brightness-[0.97] active:brightness-[0.94]"
+                    className="flex h-full min-h-16 w-full cursor-pointer items-center gap-3 rounded-xl py-2 pl-3.5 pr-2 text-left transition-[filter] hover:brightness-[0.97] active:brightness-[0.94]"
                     style={{ backgroundColor: `${friend.accent_color}18` }}
                     aria-label={`View ${formatUsername(friend.display_name)} profile`}
                     onClick={() => setSelectedFriend(friend)}
@@ -300,7 +317,7 @@ export function ProfilePage() {
               {summary.outgoing.map((request) => (
                 <li
                   key={request.request_id}
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-2 transition-colors hover:bg-surface-secondary"
+                  className="flex min-h-16 items-center gap-3 rounded-xl px-3.5 py-2 transition-colors hover:bg-surface-secondary"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">

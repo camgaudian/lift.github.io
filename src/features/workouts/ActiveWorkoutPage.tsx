@@ -12,6 +12,7 @@ import { ExerciseBlock, type ExerciseBlockHandle } from './ExerciseBlock'
 import { useExercises } from '@/features/exercises/useExercises'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
+import { Confetti } from '@/components/Confetti'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
 import { TrashIcon } from '@/components/TrashIcon'
@@ -55,6 +56,15 @@ export function ActiveWorkoutPage() {
   useEffect(() => {
     reload()
   }, [id])
+
+  // Celebratory haptic buzz when the completion summary appears (progressive
+  // enhancement; iOS Safari ignores navigator.vibrate).
+  useEffect(() => {
+    if (!showCompletionSummary) return
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate([60, 40, 120])
+    }
+  }, [showCompletionSummary])
 
   const handleAddExercise = async (exerciseId: string) => {
     if (!id || adding) return
@@ -125,10 +135,11 @@ export function ActiveWorkoutPage() {
 
   if (showCompletionSummary) {
     return (
-      <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
+      <div className="flex min-h-full flex-col justify-center gap-5 py-6">
+        <Confetti />
         <h1 className="text-2xl font-semibold">Workout complete!</h1>
         <WorkoutAchievementsSection workoutId={id} exercises={items} />
-        <WorkoutFunStatsSection exercises={items} />
+        <WorkoutFunStatsSection exercises={items} animate />
         <Button fullWidth size="lg" onClick={handleDone}>
           Done
         </Button>
@@ -137,7 +148,7 @@ export function ActiveWorkoutPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100dvh-7rem)] flex-col justify-center gap-5 py-6">
+    <div className="flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <h1 className="text-2xl font-semibold">{isCompleted ? 'Workout' : 'Active workout'}</h1>
@@ -188,7 +199,13 @@ export function ActiveWorkoutPage() {
             key={item.id}
             data-drag-row
             {...(!isCompleted ? getLongPressProps(idx) : {})}
+            onContextMenu={!isCompleted ? (e) => e.preventDefault() : undefined}
             className={[
+              // Suppress text selection / iOS callout during the long press, but
+              // keep form fields selectable so logging still works.
+              !isCompleted
+                ? 'select-none [-webkit-touch-callout:none] [&_input]:select-auto [&_textarea]:select-auto'
+                : '',
               draggingKey === item.id
                 ? 'relative z-10 select-none rounded-2xl shadow-lg ring-1 ring-accent/40'
                 : isDragging

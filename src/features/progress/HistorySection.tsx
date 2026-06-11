@@ -4,7 +4,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseIS
 import { cancelWorkout, fetchCompletedWorkouts } from '@/features/workouts/workoutApi'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { Modal } from '@/components/Modal'
 import { TrashIcon } from '@/components/TrashIcon'
 import { iconDeleteButtonClass } from '@/lib/ui'
@@ -28,6 +28,33 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
     >
       <path d="M6 9l6 6 6-6" />
     </svg>
+  )
+}
+
+function HistorySkeleton() {
+  return (
+    <SkeletonGroup className="flex flex-col gap-4">
+      <Card>
+        <div className="mb-3 flex items-center justify-between">
+          <Skeleton className="h-5 w-5" />
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-5 w-5" />
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 35 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-square rounded-lg" />
+          ))}
+        </div>
+      </Card>
+      <section>
+        <Skeleton className="mb-2 h-4 w-32" />
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-2xl" />
+          ))}
+        </div>
+      </section>
+    </SkeletonGroup>
   )
 }
 
@@ -84,7 +111,7 @@ export function HistorySection({
     }
   }
 
-  if (loading) return <LoadingSpinner size="section" />
+  if (loading) return <HistorySkeleton />
 
   return (
     <div className="flex flex-col gap-4">

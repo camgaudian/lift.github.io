@@ -30,7 +30,21 @@ export interface NowPlaying {
   artist: string
   album_art_url: string | null
   expires_at: string
+  // The emoji the current user has left on this track, if any. Only populated
+  // for friends' tracks (via get_friend_summary).
+  my_reaction?: string | null
 }
+
+export interface NowPlayingReaction {
+  reactor_id: string
+  display_name: string | null
+  accent_color: string
+  emoji: string
+}
+
+export type ReactToNowPlayingResult =
+  | { ok: true; reaction: string | null }
+  | { ok: false; error: string }
 
 export interface SpotifySearchTrack {
   track_id: string

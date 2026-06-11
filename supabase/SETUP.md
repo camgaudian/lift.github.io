@@ -72,6 +72,7 @@ Resend free tier: 3,000 emails/month, 100/day. See [resend.com/pricing](https://
    - `014_profile_featured_milestone.sql`
    - `015_longest_streak_timezone.sql`
    - `016_content_sharing.sql`
+   - `017_now_playing_reactions.sql`
 
 Alternatively, if you install the [Supabase CLI](https://supabase.com/docs/guides/cli), run:
 
@@ -92,6 +93,16 @@ Create a `.env` file in the project root:
 ```env
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# Local dev only — proxied by Vite for in-app feedback (never bundled)
+DISCORD_FEEDBACK_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
+```
+
+For production feedback (Settings → Send feedback), deploy the `send-feedback` edge function and set the webhook as a Supabase secret (not in the client):
+
+```bash
+supabase secrets set DISCORD_FEEDBACK_WEBHOOK_URL="https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
+supabase functions deploy send-feedback
 ```
 
 For GitHub Pages deployment, add the same values as repository secrets:

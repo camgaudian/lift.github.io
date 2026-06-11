@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase'
-import type { NowPlaying, SpotifySearchTrack } from '@/lib/types'
+import type {
+  NowPlaying,
+  NowPlayingReaction,
+  ReactToNowPlayingResult,
+  SpotifySearchTrack,
+} from '@/lib/types'
 
 export async function fetchMyNowPlaying(): Promise<NowPlaying | null> {
   const { data, error } = await supabase.rpc('get_my_now_playing')
@@ -21,6 +26,24 @@ export async function setNowPlaying(track: SpotifySearchTrack): Promise<NowPlayi
 export async function clearNowPlaying(): Promise<void> {
   const { error } = await supabase.rpc('clear_now_playing')
   if (error) throw error
+}
+
+export async function fetchMyNowPlayingReactions(): Promise<NowPlayingReaction[]> {
+  const { data, error } = await supabase.rpc('get_my_now_playing_reactions')
+  if (error) throw error
+  return (data as NowPlayingReaction[] | null) ?? []
+}
+
+export async function reactToNowPlaying(
+  ownerId: string,
+  emoji: string,
+): Promise<ReactToNowPlayingResult> {
+  const { data, error } = await supabase.rpc('react_to_now_playing', {
+    p_owner_id: ownerId,
+    p_emoji: emoji,
+  })
+  if (error) throw error
+  return data as ReactToNowPlayingResult
 }
 
 export async function searchSpotifyTracks(query: string): Promise<SpotifySearchTrack[]> {
