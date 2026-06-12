@@ -1,4 +1,5 @@
--- Lift: seed built-in exercises (~50)
+-- Lift: seed built-in exercises (~50, reference — all migrations have been applied in Supabase)
+-- Categories: arms, chest, shoulders, back, core, legs, cardio
 
 INSERT INTO exercises (user_id, name, exercise_type, category, primary_muscles, equipment) VALUES
 (NULL, 'Barbell Bench Press', 'strength', 'chest', ARRAY['chest', 'triceps'], 'barbell'),

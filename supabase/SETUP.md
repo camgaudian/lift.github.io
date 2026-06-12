@@ -54,25 +54,18 @@ Resend free tier: 3,000 emails/month, 100/day. See [resend.com/pricing](https://
 
 ## 5. Run database migrations
 
+These files describe the full current schema. Run them in order on a **new** project:
+
 1. Open **SQL Editor** in the Supabase dashboard.
-2. Run each file in order from [`supabase/migrations/`](migrations/):
-   - `001_schema.sql`
-   - `002_rls.sql`
-   - `003_seed_exercises.sql`
-   - `004_stats_functions.sql`
-   - `005_profile_appearance.sql`
-   - `006_pr_by_weight.sql`
-   - `007_fun_stats_cardio.sql`
-   - `008_exercise_categories.sql`
-   - `009_display_name_uniqueness.sql`
-   - `010_streak_timezone.sql`
-   - `011_friends.sql`
-   - `012_pr_leaderboard_friends.sql`
-   - `013_user_now_playing.sql` (see [SPOTIFY_SETUP.md](SPOTIFY_SETUP.md) for Spotify-specific steps)
-   - `014_profile_featured_milestone.sql`
-   - `015_longest_streak_timezone.sql`
-   - `016_content_sharing.sql`
-   - `017_now_playing_reactions.sql`
+2. Run each file from [`supabase/migrations/`](migrations/):
+   - `001_schema.sql` — tables, types, indexes, triggers
+   - `002_rls.sql` — row-level security policies
+   - `003_seed_exercises.sql` — built-in exercise library
+   - `004_functions.sql` — RPCs and helper functions
+
+For Spotify now-playing, also complete [SPOTIFY_SETUP.md](SPOTIFY_SETUP.md) (Edge Function deploy; schema is already in the files above).
+
+For incremental changes on an existing database, add a new numbered migration (e.g. `005_…sql`) rather than editing these reference files.
 
 Alternatively, if you install the [Supabase CLI](https://supabase.com/docs/guides/cli), run:
 

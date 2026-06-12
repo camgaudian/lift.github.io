@@ -41,6 +41,7 @@ export interface NowPlayingReaction {
   display_name: string | null
   accent_color: string
   emoji: string
+  now_playing?: NowPlaying | null
 }
 
 export type ReactToNowPlayingResult =

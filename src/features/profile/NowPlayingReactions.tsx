@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
+import { TrackArtwork } from '@/components/TrackArtwork'
 import { TrackArtworkPlaceholder } from '@/components/TrackArtworkPlaceholder'
+import { FriendNoTrackInline } from '@/features/profile/FriendNoTrackInline'
+import { FriendNowPlayingInline } from '@/features/profile/FriendNowPlayingInline'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { formatUsername } from '@/lib/format'
 import { REACTION_EMOJIS } from '@/lib/reactions'
@@ -141,10 +144,26 @@ export function ReactionsListModal({
               className="flex items-center gap-3 rounded-xl px-3 py-2.5"
               style={{ backgroundColor: `${reaction.accent_color}18` }}
             >
-              <TrackArtworkPlaceholder accentColor={reaction.accent_color} size="md" />
-              <p className="min-w-0 flex-1 truncate text-sm font-medium">
-                {formatUsername(reaction.display_name)}
-              </p>
+              <div className="shrink-0">
+                {reaction.now_playing ? (
+                  <TrackArtwork url={reaction.now_playing.album_art_url} size="md" />
+                ) : (
+                  <TrackArtworkPlaceholder accentColor={reaction.accent_color} size="md" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {formatUsername(reaction.display_name)}
+                </p>
+                {reaction.now_playing ? (
+                  <FriendNowPlayingInline
+                    nowPlaying={reaction.now_playing}
+                    accentColor={reaction.accent_color}
+                  />
+                ) : (
+                  <FriendNoTrackInline accentColor={reaction.accent_color} />
+                )}
+              </div>
               <span className="shrink-0 text-xl leading-none">{reaction.emoji}</span>
             </li>
           ))}

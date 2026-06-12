@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
-import { ACCENT_PRESETS } from '@/lib/theme'
+import { ACCENT_PRESETS, DEFAULT_ACCENT } from '@/lib/theme'
 import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
@@ -19,8 +19,18 @@ import type { ThemeMode, WeightUnit } from '@/lib/types'
 const selectClass =
   'mt-1 w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base'
 
+function isPresetAccent(color: string) {
+  return ACCENT_PRESETS.some((p) => p.color.toLowerCase() === color.toLowerCase())
+}
+
 function accentLabel(color: string) {
   return ACCENT_PRESETS.find((p) => p.color.toLowerCase() === color.toLowerCase())?.label ?? 'Custom'
+}
+
+function normalizeHexForColorInput(hex: string) {
+  const normalized = hex.replace('#', '')
+  if (normalized.length !== 6 || !/^[0-9a-fA-F]{6}$/.test(normalized)) return DEFAULT_ACCENT
+  return `#${normalized.toLowerCase()}`
 }
 
 function DetailsChevron() {
@@ -59,10 +69,16 @@ export function SettingsPage() {
   const [erasing, setErasing] = useState(false)
   const [eraseError, setEraseError] = useState<string | null>(null)
   const [eraseSuccess, setEraseSuccess] = useState(false)
+  const [accentMode, setAccentMode] = useState<'preset' | 'custom'>('preset')
 
   useEffect(() => {
     setNameDraft(displayName)
   }, [displayName])
+
+  useEffect(() => {
+    if (loading) return
+    setAccentMode(isPresetAccent(accentColor) ? 'preset' : 'custom')
+  }, [loading])
 
   const handleTheme = async (next: ThemeMode) => {
     setSaving(true)
@@ -92,7 +108,10 @@ export function SettingsPage() {
   }
 
   const accentSelectValue =
-    ACCENT_PRESETS.find((p) => p.color.toLowerCase() === accentColor.toLowerCase())?.color ?? 'custom'
+    accentMode === 'custom'
+      ? 'custom'
+      : (ACCENT_PRESETS.find((p) => p.color.toLowerCase() === accentColor.toLowerCase())?.color ??
+        'custom')
 
   const handleSaveDisplayName = async () => {
     setNameSaving(true)
@@ -391,7 +410,12 @@ export function SettingsPage() {
                   value={accentSelectValue}
                   disabled={loading || saving}
                   onChange={(e) => {
-                    if (e.target.value !== 'custom') handleAccent(e.target.value)
+                    if (e.target.value === 'custom') {
+                      setAccentMode('custom')
+                      return
+                    }
+                    setAccentMode('preset')
+                    handleAccent(e.target.value)
                   }}
                 >
                   {ACCENT_PRESETS.map((preset) => (
@@ -412,9 +436,9 @@ export function SettingsPage() {
                     <input
                       id="custom-accent"
                       type="color"
-                      value={accentColor}
-                      disabled={loading || saving}
-                      onChange={(e) => handleAccent(e.target.value)}
+                      value={normalizeHexForColorInput(accentColor)}
+                      disabled={loading}
+                      onChange={(e) => void setAccentColor(e.target.value)}
                       className="h-11 w-14 cursor-pointer rounded-lg border border-border bg-transparent"
                     />
                     <span className="text-sm text-text-secondary font-mono">{accentColor}</span>

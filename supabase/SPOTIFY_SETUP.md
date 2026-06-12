@@ -6,13 +6,12 @@ Complete these steps **in order**.
 
 ---
 
-## Step 1: Run the database migration
+## Step 1: Run the database migrations
 
-1. Open your Supabase project → **SQL Editor**.
-2. Paste and run the full contents of [`migrations/013_user_now_playing.sql`](migrations/013_user_now_playing.sql).
-3. Confirm success (no errors in the output panel).
+If you have not already set up the database, run all migration files in order per [SETUP.md](SETUP.md). The Spotify tables and RPCs live in:
 
-This creates the `user_now_playing` table, RPCs (`set_now_playing`, `clear_now_playing`, `get_my_now_playing`), and extends `get_friend_summary` to include friends' active songs.
+- `001_schema.sql` — `user_now_playing`, `now_playing_reactions`
+- `004_functions.sql` — `set_now_playing`, `clear_now_playing`, `get_my_now_playing`, reaction RPCs, and `get_friend_summary` (includes friends' active songs)
 
 ---
 

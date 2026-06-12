@@ -1,6 +1,6 @@
 // Allowed now-playing reaction emojis. Must stay in sync with the CHECK
-// constraint and RPC validation in supabase/migrations/017_now_playing_reactions.sql.
-export const REACTION_EMOJIS = ['🔥', '💪', '🎵', '❤️', '😂', '🤘'] as const
+// constraint in 001_schema.sql and react_to_now_playing in 004_functions.sql.
+export const REACTION_EMOJIS = ['🔥', '💪', '🗣️', '💔', '💀', '😩'] as const
 
 export type ReactionEmoji = (typeof REACTION_EMOJIS)[number]
 
