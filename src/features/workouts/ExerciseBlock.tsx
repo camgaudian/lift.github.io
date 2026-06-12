@@ -11,7 +11,7 @@ import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
 import { Modal } from '@/components/Modal'
 import { TrashIcon } from '@/components/TrashIcon'
-import { iconDeleteButtonClass } from '@/lib/ui'
+import { iconDeleteButtonClass, useColorPopText } from '@/lib/ui'
 import {
   upsertStrengthSets,
   upsertCardioEntry,
@@ -146,6 +146,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   ref,
 ) {
   const { unit } = useProfile()
+  const mutedTextClass = useColorPopText('text-text-secondary')
   const rowKeyRef = useRef(0)
   const nextRowKey = () => String(++rowKeyRef.current)
 
@@ -456,7 +457,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
 
       {!readOnly && (
         <div>
-          <label className="text-sm text-text-secondary">Note for next session</label>
+          <label className={`text-sm ${mutedTextClass}`}>Note for next session</label>
           <textarea
             className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-3 text-base min-h-[72px] focus:outline-none focus:ring-2 focus:ring-accent/30"
             value={note}
@@ -496,14 +497,14 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
               <button
                 type="button"
                 onPointerDown={(e) => startDrag(idx, e)}
-                className="flex shrink-0 touch-none select-none cursor-grab active:cursor-grabbing text-text-secondary pl-0.5 pr-2 py-2"
+                className={`flex shrink-0 touch-none select-none cursor-grab active:cursor-grabbing pl-0.5 pr-2 py-2 ${mutedTextClass}`}
                 style={{ touchAction: 'none' }}
                 aria-label={`Reorder set ${idx + 1}`}
               >
                 <DragGripIcon />
               </button>
             )}
-            <span className="shrink-0 mr-2 text-sm text-text-secondary whitespace-nowrap">Set {idx + 1}</span>
+            <span className={`shrink-0 mr-2 text-sm whitespace-nowrap ${mutedTextClass}`}>Set {idx + 1}</span>
             {exerciseType === 'bodyweight' ? (
               <>
                 <Input

@@ -26,6 +26,10 @@ html {
   color-scheme: light;
 }
 
+[data-color-pop="true"] .color-pop-muted-content .text-text-secondary {
+  color: var(--color-text);
+}
+
 * {
   box-sizing: border-box;
 }

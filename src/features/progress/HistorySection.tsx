@@ -7,7 +7,7 @@ import { Card } from '@/components/Card'
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { Modal } from '@/components/Modal'
 import { TrashIcon } from '@/components/TrashIcon'
-import { iconDeleteButtonClass } from '@/lib/ui'
+import { iconDeleteButtonClass, useColorPopText } from '@/lib/ui'
 import type { Workout } from '@/lib/types'
 
 const RECENT_LIMIT = 3
@@ -72,6 +72,7 @@ export function HistorySection({
   const [deleteTarget, setDeleteTarget] = useState<Workout | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const sectionTitleClass = useColorPopText('text-text-secondary')
 
   useEffect(() => {
     fetchCompletedWorkouts().then((w) => {
@@ -174,7 +175,7 @@ export function HistorySection({
       </Card>
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-text-secondary">
+        <h2 className={`mb-2 text-sm font-medium ${sectionTitleClass}`}>
           {selectedDate ? format(selectedDate, 'MMM d, yyyy') : 'Recent workouts'}
         </h2>
         <ul className="flex flex-col gap-2">

@@ -17,7 +17,7 @@ import {
 import { reactToNowPlaying } from '@/features/profile/nowPlayingApi'
 import { ReactionPicker } from '@/features/profile/NowPlayingReactions'
 import { fetchFriendMilestoneStats, type MilestoneStats } from '@/lib/stats'
-import { sectionHeadingClass, iconDeleteButtonClass } from '@/lib/ui'
+import { iconDeleteButtonClass, useColorPopText, useSectionHeadingClass } from '@/lib/ui'
 import type { FriendEntry, NowPlaying } from '@/lib/types'
 
 function FriendNowPlayingPreview({
@@ -26,12 +26,14 @@ function FriendNowPlayingPreview({
   myReaction,
   reacting,
   onReact,
+  artistClass,
 }: {
   nowPlaying: NowPlaying
   accentColor: string
   myReaction: string | null
   reacting: boolean
   onReact: (emoji: string) => void
+  artistClass: string
 }) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-accent/30 bg-surface-secondary/50 p-4">
@@ -41,7 +43,7 @@ function FriendNowPlayingPreview({
           <MusicPlayingIcon size="md" accentColor={accentColor} />
           <span className="truncate">{nowPlaying.title}</span>
         </p>
-        <p className="truncate text-sm text-text-secondary">{nowPlaying.artist}</p>
+        <p className={`truncate text-sm ${artistClass}`}>{nowPlaying.artist}</p>
         <p className="mt-1 text-xs text-text-secondary">{formatHoursLeft(nowPlaying.expires_at)}</p>
       </div>
       <ReactionPicker current={myReaction} disabled={reacting} onSelect={onReact} />
@@ -66,6 +68,8 @@ export function FriendProfileModal({
   )
   const [reacting, setReacting] = useState(false)
   const [reactionError, setReactionError] = useState<string | null>(null)
+  const sectionHeadingClassName = useSectionHeadingClass()
+  const artistClass = useColorPopText('text-text-secondary')
 
   useEffect(() => {
     if (!friend.featured_milestone_category) {
@@ -145,7 +149,7 @@ export function FriendProfileModal({
       }
     >
       <section className="flex flex-col gap-1.5">
-        <h3 className={sectionHeadingClass}>Today&apos;s lift track</h3>
+        <h3 className={sectionHeadingClassName}>Today&apos;s lift track</h3>
         {friend.now_playing ? (
           <FriendNowPlayingPreview
             nowPlaying={friend.now_playing}
@@ -153,6 +157,7 @@ export function FriendProfileModal({
             myReaction={myReaction}
             reacting={reacting}
             onReact={handleReact}
+            artistClass={artistClass}
           />
         ) : (
           <p className="px-1 text-sm text-text-secondary">No song chosen.</p>
@@ -163,7 +168,7 @@ export function FriendProfileModal({
       </section>
 
       <section className="flex flex-col gap-1.5">
-        <h3 className={sectionHeadingClass}>Profile milestone</h3>
+        <h3 className={sectionHeadingClassName}>Profile milestone</h3>
         {!friend.featured_milestone_category ? (
           <p className="px-1 text-sm text-text-secondary">No milestone chosen.</p>
         ) : milestoneLoading ? (

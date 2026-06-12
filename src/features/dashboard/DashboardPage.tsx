@@ -22,11 +22,13 @@ import { Input } from '@/components/Input'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
+import { useColorPopText } from '@/lib/ui'
 import type { FunStats, WorkoutTemplate } from '@/lib/types'
 
 export function DashboardPage() {
   const { unit, displayName, loading: profileLoading } = useProfile()
   const { accentColor } = useTheme()
+  const usernameClass = useColorPopText('text-text-secondary')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [stats, setStats] = useState<FunStats | null>(null)
@@ -95,7 +97,7 @@ export function DashboardPage() {
         </div>
         <Link
           to="/profile"
-          className="text-sm font-medium text-text-secondary truncate max-w-[45%] shrink-0"
+          className={`text-sm font-medium truncate max-w-[45%] shrink-0 ${usernameClass}`}
         >
           {profileLoading ? '…' : displayName ? `@${displayName}` : 'Set username'}
         </Link>

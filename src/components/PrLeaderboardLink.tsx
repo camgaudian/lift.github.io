@@ -41,14 +41,20 @@ function ChevronIcon() {
 }
 
 export function PrLeaderboardLink({ from }: { from: NavTab }) {
-  const { accentColor } = useTheme()
+  const { accentColor, colorPop } = useTheme()
 
   return (
     <Link
       to="/pr-leaderboard"
       state={{ navFrom: from }}
-      className="inline-flex w-full min-h-[52px] items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium transition-opacity hover:opacity-90 active:opacity-80"
-      style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
+      className={[
+        'inline-flex w-full min-h-[52px] items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium transition-opacity hover:opacity-90 active:opacity-80',
+        colorPop ? 'text-text' : '',
+      ].join(' ')}
+      style={{
+        backgroundColor: `${accentColor}${colorPop ? '24' : '18'}`,
+        ...(colorPop ? {} : { color: accentColor }),
+      }}
     >
       <PodiumIcon />
       <span className="flex-1">PR Leaderboard</span>

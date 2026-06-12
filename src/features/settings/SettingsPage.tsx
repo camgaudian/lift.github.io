@@ -6,13 +6,14 @@ import { ACCENT_PRESETS } from '@/lib/theme'
 import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
+import { Switch } from '@/components/Switch'
 import { DisplayNameInput } from '@/components/DisplayNameInput'
 import { Input } from '@/components/Input'
 import { eraseAllWorkoutData, isDisplayNameTaken } from '@/features/settings/profileApi'
 import { FeedbackSection } from '@/features/settings/FeedbackSection'
 import { InstallGuide } from '@/features/settings/InstallGuide'
 import { capitalize } from '@/lib/format'
-import { sectionHeadingClass } from '@/lib/ui'
+import { sectionHeadingBase, useSectionHeadingClass } from '@/lib/ui'
 import type { ThemeMode, WeightUnit } from '@/lib/types'
 
 const selectClass =
@@ -40,7 +41,8 @@ function DetailsChevron() {
 export function SettingsPage() {
   const { user, signOut, verifyPassword, changePassword } = useAuth()
   const { displayName, unit, loading: profileLoading, setDisplayName, setUnit } = useProfile()
-  const { theme, accentColor, loading, setTheme, setAccentColor } = useTheme()
+  const { theme, accentColor, colorPop, loading, setTheme, setAccentColor, setColorPop } = useTheme()
+  const sectionHeadingClassName = useSectionHeadingClass()
   const [saving, setSaving] = useState(false)
   const [nameDraft, setNameDraft] = useState('')
   const [nameSaving, setNameSaving] = useState(false)
@@ -75,6 +77,15 @@ export function SettingsPage() {
     setSaving(true)
     try {
       await setAccentColor(color)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleColorPop = async (enabled: boolean) => {
+    setSaving(true)
+    try {
+      await setColorPop(enabled)
     } finally {
       setSaving(false)
     }
@@ -192,7 +203,7 @@ export function SettingsPage() {
       </div>
 
       <section className="flex flex-col gap-2">
-        <h2 className={`${sectionHeadingClass} text-text-secondary`}>Account</h2>
+        <h2 className={sectionHeadingClassName}>Account</h2>
 
         {user && (
           <Card padding="sm" className="p-0 overflow-hidden">
@@ -220,7 +231,7 @@ export function SettingsPage() {
               <DetailsChevron />
             </summary>
 
-            <div className="flex flex-col gap-4 border-t border-border px-3.5 py-3.5">
+            <div className="color-pop-muted-content flex flex-col gap-4 border-t border-border px-3.5 py-3.5">
               <DisplayNameInput
                 label="Change username"
                 autoComplete="name"
@@ -276,7 +287,7 @@ export function SettingsPage() {
                 <DetailsChevron />
               </summary>
 
-              <div className="flex flex-col gap-4 border-t border-border px-3.5 py-3.5">
+              <div className="color-pop-muted-content flex flex-col gap-4 border-t border-border px-3.5 py-3.5">
                 <Input
                   label="Current password"
                   type="password"
@@ -338,7 +349,7 @@ export function SettingsPage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className={`${sectionHeadingClass} text-text-secondary`}>Preferences</h2>
+        <h2 className={sectionHeadingClassName}>Preferences</h2>
 
         <Card padding="sm" className="p-0 overflow-hidden">
           <details className="group">
@@ -347,6 +358,7 @@ export function SettingsPage() {
                 <p className="text-sm font-medium">Appearance</p>
                 <p className="text-xs text-text-secondary truncate">
                   {capitalize(theme)} · {accentLabel(accentColor)}
+                  {colorPop ? ' · Color Pop' : ''}
                 </p>
               </div>
               <DetailsChevron />
@@ -391,26 +403,44 @@ export function SettingsPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="text-sm font-medium" htmlFor="custom-accent">
-                  Custom color
-                </label>
-                <div className="mt-2 flex items-center gap-3">
-                  <input
-                    id="custom-accent"
-                    type="color"
-                    value={accentColor}
-                    disabled={loading || saving}
-                    onChange={(e) => handleAccent(e.target.value)}
-                    className="h-11 w-14 cursor-pointer rounded-lg border border-border bg-transparent"
-                  />
-                  <span className="text-sm text-text-secondary font-mono">{accentColor}</span>
+              {accentSelectValue === 'custom' && (
+                <div>
+                  <label className="text-sm font-medium" htmlFor="custom-accent">
+                    Custom color
+                  </label>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      id="custom-accent"
+                      type="color"
+                      value={accentColor}
+                      disabled={loading || saving}
+                      onChange={(e) => handleAccent(e.target.value)}
+                      className="h-11 w-14 cursor-pointer rounded-lg border border-border bg-transparent"
+                    />
+                    <span className="text-sm text-text-secondary font-mono">{accentColor}</span>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <p className="text-xs text-text-secondary">
-                Saved to your account and syncs across devices.
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Color Pop</p>
+                  <div className="mt-0.5 space-y-0 leading-snug">
+                    <p className="text-xs text-text-secondary">
+                      Add more of your chosen color to Lift
+                    </p>
+                    <p className="text-xs text-text-secondary">
+                      (Note: Color Pop mode may reduce readability in some cases)
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  label="Color Pop"
+                  checked={colorPop}
+                  disabled={loading || saving}
+                  onChange={handleColorPop}
+                />
+              </div>
             </div>
           </details>
         </Card>
@@ -452,14 +482,14 @@ export function SettingsPage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className={`${sectionHeadingClass} text-text-secondary`}>Help</h2>
+        <h2 className={sectionHeadingClassName}>Help</h2>
         <FeedbackSection />
         <InstallGuide />
       </section>
 
       {user && (
         <section className="flex flex-col gap-2">
-          <h2 className={`${sectionHeadingClass} text-danger`}>Danger</h2>
+          <h2 className={`${sectionHeadingBase} text-danger`}>Danger</h2>
 
           <Card padding="sm" className="p-0 overflow-hidden border-danger/30">
             <details className="group">

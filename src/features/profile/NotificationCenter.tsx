@@ -6,6 +6,7 @@ import { Modal } from '@/components/Modal'
 import { acceptFriendRequest, declineFriendRequest } from '@/features/profile/friendsApi'
 import { acceptShare, dismissShare, fetchNotifications } from '@/features/sharing/sharingApi'
 import { capitalize, formatUsername } from '@/lib/format'
+import { useColorPopText } from '@/lib/ui'
 import type { NotificationItem } from '@/lib/types'
 
 function BellIcon() {
@@ -169,6 +170,7 @@ export function NotificationCenter({
   const [selected, setSelected] = useState<NotificationItem | null>(null)
   const [pending, setPending] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const sectionTitleClass = useColorPopText('text-text-secondary')
 
   const load = useCallback(async () => {
     if (disabled) {
@@ -248,7 +250,7 @@ export function NotificationCenter({
         <span className="text-accent">
           <BellIcon />
         </span>
-        <h2 className="text-sm font-medium text-text-secondary">Notifications</h2>
+        <h2 className={`text-sm font-medium ${sectionTitleClass}`}>Notifications</h2>
         {unreadCount > 0 && (
           <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
             {unreadCount > 9 ? '9+' : unreadCount}

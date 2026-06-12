@@ -1,5 +1,20 @@
-export const sectionHeadingClass =
-  'px-1 text-xs font-semibold uppercase tracking-wide text-text-secondary'
+import { useTheme } from '@/contexts/ThemeContext'
+
+export const sectionHeadingBase =
+  'px-1 text-xs font-semibold uppercase tracking-wide'
+
+export const sectionHeadingClass = `${sectionHeadingBase} text-text-secondary`
+
+/** Primary text when Color Pop is on; otherwise the default muted/accent class. */
+export function useColorPopText(defaultClass: string): string {
+  const { colorPop } = useTheme()
+  return colorPop ? 'text-text' : defaultClass
+}
+
+export function useSectionHeadingClass(): string {
+  const { colorPop } = useTheme()
+  return `${sectionHeadingBase} ${colorPop ? 'text-text' : 'text-text-secondary'}`
+}
 
 export const iconDeleteButtonClass =
   'shrink-0 rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-danger'

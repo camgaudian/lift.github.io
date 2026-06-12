@@ -1,3 +1,6 @@
 
 [functions.spotify-search]
 verify_jwt = true
+
+[functions.send-feedback]
+verify_jwt = true

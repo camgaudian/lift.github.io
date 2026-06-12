@@ -15,7 +15,7 @@ import {
   EXERCISE_FILTER_CATEGORIES,
   groupExercisesByCategory,
 } from '@/lib/exerciseCategories'
-import { iconDeleteButtonClass } from '@/lib/ui'
+import { iconDeleteButtonClass, useColorPopText } from '@/lib/ui'
 import type { Exercise, ExerciseType } from '@/lib/types'
 
 const TYPES: ExerciseType[] = ['strength', 'bodyweight', 'cardio']
@@ -26,6 +26,7 @@ type ExerciseItem = Pick<
 >
 
 export function ExercisesTab() {
+  const sectionTitleClass = useColorPopText('text-text-secondary')
   const { exercises, loading, error, reload } = useExercises()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
@@ -153,7 +154,7 @@ export function ExercisesTab() {
 
       {custom.length > 0 && (
         <section>
-          <h3 className="mb-2 text-sm font-medium text-text-secondary">Your exercises</h3>
+          <h3 className={`mb-2 text-sm font-medium ${sectionTitleClass}`}>Your exercises</h3>
           <GroupedExerciseList
             groups={groupExercisesByCategory(custom)}
             showGroupHeaders={!category}
@@ -167,7 +168,7 @@ export function ExercisesTab() {
       )}
 
       <section>
-        <h3 className="mb-2 text-sm font-medium text-text-secondary">Built-in</h3>
+        <h3 className={`mb-2 text-sm font-medium ${sectionTitleClass}`}>Built-in</h3>
         <GroupedExerciseList groups={groupExercisesByCategory(builtin)} showGroupHeaders={!category} />
       </section>
 

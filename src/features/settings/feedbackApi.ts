@@ -16,6 +16,18 @@ const categoryLabels: Record<FeedbackCategory, string> = {
   general: 'General feedback',
 }
 
+async function readFunctionError(error: unknown): Promise<string | null> {
+  if (!error || typeof error !== 'object' || !('context' in error)) return null
+  const response = (error as { context: unknown }).context
+  if (!(response instanceof Response)) return null
+  try {
+    const payload = (await response.clone().json()) as { error?: string; message?: string }
+    return payload.error ?? payload.message ?? null
+  } catch {
+    return null
+  }
+}
+
 function buildDiscordBody(payload: FeedbackPayload) {
   const fields: { name: string; value: string; inline?: boolean }[] = [
     { name: 'Category', value: categoryLabels[payload.category], inline: true },
@@ -72,6 +84,9 @@ export async function sendFeedback(payload: FeedbackPayload): Promise<void> {
   const { data, error } = await supabase.functions.invoke('send-feedback', {
     body,
   })
-  if (error) throw error
+  if (error) {
+    const detail = await readFunctionError(error)
+    throw new Error(detail ?? 'Failed to send feedback')
+  }
   if (data?.error) throw new Error(data.error)
 }

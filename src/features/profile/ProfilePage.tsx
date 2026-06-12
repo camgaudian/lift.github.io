@@ -23,6 +23,7 @@ import { NotificationCenter } from '@/features/profile/NotificationCenter'
 import { PoweringLiftSection } from '@/features/profile/PoweringLiftSection'
 import { fetchProfile, updateProfileSettings } from '@/features/settings/profileApi'
 import { formatUsername } from '@/lib/format'
+import { useColorPopText } from '@/lib/ui'
 import type { FriendEntry, FriendSummary, PendingFriendRequest } from '@/lib/types'
 
 function FriendsIcon() {
@@ -46,11 +47,11 @@ function FriendsIcon() {
   )
 }
 
-function SettingsGearLink() {
+function SettingsGearLink({ linkClass }: { linkClass: string }) {
   return (
     <Link
       to="/profile/settings"
-      className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text"
+      className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors hover:bg-surface-secondary hover:text-text ${linkClass}`}
     >
       <span>Settings</span>
       <svg
@@ -73,6 +74,8 @@ function SettingsGearLink() {
 
 export function ProfilePage() {
   const { user } = useAuth()
+  const sectionTitleClass = useColorPopText('text-text-secondary')
+  const addButtonAccentClass = useColorPopText('text-accent')
   const [summary, setSummary] = useState<FriendSummary>({ friends: [], incoming: [], outgoing: [] })
   const [friendsLoading, setFriendsLoading] = useState(true)
   const [hideAddFriendWarning, setHideAddFriendWarning] = useState(false)
@@ -203,7 +206,7 @@ export function ProfilePage() {
     <div className="flex flex-col gap-6 pt-3">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Profile</h1>
-        <SettingsGearLink />
+        <SettingsGearLink linkClass={sectionTitleClass} />
       </div>
 
       <NotificationCenter disabled={!user} onFriendsChanged={loadFriends} />
@@ -216,12 +219,12 @@ export function ProfilePage() {
             <span className="text-accent">
               <FriendsIcon />
             </span>
-            <h2 className="text-sm font-medium text-text-secondary">Friends</h2>
+            <h2 className={`text-sm font-medium ${sectionTitleClass}`}>Friends</h2>
           </div>
           <button
             type="button"
             className={`-my-2 inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors hover:bg-surface-secondary disabled:opacity-50 ${
-              showAddForm ? 'text-accent' : 'text-text-secondary hover:text-text'
+              showAddForm ? addButtonAccentClass : `${sectionTitleClass} hover:text-text`
             }`}
             aria-label={showAddForm ? 'Hide add friend form' : 'Add friend'}
             aria-expanded={showAddForm}
@@ -238,7 +241,7 @@ export function ProfilePage() {
 
         <Card padding="sm" className="p-0 overflow-hidden">
           {showAddForm && (
-            <div className="border-b border-border p-3.5">
+            <div className="color-pop-muted-content border-b border-border p-3.5">
               <form onSubmit={handleAddSubmit} className="flex flex-col gap-3">
                 <Input
                   label="Add friend by username"

@@ -17,7 +17,7 @@ import {
 import { ReactionStack, ReactionsListModal } from '@/features/profile/NowPlayingReactions'
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { useClickOutside } from '@/hooks/useClickOutside'
-import { trackTextFadeClass } from '@/lib/ui'
+import { trackTextFadeClass, useColorPopText } from '@/lib/ui'
 import type { NowPlaying, NowPlayingReaction, SpotifySearchTrack } from '@/lib/types'
 
 function MusicIcon() {
@@ -162,6 +162,7 @@ function SearchResultRow({
 }
 
 export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
+  const sectionTitleClass = useColorPopText('text-text-secondary')
   const searchRef = useRef<HTMLDivElement>(null)
   const [current, setCurrent] = useState<NowPlaying | null>(null)
   const [reactions, setReactions] = useState<NowPlayingReaction[]>([])
@@ -277,7 +278,7 @@ export function PoweringLiftSection({ disabled }: { disabled?: boolean }) {
         <span className="text-accent">
           <MusicIcon />
         </span>
-        <h2 className="text-sm font-medium text-text-secondary">What&apos;s powering your Lift?</h2>
+        <h2 className={`text-sm font-medium ${sectionTitleClass}`}>What&apos;s powering your Lift?</h2>
         <InfoPopover ariaLabel="How sharing works" size="sm">
           <p className="text-sm text-text-secondary leading-relaxed">
             Search for a song to share with your friends. It appears next to your username on their

@@ -19,10 +19,11 @@ export async function updateProfileAppearance(
   userId: string,
   theme: ThemeMode,
   accentColor: string,
+  colorPop: boolean,
 ): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')
-    .update({ theme, accent_color: accentColor })
+    .update({ theme, accent_color: accentColor, color_pop: colorPop })
     .eq('id', userId)
     .select()
     .single()
@@ -80,9 +81,11 @@ export async function eraseAllWorkoutData(userId: string): Promise<void> {
 export function normalizeProfile(profile: Profile | null): {
   theme: ThemeMode
   accentColor: string
+  colorPop: boolean
 } {
   return {
     theme: profile?.theme === 'dark' ? 'dark' : 'light',
     accentColor: profile?.accent_color ?? DEFAULT_ACCENT,
+    colorPop: profile?.color_pop ?? false,
   }
 }

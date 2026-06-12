@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useColorPopText } from '@/lib/ui'
 import {
   getStoredNavFrom,
   isNavTabActive,
@@ -16,6 +17,7 @@ const tabs: { to: string; id: NavTab; label: string; icon: typeof HomeIcon }[] =
 
 export function BottomNav() {
   const { pathname, state } = useLocation()
+  const inactiveTabClass = useColorPopText('text-text-secondary')
   const navFrom = navFromState(state) ?? getStoredNavFrom()
 
   return (
@@ -30,7 +32,7 @@ export function BottomNav() {
               aria-current={active ? 'page' : undefined}
               className={[
                 'flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
-                active ? 'text-accent' : 'text-text-secondary',
+                active ? 'text-accent' : inactiveTabClass,
               ].join(' ')}
             >
               <Icon active={active} />

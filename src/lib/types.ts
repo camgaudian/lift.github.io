@@ -18,6 +18,7 @@ export interface Profile {
   unit_preference: WeightUnit
   theme: ThemeMode
   accent_color: string
+  color_pop: boolean
   hide_add_friend_warning: boolean
   featured_milestone_category: MilestoneCategoryId | null
   created_at: string
