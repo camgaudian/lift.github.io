@@ -63,7 +63,7 @@ These files describe the full current schema. Run them in order on a **new** pro
    - `003_seed_exercises.sql` — built-in exercise library
    - `004_functions.sql` — RPCs and helper functions
 
-For Spotify now-playing, also complete [SPOTIFY_SETUP.md](SPOTIFY_SETUP.md) (Edge Function deploy; schema is already in the files above).
+For the now-playing song feature, also complete [MUSIC_SEARCH_SETUP.md](MUSIC_SEARCH_SETUP.md) (Edge Function deploy; schema is already in the files above).
 
 For incremental changes on an existing database, add a new numbered migration (e.g. `005_…sql`) rather than editing these reference files.
 

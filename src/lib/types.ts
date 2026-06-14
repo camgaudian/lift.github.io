@@ -48,7 +48,7 @@ export type ReactToNowPlayingResult =
   | { ok: true; reaction: string | null }
   | { ok: false; error: string }
 
-export interface SpotifySearchTrack {
+export interface MusicSearchTrack {
   track_id: string
   title: string
   artist: string

@@ -1,5 +1,5 @@
 
-[functions.spotify-search]
+[functions.music-search]
 verify_jwt = true
 
 [functions.send-feedback]

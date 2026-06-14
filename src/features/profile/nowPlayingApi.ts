@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import type {
+  MusicSearchTrack,
   NowPlaying,
   NowPlayingReaction,
   ReactToNowPlayingResult,
-  SpotifySearchTrack,
 } from '@/lib/types'
 
 export async function fetchMyNowPlaying(): Promise<NowPlaying | null> {
@@ -12,7 +12,7 @@ export async function fetchMyNowPlaying(): Promise<NowPlaying | null> {
   return (data as NowPlaying | null) ?? null
 }
 
-export async function setNowPlaying(track: SpotifySearchTrack): Promise<NowPlaying> {
+export async function setNowPlaying(track: MusicSearchTrack): Promise<NowPlaying> {
   const { data, error } = await supabase.rpc('set_now_playing', {
     p_track_id: track.track_id,
     p_title: track.title,
@@ -46,13 +46,28 @@ export async function reactToNowPlaying(
   return data as ReactToNowPlayingResult
 }
 
-export async function searchSpotifyTracks(query: string): Promise<SpotifySearchTrack[]> {
-  const { data, error } = await supabase.functions.invoke('spotify-search', {
+async function readFunctionError(error: unknown): Promise<string | null> {
+  if (!error || typeof error !== 'object' || !('context' in error)) return null
+  const response = (error as { context: unknown }).context
+  if (!(response instanceof Response)) return null
+  try {
+    const payload = (await response.clone().json()) as { error?: string; message?: string }
+    return payload.error ?? payload.message ?? null
+  } catch {
+    return null
+  }
+}
+
+export async function searchMusicTracks(query: string): Promise<MusicSearchTrack[]> {
+  const { data, error } = await supabase.functions.invoke('music-search', {
     body: { q: query },
   })
-  if (error) throw error
+  if (error) {
+    const detail = await readFunctionError(error)
+    throw new Error(detail ?? 'Search failed')
+  }
   if (data?.error) throw new Error(data.error)
-  return (data?.tracks ?? []) as SpotifySearchTrack[]
+  return (data?.tracks ?? []) as MusicSearchTrack[]
 }
 
 function hoursLeft(expiresAt: string): number {

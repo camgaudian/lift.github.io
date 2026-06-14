@@ -128,7 +128,7 @@ CREATE TABLE friendships (
   CHECK (user_id <> friend_id)
 );
 
--- Now playing (Spotify track shared with friends for 24 hours)
+-- Now playing (song shared with friends for 24 hours)
 
 CREATE TABLE user_now_playing (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
