@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import {
   fetchActiveWorkout,
   startEmptyWorkout,
   startWorkoutFromTemplate,
-  createCompletedWorkout,
+  createPastWorkoutShell,
 } from '@/features/workouts/workoutApi'
 import { fetchTemplates } from '@/features/templates/templateApi'
 import { AppIcon } from '@/components/AppIcon'
@@ -15,6 +16,8 @@ import {
   fetchFunStats,
 } from '@/lib/stats'
 import { StartWorkoutModal } from '@/features/dashboard/StartWorkoutModal'
+import { UpdatesPopup } from '@/features/dashboard/UpdatesPopup'
+import { fetchProfile } from '@/features/settings/profileApi'
 import { InstallBanner } from '@/features/dashboard/InstallBanner'
 import { formatVolume } from '@/lib/format'
 import { Card } from '@/components/Card'
@@ -26,6 +29,7 @@ import { useColorPopText } from '@/lib/ui'
 import type { FunStats, WorkoutTemplate } from '@/lib/types'
 
 export function DashboardPage() {
+  const { user } = useAuth()
   const { unit, displayName, loading: profileLoading } = useProfile()
   const { accentColor } = useTheme()
   const usernameClass = useColorPopText('text-text-secondary')
@@ -40,19 +44,22 @@ export function DashboardPage() {
   const [postStarted, setPostStarted] = useState('')
   const [postCompleted, setPostCompleted] = useState('')
   const [startingWorkout, setStartingWorkout] = useState(false)
+  const [showUpdatesPopup, setShowUpdatesPopup] = useState(false)
 
   useEffect(() => {
     Promise.all([
       fetchFunStats(),
       fetchActiveWorkout(),
       fetchTemplates(),
-    ]).then(([s, active, tmpl]) => {
+      user ? fetchProfile(user.id) : Promise.resolve(null),
+    ]).then(([s, active, tmpl, profile]) => {
       setStats(s)
       setActiveWorkout(active)
       setTemplates(tmpl)
+      setShowUpdatesPopup(Boolean(profile?.show_updates_popup))
       setLoading(false)
     }).catch(() => setLoading(false))
-  }, [])
+  }, [user?.id])
 
   useEffect(() => {
     const templateId = searchParams.get('template')
@@ -78,12 +85,14 @@ export function DashboardPage() {
   }
 
   const handlePostLog = async () => {
-    if (!postStarted || !postCompleted) return
-    const w = await createCompletedWorkout(
-      new Date(postStarted).toISOString(),
-      new Date(postCompleted).toISOString(),
-    )
-    navigate(`/workout/${w.id}`, { state: { navFrom: 'home' } })
+    if (!postStarted || !postCompleted || activeWorkout) return
+    const w = await createPastWorkoutShell(new Date(postStarted).toISOString())
+    navigate(`/workout/${w.id}`, {
+      state: {
+        navFrom: 'home',
+        pendingCompletedAt: new Date(postCompleted).toISOString(),
+      },
+    })
   }
 
   if (loading) return <DashboardSkeleton />
@@ -141,11 +150,26 @@ export function DashboardPage() {
         </>
       )}
 
-      <Button variant="secondary" fullWidth onClick={() => setShowPostLog(!showPostLog)}>
+      <Button
+        variant="secondary"
+        fullWidth
+        onClick={() => setShowPostLog(!showPostLog)}
+        disabled={!!activeWorkout}
+      >
         {showPostLog ? 'Cancel post-log' : 'Log past workout'}
       </Button>
 
-      {showPostLog && (
+      {activeWorkout && (
+        <p className="text-sm text-text-secondary text-center">
+          Finish or discard your current workout before logging a past one.
+        </p>
+      )}
+
+      {showUpdatesPopup && user && (
+        <UpdatesPopup userId={user.id} onDismissed={() => setShowUpdatesPopup(false)} />
+      )}
+
+      {showPostLog && !activeWorkout && (
         <Card className="flex flex-col gap-3">
           <Input
             label="Started"

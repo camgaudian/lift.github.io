@@ -1,5 +1,5 @@
 import { Card } from '@/components/Card'
-import { Modal } from '@/components/Modal'
+import { BottomSheet } from '@/components/BottomSheet'
 import { formatExercisePreview } from '@/lib/format'
 import { sectionHeadingClass } from '@/lib/ui'
 import type { WorkoutTemplate } from '@/lib/types'
@@ -38,7 +38,7 @@ export function StartWorkoutModal({
   onStart: (templateId?: string) => void
 }) {
   return (
-    <Modal title="Start workout" onClose={onClose} showCloseButton>
+    <BottomSheet title="Start workout" onClose={onClose} showCloseButton>
       <p className="text-sm text-text-secondary">
         Pick a saved template or start with a blank slate.
       </p>
@@ -100,6 +100,6 @@ export function StartWorkoutModal({
           </p>
         </Card>
       )}
-    </Modal>
+    </BottomSheet>
   )
 }

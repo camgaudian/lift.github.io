@@ -3,6 +3,10 @@ import { fetchLastSessionForExercise } from '@/lib/stats'
 import { useProfile } from '@/contexts/ProfileContext'
 import { formatSetsList } from '@/lib/format'
 import { displayToLb, lbToDisplay } from '@/lib/units'
+import {
+  clampReps,
+  clampWeightLb,
+} from '@/lib/workoutLimits'
 import { useDragReorder, reorderList } from '@/lib/useDragReorder'
 import type { ExerciseType, LastSessionData, StrengthSet } from '@/lib/types'
 import { Button } from '@/components/Button'
@@ -22,7 +26,8 @@ import { formatDuration, parseDuration } from '@/lib/format'
 const AUTOSAVE_DELAY_MS = 1200
 
 export interface ExerciseBlockHandle {
-  save: () => Promise<void>
+  save: (workoutExerciseIdOverride?: string) => Promise<void>
+  validate: () => boolean
 }
 
 interface ExerciseBlockProps {
@@ -35,6 +40,9 @@ interface ExerciseBlockProps {
   initialCardio?: { duration_seconds: number; distance_miles: number | null; calories: number | null }
   onRemove?: () => void | Promise<void>
   readOnly?: boolean
+  persistenceMode?: 'auto' | 'manual'
+  sessionNoteReadOnly?: boolean
+  onDirty?: () => void
 }
 
 function ExerciseRemoveButton({
@@ -93,8 +101,36 @@ function ExerciseRemoveButton({
 
 type SetRow = StrengthSet & { rowKey: string; lastPlaceholderIndex?: number }
 
-function hasSetData(set: StrengthSet): boolean {
-  return set.reps > 0 || set.weight_lb > 0 || (set.added_weight_lb ?? 0) > 0
+function isSetEmpty(set: StrengthSet, exerciseType: ExerciseType): boolean {
+  if (exerciseType === 'bodyweight') {
+    return set.reps <= 0 && (set.added_weight_lb ?? 0) <= 0
+  }
+  return set.reps <= 0 && set.weight_lb <= 0
+}
+
+function isSetComplete(set: StrengthSet, exerciseType: ExerciseType): boolean {
+  if (exerciseType === 'bodyweight') {
+    return set.reps > 0
+  }
+  return set.reps > 0 && set.weight_lb > 0
+}
+
+function isSetPartial(set: StrengthSet, exerciseType: ExerciseType): boolean {
+  return !isSetEmpty(set, exerciseType) && !isSetComplete(set, exerciseType)
+}
+
+function invalidSetFields(
+  set: StrengthSet,
+  exerciseType: ExerciseType,
+): Array<'weight' | 'reps' | 'added'> {
+  if (!isSetPartial(set, exerciseType)) return []
+  if (exerciseType === 'bodyweight') {
+    return set.reps <= 0 ? ['reps'] : []
+  }
+  const missing: Array<'weight' | 'reps'> = []
+  if (set.weight_lb <= 0) missing.push('weight')
+  if (set.reps <= 0) missing.push('reps')
+  return missing
 }
 
 function reorderSets(sets: SetRow[], from: number, to: number): SetRow[] {
@@ -114,21 +150,20 @@ function toSetRows(sets: StrengthSet[], nextRowKey: () => string): SetRow[] {
 
 function resolveSetsForSave(
   sets: SetRow[],
-  lastSession: LastSessionData | null,
+  exerciseType: ExerciseType,
 ): Omit<StrengthSet, 'id' | 'workout_exercise_id'>[] {
   return sets
-    .filter(hasSetData)
-    .map((set, index) => {
-      const last = lastSession?.sets?.[set.lastPlaceholderIndex ?? index]
-      return {
-        set_number: index + 1,
-        reps: set.reps > 0 ? set.reps : (last?.reps ?? 0),
-        weight_lb: set.weight_lb > 0 ? set.weight_lb : (last?.weight_lb ?? 0),
-        added_weight_lb: set.added_weight_lb ?? last?.added_weight_lb ?? null,
-        is_warmup: set.is_warmup,
-      }
-    })
-    .filter((set) => set.reps > 0)
+    .filter((set) => !isSetEmpty(set, exerciseType))
+    .map((set, index) => ({
+      set_number: index + 1,
+      reps: clampReps(set.reps),
+      weight_lb: clampWeightLb(set.weight_lb),
+      added_weight_lb:
+        set.added_weight_lb != null && set.added_weight_lb > 0
+          ? clampWeightLb(set.added_weight_lb)
+          : set.added_weight_lb,
+      is_warmup: set.is_warmup,
+    }))
 }
 
 export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>(function ExerciseBlock(
@@ -142,6 +177,9 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     initialCardio,
     onRemove,
     readOnly = false,
+    persistenceMode = 'auto',
+    sessionNoteReadOnly = false,
+    onDirty,
   },
   ref,
 ) {
@@ -173,6 +211,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [showValidation, setShowValidation] = useState(false)
 
   // Refs mirror the latest values so debounced autosave and flush-on-exit never
   // persist stale state from an old closure.
@@ -183,6 +222,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   const distanceRef = useRef(distance)
   const caloriesRef = useRef(calories)
   const readOnlyRef = useRef(readOnly)
+  const persistenceModeRef = useRef(persistenceMode)
   const dirtyRef = useRef(false)
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   setsRef.current = sets
@@ -191,6 +231,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   distanceRef.current = distance
   caloriesRef.current = calories
   readOnlyRef.current = readOnly
+  persistenceModeRef.current = persistenceMode
 
   useEffect(() => {
     fetchLastSessionForExercise(exerciseId).then((data) => {
@@ -239,31 +280,38 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
       onUpdate(0)
       return
     }
-    onUpdate(displayToLb(Number(raw), unit))
+    onUpdate(clampWeightLb(displayToLb(Number(raw), unit)))
+  }
+
+  const handleRepsInput = (index: number, raw: string) => {
+    updateSet(index, 'reps', clampReps(Number(raw)))
   }
 
   // Persist current values without touching React state, so it is safe to call
   // during unmount / tab-hide.
-  const persist = async () => {
+  const persist = async (workoutExerciseIdOverride?: string) => {
+    const weId = workoutExerciseIdOverride ?? workoutExerciseId
     if (exerciseType === 'cardio') {
-      await upsertCardioEntry(workoutExerciseId, {
+      await upsertCardioEntry(weId, {
         duration_seconds: parseDuration(durationRef.current),
         distance_miles: distanceRef.current ? Number(distanceRef.current) : null,
         calories: caloriesRef.current ? Number(caloriesRef.current) : null,
       })
     } else {
       await upsertStrengthSets(
-        workoutExerciseId,
-        resolveSetsForSave(setsRef.current, lastSessionRef.current),
+        weId,
+        resolveSetsForSave(setsRef.current, exerciseType),
       )
-      await upsertSessionNote(workoutExerciseId, noteRef.current)
+      if (!sessionNoteReadOnly) {
+        await upsertSessionNote(weId, noteRef.current)
+      }
     }
   }
   const persistRef = useRef(persist)
   persistRef.current = persist
 
   // Stateful save used by autosave and by the parent's "Complete workout" flow.
-  const save = async () => {
+  const save = async (workoutExerciseIdOverride?: string) => {
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current)
       autosaveTimerRef.current = null
@@ -272,9 +320,11 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     setSaved(false)
     setSaveError(null)
     try {
-      await persistRef.current()
+      await persistRef.current(workoutExerciseIdOverride)
       dirtyRef.current = false
-      setSaved(true)
+      if (persistenceModeRef.current === 'auto') {
+        setSaved(true)
+      }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save')
       throw err
@@ -285,11 +335,25 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   const saveRef = useRef(save)
   saveRef.current = save
 
-  useImperativeHandle(ref, () => ({ save: () => saveRef.current() }), [])
+  const validate = () => {
+    const partial = setsRef.current.some((set) => isSetPartial(set, exerciseType))
+    if (partial) setShowValidation(true)
+    return !partial
+  }
 
-  const scheduleAutosave = () => {
+  useImperativeHandle(ref, () => ({
+    save: (workoutExerciseIdOverride?: string) => saveRef.current(workoutExerciseIdOverride),
+    validate,
+  }), [exerciseType])
+
+  const markDirty = () => {
     if (readOnly) return
+    setShowValidation(false)
     dirtyRef.current = true
+    if (persistenceModeRef.current === 'manual') {
+      onDirty?.()
+      return
+    }
     setSaved(false)
     setSaveError(null)
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
@@ -299,7 +363,12 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     }, AUTOSAVE_DELAY_MS)
   }
 
+  const scheduleAutosave = () => {
+    markDirty()
+  }
+
   const flushAutosave = () => {
+    if (persistenceModeRef.current === 'manual') return
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current)
       autosaveTimerRef.current = null
@@ -312,6 +381,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState !== 'hidden') return
+      if (persistenceModeRef.current === 'manual') return
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current)
         autosaveTimerRef.current = null
@@ -323,6 +393,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     document.addEventListener('visibilitychange', onVisibility)
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
+      if (persistenceModeRef.current === 'manual') return
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
       if (!readOnlyRef.current && dirtyRef.current) {
         void persistRef.current().catch(() => {})
@@ -363,6 +434,9 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     scheduleAutosave()
   }
 
+  const fieldError = (set: SetRow, field: 'weight' | 'reps' | 'added') =>
+    showValidation && invalidSetFields(set, exerciseType).includes(field)
+
   const { listRef: setListRef, draggingKey, isDragging, startDrag, getRowStyle } = useDragReorder({
     keys: sets.map((set) => set.rowKey),
     disabled: readOnly,
@@ -373,7 +447,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
   })
 
   const autosaveStatus =
-    !readOnly && (saveError || saving || saved) ? (
+    persistenceMode === 'auto' && !readOnly && (saveError || saving || saved) ? (
       <span className="shrink-0 text-xs">
         {saveError ? (
           <span className="text-danger">{saveError}</span>
@@ -455,7 +529,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
         </div>
       )}
 
-      {!readOnly && (
+      {!readOnly && !sessionNoteReadOnly && (
         <div>
           <label className={`text-sm ${mutedTextClass}`}>Note for next session</label>
           <textarea
@@ -471,7 +545,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
         </div>
       )}
 
-      {readOnly && note && (
+      {(readOnly || sessionNoteReadOnly) && note && (
         <div>
           <p className="text-xs text-text-secondary">Note</p>
           <p className="text-sm">{note}</p>
@@ -512,7 +586,8 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                   inputMode="numeric"
                   placeholder={placeholderFromLast(set, 'reps') ?? 'reps'}
                   value={set.reps || ''}
-                  onChange={(e) => updateSet(idx, 'reps', Number(e.target.value))}
+                  error={fieldError(set, 'reps')}
+                  onChange={(e) => handleRepsInput(idx, e.target.value)}
                   onBlur={flushAutosave}
                   disabled={readOnly}
                   className="flex-1"
@@ -522,6 +597,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                   inputMode="decimal"
                   placeholder={placeholderFromLast(set, 'added') ?? `added ${unit}`}
                   value={set.added_weight_lb != null && set.added_weight_lb > 0 ? weightInputValue(set.added_weight_lb) : ''}
+                  error={fieldError(set, 'added')}
                   onChange={(e) =>
                     handleWeightInput(e.target.value, (lb) =>
                       updateSet(idx, 'added_weight_lb', lb > 0 ? lb : null),
@@ -539,6 +615,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                   inputMode="decimal"
                   placeholder={placeholderFromLast(set, 'weight') ?? unit}
                   value={weightInputValue(set.weight_lb)}
+                  error={fieldError(set, 'weight')}
                   onChange={(e) => handleWeightInput(e.target.value, (lb) => updateSet(idx, 'weight_lb', lb))}
                   onBlur={flushAutosave}
                   disabled={readOnly}
@@ -550,7 +627,8 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                   inputMode="numeric"
                   placeholder={placeholderFromLast(set, 'reps') ?? 'reps'}
                   value={set.reps || ''}
-                  onChange={(e) => updateSet(idx, 'reps', Number(e.target.value))}
+                  error={fieldError(set, 'reps')}
+                  onChange={(e) => handleRepsInput(idx, e.target.value)}
                   onBlur={flushAutosave}
                   disabled={readOnly}
                   className="w-20"

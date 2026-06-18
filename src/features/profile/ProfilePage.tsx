@@ -1,7 +1,9 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useProfile } from '@/contexts/ProfileContext'
 import { AddFriendIcon } from '@/components/AddFriendIcon'
+import { AvatarImage } from '@/components/AvatarImage'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { Input } from '@/components/Input'
@@ -20,8 +22,10 @@ import { FriendNoTrackInline } from '@/features/profile/FriendNoTrackInline'
 import { FriendNowPlayingInline } from '@/features/profile/FriendNowPlayingInline'
 import { FriendProfileModal } from '@/features/profile/FriendProfileModal'
 import { NotificationCenter } from '@/features/profile/NotificationCenter'
+import { AvatarUploadSheet } from '@/features/profile/AvatarUploadSheet'
 import { PoweringLiftSection } from '@/features/profile/PoweringLiftSection'
 import { fetchProfile, updateProfileSettings } from '@/features/settings/profileApi'
+import { getAvatarUrl } from '@/features/profile/avatarApi'
 import { formatUsername } from '@/lib/format'
 import { useColorPopText } from '@/lib/ui'
 import type { FriendEntry, FriendSummary, PendingFriendRequest } from '@/lib/types'
@@ -43,6 +47,25 @@ function FriendsIcon() {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 00-3-3.87" />
       <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  )
+}
+
+function PencilIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   )
 }
@@ -72,10 +95,105 @@ function SettingsGearLink({ linkClass }: { linkClass: string }) {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Profile card (left column of the 2-column header row)
+// ---------------------------------------------------------------------------
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function formatJoinDate(iso: string): string {
+  const d = new Date(iso)
+  return `Joined ${MONTHS[d.getMonth()]}, ${d.getFullYear()}`
+}
+
+function ProfileCard({
+  userId,
+  displayName,
+  accentColor,
+  avatarUrl,
+  avatarPath,
+  joinedAt,
+  onAvatarSaved,
+  onAvatarRemoved,
+}: {
+  userId: string
+  displayName: string
+  accentColor: string
+  avatarUrl: string | null
+  avatarPath: string | null
+  joinedAt: string | null
+  onAvatarSaved: (url: string) => void
+  onAvatarRemoved: () => void
+}) {
+  const [showUpload, setShowUpload] = useState(false)
+
+  return (
+    <>
+      <Card padding="sm" className="relative overflow-hidden flex items-center gap-3 px-4 py-2.5">
+        {/* Accent bar — flush left edge, clipped by card's border radius */}
+        <div
+          className="absolute inset-y-0 left-0 w-[3px]"
+          style={{ backgroundColor: accentColor }}
+        />
+        {/* Avatar + pencil edit button */}
+        <div className="relative shrink-0">
+          <AvatarImage
+            avatarUrl={avatarUrl}
+            displayName={displayName}
+            accentColor={accentColor}
+            size="lg"
+          />
+          <button
+            type="button"
+            aria-label="Edit profile photo"
+            onClick={() => setShowUpload(true)}
+            className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-surface-secondary text-text-secondary transition-colors hover:bg-border hover:text-text [box-shadow:0_0_0_3px_var(--color-surface)]"
+          >
+            <PencilIcon />
+          </button>
+        </div>
+
+        {/* Name + join date */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-semibold">
+            {displayName ? formatUsername(displayName) : <span className="text-text-secondary italic">No name set</span>}
+          </p>
+          {joinedAt && (
+            <p className="truncate text-xs text-text-secondary">{formatJoinDate(joinedAt)}</p>
+          )}
+        </div>
+      </Card>
+
+      {showUpload && (
+        <AvatarUploadSheet
+          userId={userId}
+          hasExistingAvatar={Boolean(avatarPath)}
+          onClose={() => setShowUpload(false)}
+          onSaved={(url) => {
+            setShowUpload(false)
+            onAvatarSaved(url)
+          }}
+          onRemoved={() => {
+            setShowUpload(false)
+            onAvatarRemoved()
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// ProfilePage
+// ---------------------------------------------------------------------------
+
 export function ProfilePage() {
   const { user } = useAuth()
+  const { displayName, avatarPath, avatarUrl, setAvatarUrl, setAvatarPath } = useProfile()
   const sectionTitleClass = useColorPopText('text-text-secondary')
   const addButtonAccentClass = useColorPopText('text-accent')
+  const [accentColor, setAccentColor] = useState('#0071e3')
+  const [joinedAt, setJoinedAt] = useState<string | null>(null)
   const [summary, setSummary] = useState<FriendSummary>({ friends: [], incoming: [], outgoing: [] })
   const [friendsLoading, setFriendsLoading] = useState(true)
   const [hideAddFriendWarning, setHideAddFriendWarning] = useState(false)
@@ -106,6 +224,8 @@ export function ProfilePage() {
       ])
       setSummary(friendData)
       setHideAddFriendWarning(Boolean(profile?.hide_add_friend_warning))
+      if (profile?.accent_color) setAccentColor(profile.accent_color)
+      if (profile?.created_at) setJoinedAt(profile.created_at)
     } catch {
       setActionError('Failed to load friends.')
     } finally {
@@ -194,6 +314,11 @@ export function ProfilePage() {
     }
   }
 
+  const getFriendAvatarUrl = (friend: FriendEntry): string | null => {
+    if (!friend.avatar_path) return null
+    return getAvatarUrl(friend.avatar_path)
+  }
+
   const hasPending = summary.outgoing.length > 0
   const orderedFriends = [
     ...summary.friends.filter((friend) => friend.now_playing),
@@ -209,7 +334,31 @@ export function ProfilePage() {
         <SettingsGearLink linkClass={sectionTitleClass} />
       </div>
 
-      <NotificationCenter disabled={!user} onFriendsChanged={loadFriends} />
+      {/* 2-column header row: profile card (3/4) + notification bell (1/4) */}
+      <div className="flex gap-3">
+        <div className="flex-[3] min-w-0">
+          {user ? (
+            <ProfileCard
+              userId={user.id}
+              displayName={displayName}
+              accentColor={accentColor}
+              avatarUrl={avatarUrl}
+              avatarPath={avatarPath}
+              joinedAt={joinedAt}
+              onAvatarSaved={(url) => setAvatarUrl(url)}
+              onAvatarRemoved={() => setAvatarPath(null)}
+            />
+          ) : (
+            <Card padding="sm" className="flex items-center gap-3 px-4 py-2.5 h-full">
+              <div className="w-16 h-16 rounded-full bg-surface-secondary shrink-0" />
+              <p className="text-sm text-text-secondary">Sign in to see your profile.</p>
+            </Card>
+          )}
+        </div>
+        <div className="flex-[1] min-w-0">
+          <NotificationCenter disabled={!user} onFriendsChanged={loadFriends} />
+        </div>
+      </div>
 
       <PoweringLiftSection disabled={!user} />
 
@@ -266,6 +415,7 @@ export function ProfilePage() {
             <SkeletonGroup className="flex flex-col gap-1.5">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex min-h-16 items-center gap-3 rounded-xl px-3.5 py-2">
+                  <Skeleton className="h-8 w-8 rounded-full shrink-0" />
                   <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <Skeleton className="h-4 w-28" />
                     <Skeleton className="h-3 w-40" />
@@ -289,11 +439,19 @@ export function ProfilePage() {
                 <li key={friend.user_id} className="w-full min-h-16">
                   <button
                     type="button"
-                    className="flex h-full min-h-16 w-full cursor-pointer items-center gap-3 rounded-xl py-2 pl-3.5 pr-2 text-left transition-[filter] hover:brightness-[0.97] active:brightness-[0.94]"
+                    className="flex h-full min-h-16 w-full cursor-pointer items-center gap-2 rounded-xl py-2 pl-2.5 pr-2 text-left transition-[filter] hover:brightness-[0.97] active:brightness-[0.94]"
                     style={{ backgroundColor: `${friend.accent_color}18` }}
                     aria-label={`View ${formatUsername(friend.display_name)} profile`}
                     onClick={() => setSelectedFriend(friend)}
                   >
+                    {/* Avatar on left */}
+                    <AvatarImage
+                      avatarUrl={getFriendAvatarUrl(friend)}
+                      displayName={friend.display_name}
+                      accentColor={friend.accent_color}
+                      size="md"
+                    />
+
                     <div className="pointer-events-none min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">
                         {formatUsername(friend.display_name)}

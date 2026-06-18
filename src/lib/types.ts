@@ -20,7 +20,9 @@ export interface Profile {
   accent_color: string
   color_pop: boolean
   hide_add_friend_warning: boolean
+  show_updates_popup: boolean
   featured_milestone_category: MilestoneCategoryId | null
+  avatar_path: string | null
   created_at: string
   updated_at: string
 }
@@ -40,6 +42,7 @@ export interface NowPlayingReaction {
   reactor_id: string
   display_name: string | null
   accent_color: string
+  avatar_path: string | null
   emoji: string
   now_playing?: NowPlaying | null
 }
@@ -61,6 +64,7 @@ export interface FriendEntry {
   display_name: string | null
   accent_color: string
   featured_milestone_category: MilestoneCategoryId | null
+  avatar_path: string | null
   now_playing?: NowPlaying | null
 }
 
@@ -107,6 +111,7 @@ interface NotificationBase {
   id: string
   sender_id: string
   sender_name: string | null
+  sender_avatar_path: string | null
   created_at: string
 }
 
@@ -220,6 +225,7 @@ export interface ExercisePrRankingEntry {
   user_id: string
   display_name: string | null
   accent_color: string
+  avatar_path: string | null
   is_self: boolean
   best_weight_lb: number
   best_reps: number

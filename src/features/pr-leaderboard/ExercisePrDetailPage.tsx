@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { BackButton } from '@/components/BackButton'
+import { AvatarImage } from '@/components/AvatarImage'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { getAvatarUrl } from '@/features/profile/avatarApi'
 import { fetchExercisePrRankings } from '@/lib/stats'
 import { formatUsername } from '@/lib/format'
 import { formatWeight } from '@/lib/units'
@@ -92,9 +94,15 @@ function RankingRow({
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-text-secondary text-sm">#{rank}</span>
+            <span className="shrink-0 text-text-secondary text-sm">#{rank}</span>
+            <AvatarImage
+              avatarUrl={entry.avatar_path ? getAvatarUrl(entry.avatar_path) : null}
+              displayName={entry.display_name}
+              accentColor={selfAccentColor}
+              size="sm"
+            />
             <span className="font-medium truncate">{formatUsername(entry.display_name)}</span>
-            <span className="text-xs text-text-secondary">(you)</span>
+            <span className="shrink-0 text-xs text-text-secondary">(you)</span>
           </div>
           <p className="shrink-0 font-semibold">
             {formatWeight(entry.best_weight_lb, unit)} × {entry.best_reps}
@@ -108,7 +116,13 @@ function RankingRow({
     <Card padding="sm" style={{ backgroundColor: `${entry.accent_color}23` }}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-text-secondary text-sm">#{rank}</span>
+          <span className="shrink-0 text-text-secondary text-sm">#{rank}</span>
+          <AvatarImage
+            avatarUrl={entry.avatar_path ? getAvatarUrl(entry.avatar_path) : null}
+            displayName={entry.display_name}
+            accentColor={entry.accent_color}
+            size="sm"
+          />
           <span className="font-medium truncate">{formatUsername(entry.display_name)}</span>
         </div>
         <p className="shrink-0 font-semibold">

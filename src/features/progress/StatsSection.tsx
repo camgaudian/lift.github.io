@@ -9,6 +9,7 @@ import { formatWeight } from '@/lib/units'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Card } from '@/components/Card'
+import { CountUp } from '@/components/CountUp'
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
 import {
@@ -70,16 +71,28 @@ export function StatsSection() {
 
   if (loading) return <StatsSkeleton />
 
-  const funCards = [
-    { label: 'Total workouts', value: stats?.total_workouts ?? 0 },
-    { label: 'Total sets', value: stats?.total_sets ?? 0 },
-    { label: 'Total reps', value: (stats?.total_reps ?? 0).toLocaleString() },
+  const streakDays = stats?.streak_days ?? 0
+  const streakUnit = streakDays === 1 ? 'day' : 'days'
+
+  const funCards: { label: string; value: number; format: (n: number) => string }[] = [
+    { label: 'Total workouts', value: stats?.total_workouts ?? 0, format: (n) => String(n) },
+    { label: 'Total sets', value: stats?.total_sets ?? 0, format: (n) => String(n) },
+    { label: 'Total reps', value: stats?.total_reps ?? 0, format: (n) => n.toLocaleString() },
     {
       label: 'Total cardio time',
-      value: formatDuration(stats?.total_cardio_seconds ?? 0),
+      value: stats?.total_cardio_seconds ?? 0,
+      format: (n) => (n > 0 ? formatDuration(n) : '—'),
     },
-    { label: 'Heaviest single rep', value: stats?.heaviest_set_lb ? formatWeight(stats.heaviest_set_lb, unit) : '—' },
-    { label: 'Current streak', value: `${stats?.streak_days ?? 0} days` },
+    {
+      label: 'Heaviest single rep',
+      value: stats?.heaviest_set_lb ?? 0,
+      format: (n) => (n > 0 ? formatWeight(n, unit) : '—'),
+    },
+    {
+      label: 'Current streak',
+      value: streakDays,
+      format: (n) => `${n} ${streakUnit}`,
+    },
   ]
 
   return (
@@ -92,7 +105,9 @@ export function StatsSection() {
           {funCards.map((c) => (
             <Card key={c.label} padding="sm">
               <p className="text-xs text-text-secondary">{c.label}</p>
-              <p className="mt-1 font-semibold">{c.value}</p>
+              <p className="mt-1 font-semibold">
+                <CountUp value={c.value} format={c.format} animate />
+              </p>
             </Card>
           ))}
         </div>
@@ -100,7 +115,13 @@ export function StatsSection() {
 
       <Card>
         <h2 className="text-sm font-medium text-text-secondary mb-1">All-time volume</h2>
-        <p className="text-3xl font-semibold">{formatVolume(cumulative, unit)}</p>
+        <p className="text-3xl font-semibold">
+          <CountUp
+            value={cumulative}
+            format={(n) => formatVolume(n, unit)}
+            animate
+          />
+        </p>
         <p className="text-xs text-text-secondary mt-1">
           Sum of reps × weight across all workouts ({unit})
         </p>

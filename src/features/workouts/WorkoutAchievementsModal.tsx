@@ -1,4 +1,4 @@
-import { Modal } from '@/components/Modal'
+import { BottomSheet } from '@/components/BottomSheet'
 import { Card } from '@/components/Card'
 import { MilestoneHighlight } from '@/components/milestone-icons/MilestoneHighlight'
 import { useProfile } from '@/contexts/ProfileContext'
@@ -16,7 +16,7 @@ export function WorkoutAchievementsModal({
   const { milestones, prs } = achievements
 
   return (
-    <Modal title="New achievements!" onClose={onClose} showCloseButton scrollable>
+    <BottomSheet title="New achievements!" onClose={onClose} showCloseButton scrollable>
       <div className="flex flex-col gap-4">
         {milestones.length > 0 && (
           <section>
@@ -57,6 +57,6 @@ export function WorkoutAchievementsModal({
           </section>
         )}
       </div>
-    </Modal>
+    </BottomSheet>
   )
 }

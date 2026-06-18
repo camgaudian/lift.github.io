@@ -14,7 +14,7 @@ export function AppLayout() {
     <div className="flex h-dvh flex-col overflow-hidden">
       <main
         ref={mainRef}
-        className="mx-auto w-full max-w-lg min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-6 pt-6 safe-top"
+        className="mx-auto w-full max-w-lg min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-28 pt-6 safe-top"
       >
         <Outlet />
       </main>

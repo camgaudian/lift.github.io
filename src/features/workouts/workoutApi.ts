@@ -90,7 +90,7 @@ export async function startEmptyWorkout(): Promise<string> {
   return workout.id
 }
 
-export async function createCompletedWorkout(startedAt: string, completedAt: string): Promise<Workout> {
+export async function createPastWorkoutShell(startedAt: string): Promise<Workout> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
@@ -98,14 +98,21 @@ export async function createCompletedWorkout(startedAt: string, completedAt: str
     .from('workouts')
     .insert({
       user_id: user.id,
-      status: 'completed',
+      status: 'in_progress',
       started_at: startedAt,
-      completed_at: completedAt,
     })
     .select()
     .single()
   if (error) throw error
   return data
+}
+
+export async function updateWorkout(
+  id: string,
+  fields: { started_at?: string; completed_at?: string },
+): Promise<void> {
+  const { error } = await supabase.from('workouts').update(fields).eq('id', id)
+  if (error) throw error
 }
 
 export async function addExerciseToWorkout(
@@ -221,10 +228,43 @@ export async function upsertSessionNote(workoutExerciseId: string, note: string)
   if (error) throw error
 }
 
-export async function completeWorkout(id: string): Promise<void> {
+/** Remove session notes from prior workout instances of the same exercises. */
+export async function clearStaleSessionNotesForWorkout(workoutId: string): Promise<void> {
+  const { data: exercises, error } = await supabase
+    .from('workout_exercises')
+    .select('id, exercise_id, exercise_type')
+    .eq('workout_id', workoutId)
+  if (error) throw error
+
+  const current = (exercises ?? []).filter((e) => e.exercise_type !== 'cardio')
+  if (current.length === 0) return
+
+  const exerciseIds = [...new Set(current.map((e) => e.exercise_id))]
+  const currentWeIds = new Set(current.map((e) => e.id))
+
+  const { data: allWe, error: allErr } = await supabase
+    .from('workout_exercises')
+    .select('id')
+    .in('exercise_id', exerciseIds)
+  if (allErr) throw allErr
+
+  const staleWeIds = (allWe ?? []).map((r) => r.id).filter((id) => !currentWeIds.has(id))
+  if (staleWeIds.length === 0) return
+
+  const { error: deleteErr } = await supabase
+    .from('exercise_session_notes')
+    .delete()
+    .in('workout_exercise_id', staleWeIds)
+  if (deleteErr) throw deleteErr
+}
+
+export async function completeWorkout(id: string, completedAt?: string): Promise<void> {
   const { error } = await supabase
     .from('workouts')
-    .update({ status: 'completed' as WorkoutStatus, completed_at: new Date().toISOString() })
+    .update({
+      status: 'completed' as WorkoutStatus,
+      completed_at: completedAt ?? new Date().toISOString(),
+    })
     .eq('id', id)
   if (error) throw error
 }

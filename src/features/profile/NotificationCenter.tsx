@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
+import { AvatarImage } from '@/components/AvatarImage'
 import { Button } from '@/components/Button'
-import { Card } from '@/components/Card'
+import { BottomSheet } from '@/components/BottomSheet'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
 import { acceptFriendRequest, declineFriendRequest } from '@/features/profile/friendsApi'
+import { getAvatarUrl } from '@/features/profile/avatarApi'
 import { acceptShare, dismissShare, fetchNotifications } from '@/features/sharing/sharingApi'
 import { capitalize, formatUsername } from '@/lib/format'
-import { useColorPopText } from '@/lib/ui'
 import type { NotificationItem } from '@/lib/types'
 
 function BellIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -157,6 +158,75 @@ function NotificationDetail({
   )
 }
 
+// ---------------------------------------------------------------------------
+// Notification list — used inside the BottomSheet
+// ---------------------------------------------------------------------------
+
+function NotificationList({
+  items,
+  loading,
+  disabled,
+  onSelect,
+}: {
+  items: NotificationItem[]
+  loading: boolean
+  disabled: boolean
+  onSelect: (item: NotificationItem) => void
+}) {
+  if (disabled) {
+    return (
+      <p className="py-6 text-sm text-text-secondary text-center">
+        Sign in to see notifications.
+      </p>
+    )
+  }
+  if (loading) {
+    return (
+      <div className="flex justify-center py-10">
+        <LoadingSpinner size="inline" />
+      </div>
+    )
+  }
+  if (items.length === 0) {
+    return (
+      <p className="py-6 text-sm text-text-secondary text-center">No notifications.</p>
+    )
+  }
+  return (
+    <ul className="flex flex-col gap-1.5">
+      {items.map((item) => (
+        <li
+          key={`${item.type}-${item.id}`}
+          className="flex items-center gap-3 rounded-xl px-3.5 py-2.5"
+        >
+          <AvatarImage
+            avatarUrl={item.sender_avatar_path ? getAvatarUrl(item.sender_avatar_path) : null}
+            displayName={item.sender_name}
+            size="sm"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{formatUsername(item.sender_name)}</p>
+            <p className="truncate text-xs text-text-secondary">
+              {describe(item)} · {formatRelativeTime(item.created_at)}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => onSelect(item)}
+          >
+            Open
+          </Button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Compact bell button + BottomSheet
+// ---------------------------------------------------------------------------
+
 export function NotificationCenter({
   disabled,
   onFriendsChanged,
@@ -167,10 +237,10 @@ export function NotificationCenter({
   const [items, setItems] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [selected, setSelected] = useState<NotificationItem | null>(null)
   const [pending, setPending] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
-  const sectionTitleClass = useColorPopText('text-text-secondary')
 
   const load = useCallback(async () => {
     if (disabled) {
@@ -245,62 +315,52 @@ export function NotificationCenter({
   }
 
   return (
-    <section className="flex flex-col gap-2">
-      <div className="flex items-center gap-1.5 px-1">
-        <span className="text-accent">
+    <>
+      {/* Compact bell button — fills the right column slot */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setSheetOpen(true)}
+        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+        className={[
+          'relative flex h-full w-full flex-col items-center justify-center gap-1.5',
+          'rounded-2xl border border-border bg-surface shadow-sm',
+          'transition-colors',
+          disabled
+            ? 'opacity-40 cursor-not-allowed'
+            : 'hover:bg-surface-secondary active:bg-surface-secondary cursor-pointer',
+        ].join(' ')}
+      >
+        <span className="relative">
           <BellIcon />
+          {unreadCount > 0 && (
+            <span className="absolute -right-2 -top-2 inline-flex min-w-4 items-center justify-center rounded-full bg-accent px-1 py-0.5 text-[10px] font-bold leading-none text-white">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </span>
-        <h2 className={`text-sm font-medium ${sectionTitleClass}`}>Notifications</h2>
-        {unreadCount > 0 && (
-          <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </div>
+        <span className="text-[10px] font-medium text-text-secondary leading-none">Alerts</span>
+      </button>
 
-      <Card padding="sm" className="p-0 overflow-hidden">
-        {disabled ? (
-          <p className="px-3.5 py-4 text-sm text-text-secondary text-center">
-            Sign in to see notifications.
-          </p>
-        ) : loading ? (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner size="inline" />
-          </div>
-        ) : items.length === 0 ? (
-          <p className="px-3.5 py-4 text-sm text-text-secondary text-center">No notifications.</p>
-        ) : (
-          <ul
-            className={`flex flex-col gap-1.5 ${
-              items.length > 3 ? 'max-h-60 overflow-y-auto overscroll-contain' : ''
-            }`}
-          >
-            {items.map((item) => (
-              <li
-                key={`${item.type}-${item.id}`}
-                className="flex items-center gap-3 rounded-xl px-3.5 py-2.5"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{formatUsername(item.sender_name)}</p>
-                  <p className="truncate text-xs text-text-secondary">
-                    {describe(item)} · {formatRelativeTime(item.created_at)}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  className="shrink-0"
-                  onClick={() => {
-                    setDetailError(null)
-                    setSelected(item)
-                  }}
-                >
-                  Open
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      {sheetOpen && (
+        <BottomSheet
+          title="Notifications"
+          onClose={() => setSheetOpen(false)}
+          showCloseButton
+          scrollable
+          bodyClassName="mt-4"
+        >
+          <NotificationList
+            items={items}
+            loading={loading}
+            disabled={Boolean(disabled)}
+            onSelect={(item) => {
+              setDetailError(null)
+              setSelected(item)
+            }}
+          />
+        </BottomSheet>
+      )}
 
       {selected && (
         <NotificationDetail
@@ -312,6 +372,6 @@ export function NotificationCenter({
           onClose={() => setSelected(null)}
         />
       )}
-    </section>
+    </>
   )
 }

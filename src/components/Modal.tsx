@@ -10,6 +10,7 @@ export function Modal({
   scrollable = false,
   bodyClassName = 'mt-4',
   accentColor,
+  footer,
 }: {
   title: string
   children: ReactNode
@@ -19,12 +20,13 @@ export function Modal({
   scrollable?: boolean
   bodyClassName?: string
   accentColor?: string
+  footer?: ReactNode
 }) {
   const titleId = useId()
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center glass-scrim p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -32,7 +34,7 @@ export function Modal({
     >
       <div
         className={[
-          'w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-lg',
+          'w-full max-w-md rounded-2xl border liquid-glass-surface p-5',
           scrollable ? 'flex max-h-[min(90dvh,calc(100dvh-2rem))] flex-col' : '',
         ].join(' ')}
         style={accentColor ? ({ '--color-accent': accentColor } as CSSProperties) : undefined}
@@ -58,6 +60,7 @@ export function Modal({
         >
           {children}
         </div>
+        {footer}
         {showCloseButton && (
           <Button
             variant="secondary"

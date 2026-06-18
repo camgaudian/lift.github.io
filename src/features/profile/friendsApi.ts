@@ -10,6 +10,7 @@ function normalizeFriendEntry(entry: FriendEntry): FriendEntry {
     featured_milestone_category: isMilestoneCategoryId(entry.featured_milestone_category)
       ? entry.featured_milestone_category
       : null,
+    avatar_path: entry.avatar_path ?? null,
   }
 }
 

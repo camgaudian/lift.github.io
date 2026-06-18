@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { Button } from '@/components/Button'
-import { Modal } from '@/components/Modal'
+import { BottomSheet } from '@/components/BottomSheet'
 import { sendFeedback, type FeedbackCategory } from '@/features/settings/feedbackApi'
 
 const textareaClass =
@@ -50,19 +50,19 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
 
   if (sent) {
     return (
-      <Modal title="Thanks!" onClose={onClose}>
+      <BottomSheet title="Thanks!" onClose={onClose}>
         <p className="text-sm text-text-secondary">
           Your feedback was sent. I really appreciate you taking the time to help improve Lift.
         </p>
         <Button fullWidth className="mt-5" onClick={onClose}>
           Done
         </Button>
-      </Modal>
+      </BottomSheet>
     )
   }
 
   return (
-    <Modal title="Send feedback" onClose={() => !sending && onClose()} scrollable>
+    <BottomSheet title="Send feedback" onClose={() => !sending && onClose()} scrollable>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <p className="text-sm text-text-secondary">
           Report a bug, suggest a feature, or share anything else on your mind.
@@ -137,6 +137,6 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
           </Button>
         </div>
       </form>
-    </Modal>
+    </BottomSheet>
   )
 }

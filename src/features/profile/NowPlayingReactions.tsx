@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
+import { AvatarImage } from '@/components/AvatarImage'
 import { Modal } from '@/components/Modal'
 import { TrackArtwork } from '@/components/TrackArtwork'
 import { TrackArtworkPlaceholder } from '@/components/TrackArtworkPlaceholder'
 import { FriendNoTrackInline } from '@/features/profile/FriendNoTrackInline'
 import { FriendNowPlayingInline } from '@/features/profile/FriendNowPlayingInline'
+import { getAvatarUrl } from '@/features/profile/avatarApi'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { formatUsername } from '@/lib/format'
 import { REACTION_EMOJIS } from '@/lib/reactions'
@@ -139,22 +141,21 @@ export function ReactionsListModal({
       ) : (
         <ul className="flex flex-col gap-1.5">
           {reactions.map((reaction) => (
-            <li
-              key={reaction.reactor_id}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-              style={{ backgroundColor: `${reaction.accent_color}18` }}
-            >
-              <div className="shrink-0">
-                {reaction.now_playing ? (
-                  <TrackArtwork url={reaction.now_playing.album_art_url} size="md" />
-                ) : (
-                  <TrackArtworkPlaceholder accentColor={reaction.accent_color} size="md" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {formatUsername(reaction.display_name)}
-                </p>
+          <li
+            key={reaction.reactor_id}
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+            style={{ backgroundColor: `${reaction.accent_color}18` }}
+          >
+            <AvatarImage
+              avatarUrl={reaction.avatar_path ? getAvatarUrl(reaction.avatar_path) : null}
+              displayName={reaction.display_name}
+              accentColor={reaction.accent_color}
+              size="sm"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">
+                {formatUsername(reaction.display_name)}
+              </p>
                 {reaction.now_playing ? (
                   <FriendNowPlayingInline
                     nowPlaying={reaction.now_playing}

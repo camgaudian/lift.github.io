@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { AvatarImage } from '@/components/AvatarImage'
 import { Button } from '@/components/Button'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { Modal } from '@/components/Modal'
+import { BottomSheet } from '@/components/BottomSheet'
 import { fetchFriendSummary } from '@/features/profile/friendsApi'
+import { getAvatarUrl } from '@/features/profile/avatarApi'
 import { shareExercise, shareTemplate, shareErrorMessage } from '@/features/sharing/sharingApi'
 import { formatUsername } from '@/lib/format'
 import type { FriendEntry, ShareKind } from '@/lib/types'
@@ -63,7 +65,7 @@ export function FriendPickerModal({
   }
 
   return (
-    <Modal title={`Share "${itemName}"`} onClose={onClose} showCloseButton scrollable>
+    <BottomSheet title={`Share "${itemName}"`} onClose={onClose} showCloseButton scrollable>
       <p className="text-sm text-text-secondary">Choose a friend to share with.</p>
 
       {loading ? (
@@ -81,8 +83,14 @@ export function FriendPickerModal({
             return (
               <li
                 key={friend.user_id}
-                className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-surface-secondary"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-surface-secondary"
               >
+                <AvatarImage
+                  avatarUrl={friend.avatar_path ? getAvatarUrl(friend.avatar_path) : null}
+                  displayName={friend.display_name}
+                  accentColor={friend.accent_color}
+                  size="sm"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
                     {formatUsername(friend.display_name)}
@@ -106,6 +114,6 @@ export function FriendPickerModal({
           })}
         </ul>
       )}
-    </Modal>
+    </BottomSheet>
   )
 }

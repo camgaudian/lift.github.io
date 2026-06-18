@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { MusicPlayingIcon } from '@/components/MusicPlayingIcon'
-import { Modal } from '@/components/Modal'
+import { AvatarImage } from '@/components/AvatarImage'
+import { BottomSheet } from '@/components/BottomSheet'
 import { ShareIcon } from '@/components/ShareIcon'
 import { TrashIcon } from '@/components/TrashIcon'
 import { ShareContentModal } from '@/features/sharing/ShareContentModal'
@@ -8,6 +9,7 @@ import { TrackArtwork } from '@/components/TrackArtwork'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { MilestoneHighlight } from '@/components/milestone-icons/MilestoneHighlight'
 import { formatHoursLeft } from '@/features/profile/nowPlayingApi'
+import { getAvatarUrl } from '@/features/profile/avatarApi'
 import { formatUsername } from '@/lib/format'
 import {
   getCategoryValue,
@@ -120,12 +122,20 @@ export function FriendProfileModal({
 
   return (
     <>
-    <Modal
+    <BottomSheet
       title={formatUsername(friend.display_name)}
       onClose={onClose}
       showCloseButton
       accentColor={friend.accent_color}
       bodyClassName="mt-4 flex flex-col gap-4"
+      titleAdornment={
+        <AvatarImage
+          avatarUrl={friend.avatar_path ? getAvatarUrl(friend.avatar_path) : null}
+          displayName={friend.display_name}
+          accentColor={friend.accent_color}
+          size="md"
+        />
+      }
       headerAction={
         <div className="flex shrink-0 items-center gap-1.5">
           <button
@@ -189,7 +199,7 @@ export function FriendProfileModal({
           <p className="px-1 text-sm text-text-secondary">Could not load milestone.</p>
         )}
       </section>
-    </Modal>
+    </BottomSheet>
     {showShare && <ShareContentModal friend={friend} onClose={() => setShowShare(false)} />}
     </>
   )

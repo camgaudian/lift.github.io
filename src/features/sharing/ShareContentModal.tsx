@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/Button'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { Modal } from '@/components/Modal'
+import { BottomSheet } from '@/components/BottomSheet'
 import { fetchExercises } from '@/features/exercises/exerciseApi'
 import { fetchTemplates } from '@/features/templates/templateApi'
 import { shareExercise, shareTemplate, shareErrorMessage } from '@/features/sharing/sharingApi'
@@ -114,7 +114,7 @@ export function ShareContentModal({
     `flex-1 rounded-lg py-2 text-sm font-medium ${active ? 'bg-surface shadow-sm' : 'text-text-secondary'}`
 
   return (
-    <Modal
+    <BottomSheet
       title={`Share with ${formatUsername(friend.display_name)}`}
       onClose={onClose}
       showCloseButton
@@ -175,6 +175,6 @@ export function ShareContentModal({
           ))}
         </ul>
       )}
-    </Modal>
+    </BottomSheet>
   )
 }
