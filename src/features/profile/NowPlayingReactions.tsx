@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react'
 import { AvatarImage } from '@/components/AvatarImage'
 import { Modal } from '@/components/Modal'
-import { TrackArtwork } from '@/components/TrackArtwork'
-import { TrackArtworkPlaceholder } from '@/components/TrackArtworkPlaceholder'
 import { FriendNoTrackInline } from '@/features/profile/FriendNoTrackInline'
 import { FriendNowPlayingInline } from '@/features/profile/FriendNowPlayingInline'
 import { getAvatarUrl } from '@/features/profile/avatarApi'
