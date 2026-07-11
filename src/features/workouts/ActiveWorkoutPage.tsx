@@ -30,6 +30,7 @@ import { WorkoutAchievementsSection } from './WorkoutAchievementsSection'
 import { SaveEntriesNotice } from './SaveEntriesNotice'
 import { useDragReorder, reorderList } from '@/lib/useDragReorder'
 import { navFromState, setStoredNavFrom } from '@/lib/nav'
+import { AssistantLauncher } from '@/features/assistant/AssistantLauncher'
 import type { Workout, WorkoutExercise } from '@/lib/types'
 
 const TEMP_ID_PREFIX = 'temp-'
@@ -572,6 +573,16 @@ export function ActiveWorkoutPage() {
             <p className="text-sm text-danger text-center">{completeError}</p>
           )}
         </div>
+      )}
+
+      {!isCompleted && id && (
+        <AssistantLauncher
+          bottomClassName="bottom-28"
+          workoutContext={{
+            workoutId: id,
+            currentExerciseId: items[0]?.exercise_id,
+          }}
+        />
       )}
 
       {showCompleteConfirm && (

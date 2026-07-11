@@ -62,8 +62,12 @@ These files describe the full current schema. Run them in order on a **new** pro
    - `002_rls.sql` — row-level security policies
    - `003_seed_exercises.sql` — built-in exercise library
    - `004_functions.sql` — RPCs and helper functions
+   - `007_ai_assistant.sql` — Nifty form RAG + summary RPCs
+   - `009_remove_exercises_without_form_guides.sql` — drop exercises without form guides (existing DBs only)
 
 For the now-playing song feature, also complete [MUSIC_SEARCH_SETUP.md](MUSIC_SEARCH_SETUP.md) (Edge Function deploy; schema is already in the files above).
+
+For Nifty, also complete [AI_ASSISTANT_SETUP.md](AI_ASSISTANT_SETUP.md) after running migrations `007` and ingesting form articles.
 
 For incremental changes on an existing database, add a new numbered migration (e.g. `005_…sql`) rather than editing these reference files.
 

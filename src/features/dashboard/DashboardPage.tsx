@@ -25,6 +25,7 @@ import { Input } from '@/components/Input'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
+import { AssistantLauncher } from '@/features/assistant/AssistantLauncher'
 import { useColorPopText } from '@/lib/ui'
 import type { FunStats, WorkoutTemplate } from '@/lib/types'
 
@@ -168,6 +169,8 @@ export function DashboardPage() {
       {showUpdatesPopup && user && (
         <UpdatesPopup userId={user.id} onDismissed={() => setShowUpdatesPopup(false)} />
       )}
+
+      <AssistantLauncher />
 
       {showPostLog && !activeWorkout && (
         <Card className="flex flex-col gap-3">

@@ -506,6 +506,17 @@ export function SettingsPage() {
       </section>
 
       <section className="flex flex-col gap-2">
+        <h2 className={sectionHeadingClassName}>Nifty</h2>
+        <Card padding="sm">
+          <p className="text-sm text-text-secondary">
+            Nifty can answer form questions and, when you enable{' '}
+            <span className="text-text">Include my workout data</span> in the chat, query your
+            stats, recent workouts, and templates. Your data is never sent unless that toggle is on.
+          </p>
+        </Card>
+      </section>
+
+      <section className="flex flex-col gap-2">
         <h2 className={sectionHeadingClassName}>Help</h2>
         <FeedbackSection />
         <InstallGuide />
