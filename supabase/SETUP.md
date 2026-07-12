@@ -117,7 +117,7 @@ For GitHub Pages deployment, add the same values as repository secrets:
 
 ## 6b. Web Push notifications
 
-Push alerts cover friend requests, exercise/template shares, and a one-time reminder when an active workout is older than 5 hours. Users customize types under **Settings → Push notifications**.
+Push alerts cover friend requests, exercise/template shares, song reactions, and a one-time reminder when an active workout is older than 5 hours. Users customize types under **Settings → Push notifications**.
 
 ### Enable extensions
 
@@ -149,10 +149,16 @@ supabase secrets set \
   PUSH_DISPATCH_SECRET="your-long-random-secret" \
   APP_ORIGIN="https://lift.gaudian.dev"
 
-supabase functions deploy dispatch-push
+# JWT verify must stay off — Postgres calls this with x-push-secret, not a user JWT.
+# config.toml sets [functions.dispatch-push] verify_jwt = false; pass the flag explicitly too:
+supabase functions deploy dispatch-push --no-verify-jwt
 ```
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided automatically to Edge Functions.
+
+If friend-request / share pushes never arrive, check Edge Function logs for
+`UNAUTHORIZED_NO_AUTH_HEADER` — that means the function was deployed with JWT
+verification still enabled. Redeploy with `--no-verify-jwt`.
 
 ### Point the database at the function
 

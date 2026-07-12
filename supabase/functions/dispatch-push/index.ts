@@ -12,12 +12,14 @@ type PushType =
   | 'exercise_share'
   | 'template_share'
   | 'workout_reminder'
+  | 'song_reaction'
 
 const PREF_COLUMN: Record<PushType, string> = {
   friend_request: 'push_friend_request',
   exercise_share: 'push_exercise_share',
   template_share: 'push_template_share',
   workout_reminder: 'push_workout_reminder',
+  song_reaction: 'push_song_reaction',
 }
 
 interface DispatchBody {
@@ -84,7 +86,7 @@ Deno.serve(async (req) => {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select(
-        'push_friend_request, push_exercise_share, push_template_share, push_workout_reminder',
+        'push_friend_request, push_exercise_share, push_template_share, push_workout_reminder, push_song_reaction',
       )
       .eq('id', payload.user_id)
       .maybeSingle()

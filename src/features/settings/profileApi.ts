@@ -46,6 +46,7 @@ export async function updateProfileSettings(
     push_exercise_share?: boolean
     push_template_share?: boolean
     push_workout_reminder?: boolean
+    push_song_reaction?: boolean
     push_prompt_completed?: boolean
   },
 ): Promise<Profile> {

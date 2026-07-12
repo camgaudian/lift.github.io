@@ -4,3 +4,7 @@ verify_jwt = true
 
 [functions.send-feedback]
 verify_jwt = true
+
+# Called from Postgres via pg_net with x-push-secret (no user JWT).
+[functions.dispatch-push]
+verify_jwt = false

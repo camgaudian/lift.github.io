@@ -117,8 +117,8 @@ export function PushPermissionPrompt() {
           }
         >
           <p className="text-sm text-text-secondary">
-            Get alerts for friend requests, shares, and long active workouts — even when Lift is
-            closed.
+            Get alerts for friend requests, shares, song reactions, and long active workouts —
+            even when Lift is closed.
           </p>
         </Modal>
       )}

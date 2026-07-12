@@ -179,7 +179,7 @@ BEGIN
   PERFORM public.request_push_dispatch(
     NEW.receiver_id,
     'friend_request',
-    'Lift',
+    'New friend request',
     '@' || v_sender || ' sent a friend request',
     '/profile?notifications=1'
   );
@@ -232,7 +232,7 @@ BEGIN
   PERFORM public.request_push_dispatch(
     NEW.receiver_id,
     v_type,
-    'Lift',
+    CASE WHEN NEW.kind = 'exercise' THEN 'New exercise share' ELSE 'New template share' END,
     '@' || v_sender || ' shared a ' || v_label || ': ' || v_name,
     '/profile?notifications=1'
   );
@@ -278,7 +278,7 @@ BEGIN
     PERFORM public.request_push_dispatch(
       r.user_id,
       'workout_reminder',
-      'Lift',
+      'Unfinished workout',
       'Finished with your Lift?',
       '/workout/' || r.id::text
     );

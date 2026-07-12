@@ -4,6 +4,7 @@ export const PUSH_PREF_KEYS = [
   'push_friend_request',
   'push_exercise_share',
   'push_template_share',
+  'push_song_reaction',
   'push_workout_reminder',
 ] as const
 
@@ -13,6 +14,7 @@ export const PUSH_PREF_LABELS: Record<PushPrefKey, string> = {
   push_friend_request: 'Friend requests',
   push_exercise_share: 'Exercise shares',
   push_template_share: 'Template shares',
+  push_song_reaction: 'Song reactions',
   push_workout_reminder: 'Unfinished workouts',
 }
 
