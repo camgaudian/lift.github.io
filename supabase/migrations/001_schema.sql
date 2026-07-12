@@ -141,11 +141,15 @@ CREATE TABLE user_now_playing (
 );
 
 -- One reaction per reactor per song owner; tied to owner's current track (cascade on
--- track change/expiry). Allowed emojis must match src/lib/reactions.ts REACTION_EMOJIS.
+-- track change/expiry). Any single emoji grapheme is allowed (validated in RPC);
+-- length/control-char CHECK is tightened in later migrations for existing DBs.
 CREATE TABLE now_playing_reactions (
   owner_id UUID NOT NULL REFERENCES user_now_playing(user_id) ON DELETE CASCADE,
   reactor_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  emoji TEXT NOT NULL CHECK (emoji IN ('🔥', '💪', '🗣️', '💔', '💀', '😩')),
+  emoji TEXT NOT NULL CHECK (
+    char_length(emoji) BETWEEN 1 AND 16
+    AND emoji !~ '[[:cntrl:][:space:]]'
+  ),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (owner_id, reactor_id),
   CHECK (owner_id <> reactor_id)

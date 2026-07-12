@@ -1,13 +1,17 @@
-import { useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { AvatarImage } from '@/components/AvatarImage'
 import { BottomSheet } from '@/components/BottomSheet'
 import { FriendNoTrackInline } from '@/features/profile/FriendNoTrackInline'
 import { FriendNowPlayingInline } from '@/features/profile/FriendNowPlayingInline'
 import { getAvatarUrl } from '@/features/profile/avatarApi'
+import { useTheme } from '@/contexts/ThemeContext'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { formatUsername } from '@/lib/format'
-import { REACTION_EMOJIS } from '@/lib/reactions'
+import { QUICK_REACTION_EMOJIS, isValidReactionEmoji } from '@/lib/reactions'
 import type { NowPlayingReaction } from '@/lib/types'
+import type { EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
+
+const EmojiPicker = lazy(() => import('emoji-picker-react'))
 
 const MAX_STACK = 3
 
@@ -66,9 +70,8 @@ export function ReactionStack({ reactions }: { reactions: NowPlayingReaction[] }
 }
 
 /**
- * Emoji picker popover for reacting to a friend's track. `current` highlights
- * the reactor's existing choice; selecting it again removes it (handled by the
- * caller via the toggling RPC).
+ * Emoji picker for reacting to a friend's track. Quick presets stay in a
+ * popover; "+" opens a searchable full Unicode picker (no system emoji keyboard).
  */
 export function ReactionPicker({
   current,
@@ -79,48 +82,95 @@ export function ReactionPicker({
   disabled?: boolean
   onSelect: (emoji: string) => void
 }) {
+  const { theme } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
+  const [fullOpen, setFullOpen] = useState(false)
 
   useClickOutside(containerRef, () => setOpen(false), open)
 
+  const pick = (emoji: string) => {
+    if (!isValidReactionEmoji(emoji)) return
+    onSelect(emoji)
+    setOpen(false)
+    setFullOpen(false)
+  }
+
   return (
-    <div ref={containerRef} className="relative flex shrink-0 items-center justify-center">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
-        aria-label="React to this track"
-        aria-expanded={open}
-        className={[
-          'flex h-9 items-center justify-center gap-1 rounded-xl border border-border px-2.5 text-sm font-medium transition-colors disabled:opacity-50',
-          current ? 'bg-accent/10 text-text' : 'text-text-secondary hover:bg-surface-secondary hover:text-text',
-        ].join(' ')}
-      >
-        {current ? <span className="text-base leading-none">{current}</span> : <ReactFaceIcon />}
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full z-20 mt-1.5 flex gap-1 rounded-xl border border-border bg-surface p-1.5 shadow-lg">
-          {REACTION_EMOJIS.map((emoji) => (
+    <>
+      <div ref={containerRef} className="relative flex shrink-0 items-center justify-center">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen((v) => !v)}
+          aria-label="React to this track"
+          aria-expanded={open}
+          className={[
+            'flex h-9 items-center justify-center gap-1 rounded-xl border border-border px-2.5 text-sm font-medium transition-colors disabled:opacity-50',
+            current
+              ? 'bg-accent/10 text-text'
+              : 'text-text-secondary hover:bg-surface-secondary hover:text-text',
+          ].join(' ')}
+        >
+          {current ? <span className="text-base leading-none">{current}</span> : <ReactFaceIcon />}
+        </button>
+        {open && (
+          <div className="absolute right-0 top-full z-20 mt-1.5 flex gap-1 rounded-xl border border-border bg-surface p-1.5 shadow-lg">
+            {QUICK_REACTION_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => pick(emoji)}
+                aria-label={`React with ${emoji}`}
+                className={[
+                  'flex h-9 w-9 items-center justify-center rounded-lg text-xl transition-transform hover:scale-110 active:scale-95',
+                  current === emoji ? 'bg-accent/15' : 'hover:bg-surface-secondary',
+                ].join(' ')}
+              >
+                {emoji}
+              </button>
+            ))}
             <button
-              key={emoji}
               type="button"
               onClick={() => {
-                onSelect(emoji)
                 setOpen(false)
+                setFullOpen(true)
               }}
-              aria-label={`React with ${emoji}`}
-              className={[
-                'flex h-9 w-9 items-center justify-center rounded-lg text-xl transition-transform hover:scale-110 active:scale-95',
-                current === emoji ? 'bg-accent/15' : 'hover:bg-surface-secondary',
-              ].join(' ')}
+              aria-label="More emojis"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-lg font-medium text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text"
             >
-              {emoji}
+              +
             </button>
-          ))}
-        </div>
+          </div>
+        )}
+      </div>
+
+      {fullOpen && (
+        <BottomSheet title="Choose a reaction" onClose={() => setFullOpen(false)} showCloseButton>
+          <div className="overflow-hidden rounded-xl border border-border [-webkit-tap-highlight-color:transparent]">
+            <Suspense
+              fallback={
+                <div className="flex h-[360px] items-center justify-center text-sm text-text-secondary">
+                  Loading emojis…
+                </div>
+              }
+            >
+              <EmojiPicker
+                onEmojiClick={(data: EmojiClickData) => pick(data.emoji)}
+                theme={(theme === 'dark' ? 'dark' : 'light') as Theme}
+                emojiStyle={'native' as EmojiStyle}
+                lazyLoadEmojis
+                autoFocusSearch={false}
+                width="100%"
+                height={360}
+                previewConfig={{ showPreview: false }}
+                searchPlaceholder="Search emoji"
+              />
+            </Suspense>
+          </div>
+        </BottomSheet>
       )}
-    </div>
+    </>
   )
 }
 
@@ -139,21 +189,21 @@ export function ReactionsListModal({
       ) : (
         <ul className="flex flex-col gap-1.5">
           {reactions.map((reaction) => (
-          <li
-            key={reaction.reactor_id}
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-            style={{ backgroundColor: `${reaction.accent_color}18` }}
-          >
-            <AvatarImage
-              avatarUrl={reaction.avatar_path ? getAvatarUrl(reaction.avatar_path) : null}
-              displayName={reaction.display_name}
-              accentColor={reaction.accent_color}
-              size="sm"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
-                {formatUsername(reaction.display_name)}
-              </p>
+            <li
+              key={reaction.reactor_id}
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+              style={{ backgroundColor: `${reaction.accent_color}18` }}
+            >
+              <AvatarImage
+                avatarUrl={reaction.avatar_path ? getAvatarUrl(reaction.avatar_path) : null}
+                displayName={reaction.display_name}
+                accentColor={reaction.accent_color}
+                size="sm"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {formatUsername(reaction.display_name)}
+                </p>
                 {reaction.now_playing ? (
                   <FriendNowPlayingInline
                     nowPlaying={reaction.now_playing}

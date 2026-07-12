@@ -1,9 +1,27 @@
-// Allowed now-playing reaction emojis. Must stay in sync with the CHECK
-// constraint in 001_schema.sql and react_to_now_playing in 004_functions.sql.
-export const REACTION_EMOJIS = ['🔥', '💪', '🗣️', '💔', '💀', '😩'] as const
+// Quick-pick reactions shown in the compact bar. Full Unicode emoji is allowed
+// via the searchable in-app picker; server validates length / no whitespace.
+export const QUICK_REACTION_EMOJIS = ['🔥', '💪', '🗣️', '💔', '💀', '😩'] as const
 
-export type ReactionEmoji = (typeof REACTION_EMOJIS)[number]
+/** @deprecated Use QUICK_REACTION_EMOJIS */
+export const REACTION_EMOJIS = QUICK_REACTION_EMOJIS
 
-export function isReactionEmoji(value: string): value is ReactionEmoji {
-  return (REACTION_EMOJIS as readonly string[]).includes(value)
+export type QuickReactionEmoji = (typeof QUICK_REACTION_EMOJIS)[number]
+
+/** @deprecated Use QuickReactionEmoji */
+export type ReactionEmoji = QuickReactionEmoji
+
+export function isQuickReactionEmoji(value: string): value is QuickReactionEmoji {
+  return (QUICK_REACTION_EMOJIS as readonly string[]).includes(value)
+}
+
+/** @deprecated Use isQuickReactionEmoji */
+export function isReactionEmoji(value: string): value is QuickReactionEmoji {
+  return isQuickReactionEmoji(value)
+}
+
+/** Client-side guard before calling react_to_now_playing. */
+export function isValidReactionEmoji(value: string): boolean {
+  if (!value || [...value].length > 16) return false
+  if (/[\s\u0000-\u001f\u007f]/.test(value)) return false
+  return /\p{Extended_Pictographic}/u.test(value)
 }

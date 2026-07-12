@@ -967,7 +967,10 @@ BEGIN
     RETURN json_build_object('ok', false, 'error', 'self');
   END IF;
 
-  IF p_emoji NOT IN ('🔥', '💪', '🗣️', '💔', '💀', '😩') THEN
+  IF p_emoji IS NULL
+     OR char_length(p_emoji) < 1
+     OR char_length(p_emoji) > 16
+     OR p_emoji ~ '[[:cntrl:][:space:]]' THEN
     RETURN json_build_object('ok', false, 'error', 'invalid_emoji');
   END IF;
 
