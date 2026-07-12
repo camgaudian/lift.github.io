@@ -1,10 +1,14 @@
 import { type CSSProperties, type ReactNode, useEffect, useId, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '@/components/Button'
 
 /**
  * Drop-in replacement for Modal that slides up from the bottom instead of
  * appearing as a centered overlay. Accepts the same props as Modal so callers
  * only need to change the import.
+ *
+ * Always portals to document.body so nested sheets (and fixed + transform
+ * ancestors) do not steal iOS touch scrolling from the active sheet.
  */
 export function BottomSheet({
   title,
@@ -16,6 +20,7 @@ export function BottomSheet({
   scrollable = false,
   bodyClassName = 'mt-4',
   accentColor,
+  zIndexClassName = 'z-[100]',
 }: {
   title: string
   children: ReactNode
@@ -26,6 +31,8 @@ export function BottomSheet({
   scrollable?: boolean
   bodyClassName?: string
   accentColor?: string
+  /** Stacking class when nesting sheets (default z-[100]). */
+  zIndexClassName?: string
 }) {
   const titleId = useId()
   const [visible, setVisible] = useState(false)
@@ -35,15 +42,24 @@ export function BottomSheet({
     return () => cancelAnimationFrame(raf)
   }, [])
 
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
+
   const handleClose = () => {
     setVisible(false)
     setTimeout(onClose, 300)
   }
 
-  return (
+  const sheet = (
     <div
       className={[
-        'fixed inset-0 z-[100] flex items-end',
+        'fixed inset-0 flex items-end',
+        zIndexClassName,
         'transition-all duration-300',
         visible ? 'glass-scrim' : 'glass-scrim-hidden',
       ].join(' ')}
@@ -57,10 +73,12 @@ export function BottomSheet({
           'w-full rounded-t-2xl border-x border-t liquid-glass-surface',
           scrollable ? 'flex max-h-[90dvh] flex-col' : 'max-h-[90dvh] overflow-auto',
           'transition-transform duration-300 ease-out',
+          'touch-pan-y',
           visible ? 'translate-y-0' : 'translate-y-full',
         ].join(' ')}
         style={accentColor ? ({ '--color-accent': accentColor } as CSSProperties) : undefined}
         onClick={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
       >
         {/* Drag handle + title — never scrolls away */}
         <div className="shrink-0 px-5 pt-3">
@@ -109,4 +127,7 @@ export function BottomSheet({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') return null
+  return createPortal(sheet, document.body)
 }

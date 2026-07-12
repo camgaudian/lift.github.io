@@ -146,8 +146,17 @@ export function ReactionPicker({
       </div>
 
       {fullOpen && (
-        <BottomSheet title="Choose a reaction" onClose={() => setFullOpen(false)} showCloseButton>
-          <div className="overflow-hidden rounded-xl border border-border [-webkit-tap-highlight-color:transparent]">
+        <BottomSheet
+          title="Choose a reaction"
+          onClose={() => setFullOpen(false)}
+          showCloseButton
+          zIndexClassName="z-[110]"
+          bodyClassName="mt-4 pb-1"
+        >
+          <div
+            className="rounded-xl border border-border [-webkit-tap-highlight-color:transparent] [touch-action:pan-y]"
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             <Suspense
               fallback={
                 <div className="flex h-[360px] items-center justify-center text-sm text-text-secondary">

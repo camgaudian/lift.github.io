@@ -120,7 +120,7 @@ function PodiumColumn({
 
   return (
     <button
-      className="flex-1 flex flex-col transition-opacity active:opacity-70"
+      className="flex min-w-0 flex-1 flex-col transition-opacity active:opacity-70"
       disabled={isLoading}
       onClick={onClick}
     >
