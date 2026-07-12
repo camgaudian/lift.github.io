@@ -9,12 +9,13 @@ import { Card } from '@/components/Card'
 import { Switch } from '@/components/Switch'
 import { DisplayNameInput } from '@/components/DisplayNameInput'
 import { Input } from '@/components/Input'
-import { eraseAllWorkoutData, isDisplayNameTaken } from '@/features/settings/profileApi'
+import { eraseAllWorkoutData, fetchProfile, isDisplayNameTaken, updateProfileSettings } from '@/features/settings/profileApi'
 import { FeedbackSection } from '@/features/settings/FeedbackSection'
 import { InstallGuide } from '@/features/settings/InstallGuide'
+import { PushNotificationsSheet } from '@/features/settings/PushNotificationsSheet'
 import { capitalize } from '@/lib/format'
 import { sectionHeadingBase, useSectionHeadingClass } from '@/lib/ui'
-import type { ThemeMode, WeightUnit } from '@/lib/types'
+import type { Profile, ThemeMode, WeightUnit } from '@/lib/types'
 
 const selectClass =
   'mt-1 w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base'
@@ -70,6 +71,10 @@ export function SettingsPage() {
   const [eraseError, setEraseError] = useState<string | null>(null)
   const [eraseSuccess, setEraseSuccess] = useState(false)
   const [accentMode, setAccentMode] = useState<'preset' | 'custom'>('preset')
+  const [hideExerciseDataFromFriends, setHideExerciseDataFromFriends] = useState(false)
+  const [privacyLoading, setPrivacyLoading] = useState(true)
+  const [pushProfile, setPushProfile] = useState<Profile | null>(null)
+  const [pushSheetOpen, setPushSheetOpen] = useState(false)
 
   useEffect(() => {
     setNameDraft(displayName)
@@ -79,6 +84,27 @@ export function SettingsPage() {
     if (loading) return
     setAccentMode(isPresetAccent(accentColor) ? 'preset' : 'custom')
   }, [loading])
+
+  useEffect(() => {
+    if (!user) {
+      setHideExerciseDataFromFriends(false)
+      setPushProfile(null)
+      setPrivacyLoading(false)
+      return
+    }
+
+    setPrivacyLoading(true)
+    fetchProfile(user.id)
+      .then((profile) => {
+        setHideExerciseDataFromFriends(Boolean(profile?.hide_exercise_data_from_friends))
+        setPushProfile(profile)
+      })
+      .catch(() => {
+        setHideExerciseDataFromFriends(false)
+        setPushProfile(null)
+      })
+      .finally(() => setPrivacyLoading(false))
+  }, [user?.id])
 
   const handleTheme = async (next: ThemeMode) => {
     setSaving(true)
@@ -102,6 +128,19 @@ export function SettingsPage() {
     setSaving(true)
     try {
       await setColorPop(enabled)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleHideExerciseDataFromFriends = async (enabled: boolean) => {
+    if (!user) return
+    setSaving(true)
+    setHideExerciseDataFromFriends(enabled)
+    try {
+      await updateProfileSettings(user.id, { hide_exercise_data_from_friends: enabled })
+    } catch {
+      setHideExerciseDataFromFriends(!enabled)
     } finally {
       setSaving(false)
     }
@@ -503,7 +542,64 @@ export function SettingsPage() {
             </div>
           </details>
         </Card>
+
+        <Card padding="sm" className="p-0 overflow-hidden">
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-sm font-medium">PR sharing with friends</p>
+                <p className="text-xs text-text-secondary truncate">
+                  {hideExerciseDataFromFriends ? 'Not currently sharing' : 'Currently sharing'}
+                </p>
+              </div>
+              <DetailsChevron />
+            </summary>
+
+            <div className="flex flex-col gap-4 border-t border-border px-3.5 py-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Hide PR data from friends</p>
+                  <p className="mt-0.5 text-xs text-text-secondary leading-snug">
+                    When on, friends won&apos;t see you on the PR leaderboard or in exercise
+                    ranking comparisons. You can still view your own PRs and friends who share.
+                  </p>
+                </div>
+                <Switch
+                  label="Hide PR data from friends"
+                  checked={hideExerciseDataFromFriends}
+                  disabled={privacyLoading || saving}
+                  onChange={handleHideExerciseDataFromFriends}
+                />
+              </div>
+            </div>
+          </details>
+        </Card>
+
+        {user && (
+          <Card padding="sm" className="p-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-sm font-medium">Push notifications</p>
+                <p className="text-xs text-text-secondary truncate">Alerts for this device</p>
+              </div>
+              <Button size="sm" className="shrink-0" onClick={() => setPushSheetOpen(true)}>
+                Edit
+              </Button>
+            </div>
+          </Card>
+        )}
       </section>
+
+      {user && pushSheetOpen && (
+        <PushNotificationsSheet
+          userId={user.id}
+          profile={pushProfile}
+          onClose={() => setPushSheetOpen(false)}
+          onProfileChange={(next) =>
+            setPushProfile((prev) => (prev ? { ...prev, ...next } : prev))
+          }
+        />
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className={sectionHeadingClassName}>Help</h2>

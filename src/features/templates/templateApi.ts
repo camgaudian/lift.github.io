@@ -66,13 +66,18 @@ export async function addExerciseToTemplate(
   templateId: string,
   exerciseId: string,
   sortOrder: number,
-): Promise<void> {
-  const { error } = await supabase.from('template_exercises').insert({
-    template_id: templateId,
-    exercise_id: exerciseId,
-    sort_order: sortOrder,
-  })
+): Promise<TemplateExercise> {
+  const { data, error } = await supabase
+    .from('template_exercises')
+    .insert({
+      template_id: templateId,
+      exercise_id: exerciseId,
+      sort_order: sortOrder,
+    })
+    .select('*, exercise:exercises(*)')
+    .single()
   if (error) throw error
+  return data as TemplateExercise
 }
 
 export async function removeExerciseFromTemplate(id: string): Promise<void> {

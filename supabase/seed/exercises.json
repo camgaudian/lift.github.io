@@ -1,52 +1,1261 @@
 [
-  {"name": "Barbell Bench Press", "exercise_type": "strength", "category": "push", "primary_muscles": ["chest", "triceps"], "equipment": "barbell"},
-  {"name": "Incline Barbell Bench Press", "exercise_type": "strength", "category": "push", "primary_muscles": ["chest", "shoulders"], "equipment": "barbell"},
-  {"name": "Dumbbell Bench Press", "exercise_type": "strength", "category": "push", "primary_muscles": ["chest", "triceps"], "equipment": "dumbbell"},
-  {"name": "Incline Dumbbell Press", "exercise_type": "strength", "category": "push", "primary_muscles": ["chest", "shoulders"], "equipment": "dumbbell"},
-  {"name": "Overhead Press", "exercise_type": "strength", "category": "push", "primary_muscles": ["shoulders", "triceps"], "equipment": "barbell"},
-  {"name": "Dumbbell Shoulder Press", "exercise_type": "strength", "category": "push", "primary_muscles": ["shoulders", "triceps"], "equipment": "dumbbell"},
-  {"name": "Push-Up", "exercise_type": "bodyweight", "category": "push", "primary_muscles": ["chest", "triceps"], "equipment": "bodyweight"},
-  {"name": "Dips", "exercise_type": "bodyweight", "category": "push", "primary_muscles": ["chest", "triceps"], "equipment": "bodyweight"},
-  {"name": "Tricep Pushdown", "exercise_type": "strength", "category": "push", "primary_muscles": ["triceps"], "equipment": "cable"},
-  {"name": "Skull Crushers", "exercise_type": "strength", "category": "push", "primary_muscles": ["triceps"], "equipment": "barbell"},
-  {"name": "Lateral Raise", "exercise_type": "strength", "category": "push", "primary_muscles": ["shoulders"], "equipment": "dumbbell"},
-  {"name": "Cable Fly", "exercise_type": "strength", "category": "push", "primary_muscles": ["chest"], "equipment": "cable"},
-  {"name": "Deadlift", "exercise_type": "strength", "category": "pull", "primary_muscles": ["back", "hamstrings", "glutes"], "equipment": "barbell"},
-  {"name": "Romanian Deadlift", "exercise_type": "strength", "category": "pull", "primary_muscles": ["hamstrings", "glutes"], "equipment": "barbell"},
-  {"name": "Barbell Row", "exercise_type": "strength", "category": "pull", "primary_muscles": ["back", "biceps"], "equipment": "barbell"},
-  {"name": "Dumbbell Row", "exercise_type": "strength", "category": "pull", "primary_muscles": ["back", "biceps"], "equipment": "dumbbell"},
-  {"name": "Pull-Up", "exercise_type": "bodyweight", "category": "pull", "primary_muscles": ["back", "biceps"], "equipment": "bodyweight"},
-  {"name": "Chin-Up", "exercise_type": "bodyweight", "category": "pull", "primary_muscles": ["back", "biceps"], "equipment": "bodyweight"},
-  {"name": "Lat Pulldown", "exercise_type": "strength", "category": "pull", "primary_muscles": ["back", "biceps"], "equipment": "cable"},
-  {"name": "Seated Cable Row", "exercise_type": "strength", "category": "pull", "primary_muscles": ["back", "biceps"], "equipment": "cable"},
-  {"name": "Face Pull", "exercise_type": "strength", "category": "pull", "primary_muscles": ["rear delts", "back"], "equipment": "cable"},
-  {"name": "Barbell Curl", "exercise_type": "strength", "category": "pull", "primary_muscles": ["biceps"], "equipment": "barbell"},
-  {"name": "Dumbbell Curl", "exercise_type": "strength", "category": "pull", "primary_muscles": ["biceps"], "equipment": "dumbbell"},
-  {"name": "Hammer Curl", "exercise_type": "strength", "category": "pull", "primary_muscles": ["biceps", "forearms"], "equipment": "dumbbell"},
-  {"name": "Back Squat", "exercise_type": "strength", "category": "legs", "primary_muscles": ["quads", "glutes"], "equipment": "barbell"},
-  {"name": "Front Squat", "exercise_type": "strength", "category": "legs", "primary_muscles": ["quads", "core"], "equipment": "barbell"},
-  {"name": "Leg Press", "exercise_type": "strength", "category": "legs", "primary_muscles": ["quads", "glutes"], "equipment": "machine"},
-  {"name": "Leg Extension", "exercise_type": "strength", "category": "legs", "primary_muscles": ["quads"], "equipment": "machine"},
-  {"name": "Leg Curl", "exercise_type": "strength", "category": "legs", "primary_muscles": ["hamstrings"], "equipment": "machine"},
-  {"name": "Bulgarian Split Squat", "exercise_type": "strength", "category": "legs", "primary_muscles": ["quads", "glutes"], "equipment": "dumbbell"},
-  {"name": "Walking Lunge", "exercise_type": "strength", "category": "legs", "primary_muscles": ["quads", "glutes"], "equipment": "dumbbell"},
-  {"name": "Goblet Squat", "exercise_type": "strength", "category": "legs", "primary_muscles": ["quads", "glutes"], "equipment": "dumbbell"},
-  {"name": "Hip Thrust", "exercise_type": "strength", "category": "legs", "primary_muscles": ["glutes", "hamstrings"], "equipment": "barbell"},
-  {"name": "Calf Raise", "exercise_type": "strength", "category": "legs", "primary_muscles": ["calves"], "equipment": "machine"},
-  {"name": "Plank", "exercise_type": "bodyweight", "category": "core", "primary_muscles": ["core"], "equipment": "bodyweight"},
-  {"name": "Hanging Leg Raise", "exercise_type": "bodyweight", "category": "core", "primary_muscles": ["core"], "equipment": "bodyweight"},
-  {"name": "Cable Crunch", "exercise_type": "strength", "category": "core", "primary_muscles": ["core"], "equipment": "cable"},
-  {"name": "Ab Wheel Rollout", "exercise_type": "bodyweight", "category": "core", "primary_muscles": ["core"], "equipment": "bodyweight"},
-  {"name": "Russian Twist", "exercise_type": "bodyweight", "category": "core", "primary_muscles": ["core"], "equipment": "bodyweight"},
-  {"name": "Treadmill Run", "exercise_type": "cardio", "category": "cardio", "primary_muscles": ["cardio"], "equipment": "treadmill"},
-  {"name": "Outdoor Run", "exercise_type": "cardio", "category": "cardio", "primary_muscles": ["cardio"], "equipment": "none"},
-  {"name": "Stationary Bike", "exercise_type": "cardio", "category": "cardio", "primary_muscles": ["cardio"], "equipment": "bike"},
-  {"name": "Rowing Machine", "exercise_type": "cardio", "category": "cardio", "primary_muscles": ["cardio"], "equipment": "rower"},
-  {"name": "Elliptical", "exercise_type": "cardio", "category": "cardio", "primary_muscles": ["cardio"], "equipment": "elliptical"},
-  {"name": "Stair Climber", "exercise_type": "cardio", "category": "cardio", "primary_muscles": ["cardio"], "equipment": "machine"},
-  {"name": "Jump Rope", "exercise_type": "cardio", "category": "cardio", "primary_muscles": ["cardio"], "equipment": "rope"},
-  {"name": "Kettlebell Swing", "exercise_type": "strength", "category": "legs", "primary_muscles": ["glutes", "hamstrings"], "equipment": "kettlebell"},
-  {"name": "Farmer's Walk", "exercise_type": "strength", "category": "core", "primary_muscles": ["forearms", "core"], "equipment": "dumbbell"},
-  {"name": "Shrugs", "exercise_type": "strength", "category": "pull", "primary_muscles": ["traps"], "equipment": "barbell"},
-  {"name": "Preacher Curl", "exercise_type": "strength", "category": "pull", "primary_muscles": ["biceps"], "equipment": "barbell"}
+  {
+    "name": "Ab Wheel Rollout",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Arnold Press",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Assault Bike",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "bike"
+  },
+  {
+    "name": "Back Extension",
+    "exercise_type": "bodyweight",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "glutes"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Back Squat",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Barbell Bench Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Barbell Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Barbell Row",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Battle Ropes",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "rope"
+  },
+  {
+    "name": "Bicycle Crunch",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Box Jump",
+    "exercise_type": "bodyweight",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "box"
+  },
+  {
+    "name": "Box Squat",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Bulgarian Split Squat",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Burpee",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core",
+      "cardio"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Cable Crunch",
+    "exercise_type": "strength",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Cable Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Cable Face Pull",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "rear delts",
+      "back"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Cable Fly",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Cable Lateral Raise",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Cable Overhead Tricep Extension",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Cable Pull-Through",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Cable Pullover",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "chest"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Calf Raise",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "calves"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Chest-Supported Row",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Chin-Up",
+    "exercise_type": "bodyweight",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Close-Grip Bench Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Close-Grip Push-Up",
+    "exercise_type": "bodyweight",
+    "category": "arms",
+    "primary_muscles": [
+      "triceps",
+      "chest"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Concentration Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Dead Bug",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Deadlift",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "hamstrings",
+      "glutes"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Decline Barbell Bench Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Decline Dumbbell Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Decline Sit-Up",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Diamond Push-Up",
+    "exercise_type": "bodyweight",
+    "category": "arms",
+    "primary_muscles": [
+      "triceps",
+      "chest"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Dips",
+    "exercise_type": "bodyweight",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Dumbbell Bench Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Dumbbell Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Dumbbell Fly",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Dumbbell Row",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Dumbbell Shoulder Press",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Elliptical",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "elliptical"
+  },
+  {
+    "name": "EZ Bar Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Face Pull",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "rear delts",
+      "back"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Farmer's Walk",
+    "exercise_type": "strength",
+    "category": "core",
+    "primary_muscles": [
+      "forearms",
+      "core"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Floor Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Front Raise",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Front Squat",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "core"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Glute Bridge",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Goblet Squat",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Good Morning",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "hamstrings"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Hack Squat",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Hammer Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps",
+      "forearms"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Hanging Leg Raise",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Hiking",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "none"
+  },
+  {
+    "name": "Hip Abduction",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "glutes"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Hip Adduction",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Hip Thrust",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Hollow Body Hold",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Incline Barbell Bench Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "shoulders"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Incline Cable Fly",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Incline Dumbbell Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Incline Dumbbell Fly",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Incline Dumbbell Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "shoulders"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Indoor Cycling",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "bike"
+  },
+  {
+    "name": "Inverted Row",
+    "exercise_type": "bodyweight",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Jump Rope",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "rope"
+  },
+  {
+    "name": "Kettlebell Swing",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "kettlebell"
+  },
+  {
+    "name": "Landmine Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "shoulders"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Lat Pulldown",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Lateral Raise",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Leg Curl",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "hamstrings"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Leg Extension",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Leg Press",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Machine Chest Press",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Machine Shoulder Press",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Mountain Climber",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core",
+      "cardio"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Neutral-Grip Pull-Up",
+    "exercise_type": "bodyweight",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Outdoor Cycling",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "bike"
+  },
+  {
+    "name": "Outdoor Run",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "none"
+  },
+  {
+    "name": "Overhead Press",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Overhead Tricep Extension",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Pallof Press",
+    "exercise_type": "strength",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Pec Deck",
+    "exercise_type": "strength",
+    "category": "chest",
+    "primary_muscles": [
+      "chest"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Pendlay Row",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Pistol Squat",
+    "exercise_type": "bodyweight",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Plank",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Preacher Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Pull-Up",
+    "exercise_type": "bodyweight",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Push Press",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Push-Up",
+    "exercise_type": "bodyweight",
+    "category": "chest",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Rack Pull",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "glutes"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Rear Delt Fly",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "rear delts"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Reverse Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "forearms",
+      "biceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Reverse Lunge",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Reverse Pec Deck",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "rear delts"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Reverse Wrist Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "forearms"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Romanian Deadlift",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "hamstrings",
+      "glutes"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Rowing Machine",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "rower"
+  },
+  {
+    "name": "Russian Twist",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Seated Cable Row",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Seated Calf Raise",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "calves"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Shrugs",
+    "exercise_type": "strength",
+    "category": "shoulders",
+    "primary_muscles": [
+      "traps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Side Plank",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Single-Arm Cable Row",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Single-Leg Romanian Deadlift",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "hamstrings",
+      "glutes"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Sit-Up",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Skull Crushers",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Smith Machine Squat",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Spider Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Stair Climber",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Stair Sprints",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Standing Calf Raise",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "calves"
+    ],
+    "equipment": "machine"
+  },
+  {
+    "name": "Stationary Bike",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "bike"
+  },
+  {
+    "name": "Step-Up",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Straight-Arm Pulldown",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Sumo Deadlift",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Sumo Squat",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Superman",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "back",
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Swimming",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "none"
+  },
+  {
+    "name": "T-Bar Row",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Thruster",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "shoulders"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Toes to Bar",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Trap Bar Deadlift",
+    "exercise_type": "strength",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "barbell"
+  },
+  {
+    "name": "Treadmill Run",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "treadmill"
+  },
+  {
+    "name": "Tricep Kickback",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Tricep Pushdown",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "V-Up",
+    "exercise_type": "bodyweight",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Walking",
+    "exercise_type": "cardio",
+    "category": "cardio",
+    "primary_muscles": [
+      "cardio"
+    ],
+    "equipment": "none"
+  },
+  {
+    "name": "Walking Lunge",
+    "exercise_type": "strength",
+    "category": "legs",
+    "primary_muscles": [
+      "quads",
+      "glutes"
+    ],
+    "equipment": "dumbbell"
+  },
+  {
+    "name": "Wide-Grip Pull-Up",
+    "exercise_type": "bodyweight",
+    "category": "back",
+    "primary_muscles": [
+      "back",
+      "biceps"
+    ],
+    "equipment": "bodyweight"
+  },
+  {
+    "name": "Wood Chop",
+    "exercise_type": "strength",
+    "category": "core",
+    "primary_muscles": [
+      "core"
+    ],
+    "equipment": "cable"
+  },
+  {
+    "name": "Wrist Curl",
+    "exercise_type": "strength",
+    "category": "arms",
+    "primary_muscles": [
+      "forearms"
+    ],
+    "equipment": "dumbbell"
+  }
 ]

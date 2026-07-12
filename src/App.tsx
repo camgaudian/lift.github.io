@@ -14,7 +14,6 @@ import { LibraryPage } from '@/features/library/LibraryPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { SettingsPage } from '@/features/settings/SettingsPage'
 import { PrLeaderboardPage } from '@/features/pr-leaderboard/PrLeaderboardPage'
-import { ExercisePrDetailPage } from '@/features/pr-leaderboard/ExercisePrDetailPage'
 import { TemplateDetailPage } from '@/features/templates/TemplateDetailPage'
 
 export default function App() {
@@ -36,7 +35,6 @@ export default function App() {
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
               </Route>
               <Route path="/pr-leaderboard" element={<PrLeaderboardPage />} />
-              <Route path="/pr-leaderboard/:slug" element={<ExercisePrDetailPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/settings" element={<SettingsPage />} />
               <Route path="/settings" element={<Navigate to="/profile/settings" replace />} />

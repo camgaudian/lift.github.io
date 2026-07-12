@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import type {
-  MusicSearchTrack,
   NowPlaying,
   NowPlayingReaction,
   ReactToNowPlayingResult,
+  SpotifySearchTrack,
 } from '@/lib/types'
 
 export async function fetchMyNowPlaying(): Promise<NowPlaying | null> {
@@ -12,7 +12,7 @@ export async function fetchMyNowPlaying(): Promise<NowPlaying | null> {
   return (data as NowPlaying | null) ?? null
 }
 
-export async function setNowPlaying(track: MusicSearchTrack): Promise<NowPlaying> {
+export async function setNowPlaying(track: SpotifySearchTrack): Promise<NowPlaying> {
   const { data, error } = await supabase.rpc('set_now_playing', {
     p_track_id: track.track_id,
     p_title: track.title,
@@ -58,8 +58,8 @@ async function readFunctionError(error: unknown): Promise<string | null> {
   }
 }
 
-export async function searchMusicTracks(query: string): Promise<MusicSearchTrack[]> {
-  const { data, error } = await supabase.functions.invoke('music-search', {
+export async function searchSpotifyTracks(query: string): Promise<SpotifySearchTrack[]> {
+  const { data, error } = await supabase.functions.invoke('spotify-search', {
     body: { q: query },
   })
   if (error) {
@@ -67,7 +67,7 @@ export async function searchMusicTracks(query: string): Promise<MusicSearchTrack
     throw new Error(detail ?? 'Search failed')
   }
   if (data?.error) throw new Error(data.error)
-  return (data?.tracks ?? []) as MusicSearchTrack[]
+  return (data?.tracks ?? []) as SpotifySearchTrack[]
 }
 
 function hoursLeft(expiresAt: string): number {

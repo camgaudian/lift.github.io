@@ -40,6 +40,7 @@ Open [http://localhost:5173](http://localhost:5173).
 3. Add repository secrets:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_VAPID_PUBLIC_KEY` (see `supabase/SETUP.md` §6b for Web Push)
 4. Push to `main`. The workflow in `.github/workflows/deploy.yml` builds and deploys.
 
 ## Tech stack

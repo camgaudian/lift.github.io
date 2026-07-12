@@ -24,7 +24,7 @@ function SearchIcon() {
 export function SearchInput({ label, className = '', ...props }: SearchInputProps) {
   return (
     <div className="flex flex-col gap-1">
-      {label && <label className="text-sm text-text-secondary">{label}</label>}
+      {label && <label className="pb-1 text-sm text-text-secondary">{label}</label>}
       <div className="relative">
         <SearchIcon />
         <Input className={['pl-10', className].filter(Boolean).join(' ')} {...props} />

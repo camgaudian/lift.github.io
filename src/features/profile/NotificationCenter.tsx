@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { AvatarImage } from '@/components/AvatarImage'
 import { Button } from '@/components/Button'
 import { BottomSheet } from '@/components/BottomSheet'
@@ -93,8 +94,9 @@ function NotificationDetail({
 
       {item.type === 'friend_request' && (
         <p className="mt-3 text-sm">
-          {sender} wants to be your friend. Accepting lets you both see each other&apos;s workout
-          data.
+          {sender} wants to be your friend. Accepting lets you both compare PR leaderboards and
+          exercise rankings unless either of you chooses not to share in Settings → Preferences →
+          Hide PR data from friends.
         </p>
       )}
 
@@ -241,6 +243,7 @@ export function NotificationCenter({
   const [selected, setSelected] = useState<NotificationItem | null>(null)
   const [pending, setPending] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const load = useCallback(async () => {
     if (disabled) {
@@ -265,6 +268,15 @@ export function NotificationCenter({
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    if (disabled) return
+    if (searchParams.get('notifications') !== '1') return
+    setSheetOpen(true)
+    const next = new URLSearchParams(searchParams)
+    next.delete('notifications')
+    setSearchParams(next, { replace: true })
+  }, [disabled, searchParams, setSearchParams])
 
   const handlePrimary = async () => {
     if (!selected) return

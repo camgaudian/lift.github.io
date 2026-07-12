@@ -829,7 +829,7 @@ END;
 $$;
 
 -- ---------------------------------------------------------------------------
--- Now playing
+-- Now playing (Spotify)
 -- ---------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.delete_expired_now_playing()

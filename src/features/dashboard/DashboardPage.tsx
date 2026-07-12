@@ -17,6 +17,7 @@ import {
 } from '@/lib/stats'
 import { StartWorkoutModal } from '@/features/dashboard/StartWorkoutModal'
 import { UpdatesPopup } from '@/features/dashboard/UpdatesPopup'
+import { UPDATES_POPUP_VERSION } from '@/features/dashboard/updatesContent'
 import { fetchProfile } from '@/features/settings/profileApi'
 import { InstallBanner } from '@/features/dashboard/InstallBanner'
 import { formatVolume } from '@/lib/format'
@@ -56,7 +57,8 @@ export function DashboardPage() {
       setStats(s)
       setActiveWorkout(active)
       setTemplates(tmpl)
-      setShowUpdatesPopup(Boolean(profile?.show_updates_popup))
+      const lastSeen = profile?.last_seen_updates_version ?? 0
+      setShowUpdatesPopup(lastSeen < UPDATES_POPUP_VERSION)
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [user?.id])

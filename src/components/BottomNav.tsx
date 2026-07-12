@@ -27,7 +27,7 @@ export function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-5 pointer-events-none"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
     >
-      <nav className="liquid-glass-pill pointer-events-auto rounded-full p-1.5 w-full max-w-sm">
+      <nav className="liquid-glass-pill liquid-glass-pill-nav pointer-events-auto rounded-full p-1.5 w-full max-w-sm">
         {/* Inner flex wrapper is the positioning context for the indicator so
             percentages are relative to the tabs' actual area, not the padded pill */}
         <div className="relative flex">

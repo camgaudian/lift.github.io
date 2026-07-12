@@ -20,9 +20,18 @@ export interface Profile {
   accent_color: string
   color_pop: boolean
   hide_add_friend_warning: boolean
+  hide_exercise_data_from_friends: boolean
+  /** @deprecated Prefer last_seen_updates_version; kept for old clients */
   show_updates_popup: boolean
+  /** Absent until migration 011; treat missing as 0 */
+  last_seen_updates_version?: number
   featured_milestone_category: MilestoneCategoryId | null
   avatar_path: string | null
+  push_friend_request?: boolean
+  push_exercise_share?: boolean
+  push_template_share?: boolean
+  push_workout_reminder?: boolean
+  push_prompt_completed?: boolean
   created_at: string
   updated_at: string
 }
@@ -51,7 +60,7 @@ export type ReactToNowPlayingResult =
   | { ok: true; reaction: string | null }
   | { ok: false; error: string }
 
-export interface MusicSearchTrack {
+export interface SpotifySearchTrack {
   track_id: string
   title: string
   artist: string

@@ -60,10 +60,18 @@ These files describe the full current schema. Run them in order on a **new** pro
 2. Run each file from [`supabase/migrations/`](migrations/):
    - `001_schema.sql` — tables, types, indexes, triggers
    - `002_rls.sql` — row-level security policies
-   - `003_seed_exercises.sql` — built-in exercise library
+   - `003_seed_exercises.sql` — built-in exercise library (50 exercises)
    - `004_functions.sql` — RPCs and helper functions
+   - `005_avatars.sql` — profile avatars
+   - `006_updates_popup.sql` — updates popup flag (legacy boolean; kept for old clients)
+   - `008_seed_more_exercises.sql` — additional built-in exercises (82)
+   - `009_hide_exercise_data_from_friends.sql` — PR sharing privacy preference
+   - `010_push_notifications.sql` — Web Push subscriptions, prefs, triggers, workout-reminder cron
+   - `011_updates_popup_version.sql` — versioned updates popup (`last_seen_updates_version`)
 
-For the now-playing song feature, also complete [MUSIC_SEARCH_SETUP.md](MUSIC_SEARCH_SETUP.md) (Edge Function deploy; schema is already in the files above).
+For Spotify now-playing, also complete [SPOTIFY_SETUP.md](SPOTIFY_SETUP.md) (Edge Function deploy; schema is already in the files above).
+
+For Web Push (device notifications), also complete **section 6b** below after running `010_push_notifications.sql`.
 
 For incremental changes on an existing database, add a new numbered migration (e.g. `005_…sql`) rather than editing these reference files.
 
@@ -87,6 +95,9 @@ Create a `.env` file in the project root:
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 
+# Web Push (public VAPID key only — never put the private key in the client)
+VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
+
 # Local dev only — proxied by Vite for in-app feedback (never bundled)
 DISCORD_FEEDBACK_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
 ```
@@ -102,6 +113,67 @@ For GitHub Pages deployment, add the same values as repository secrets:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `VITE_VAPID_PUBLIC_KEY`
+
+## 6b. Web Push notifications
+
+Push alerts cover friend requests, exercise/template shares, and a one-time reminder when an active workout is older than 5 hours. Users customize types under **Settings → Push notifications**.
+
+### Enable extensions
+
+In the Supabase dashboard → **Database → Extensions**, enable:
+
+- `pg_net` (HTTP from the database to the Edge Function)
+- `pg_cron` (schedules the 5-hour workout reminder check)
+
+Then re-run the cron scheduling block from `010_push_notifications.sql` if the job was not created (look for job name `lift-workout-reminders` under **Database → Cron Jobs**).
+
+### Generate VAPID keys
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Put the **public** key in `.env` as `VITE_VAPID_PUBLIC_KEY` (and in GitHub Actions secrets). Keep the **private** key only in Supabase secrets.
+
+### Deploy `dispatch-push`
+
+```bash
+# Generate a long random secret for DB → function auth, e.g.:
+# openssl rand -hex 32
+
+supabase secrets set \
+  VAPID_PUBLIC_KEY="your-vapid-public-key" \
+  VAPID_PRIVATE_KEY="your-vapid-private-key" \
+  VAPID_SUBJECT="mailto:noreply@your-domain.com" \
+  PUSH_DISPATCH_SECRET="your-long-random-secret" \
+  APP_ORIGIN="https://lift.gaudian.dev"
+
+supabase functions deploy dispatch-push
+```
+
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided automatically to Edge Functions.
+
+### Point the database at the function
+
+In **SQL Editor**, set the runtime config (replace placeholders):
+
+```sql
+UPDATE public.push_runtime_config
+SET
+  edge_function_url = 'https://YOUR_PROJECT.supabase.co/functions/v1/dispatch-push',
+  dispatch_secret = 'your-long-random-secret',
+  app_origin = 'https://lift.gaudian.dev'
+WHERE singleton = true;
+```
+
+`dispatch_secret` must match `PUSH_DISPATCH_SECRET`.
+
+### Notes
+
+- **Android / desktop:** works in Chromium and Firefox after the user grants permission.
+- **iOS:** Web Push requires **Safari → Add to Home Screen** (iOS 16.4+). In-tab Safari and Chrome on iOS cannot receive push.
+- Until `push_runtime_config` is filled in, triggers and the cron job no-op (no errors for users).
 
 ## 7. Verify
 

@@ -57,7 +57,7 @@ export function PrLeaderboardLink({ from }: { from: NavTab }) {
       }}
     >
       <PodiumIcon />
-      <span className="flex-1">PR Leaderboard</span>
+      <span className="flex-1">PR leaderboard</span>
       <ChevronIcon />
     </Link>
   )

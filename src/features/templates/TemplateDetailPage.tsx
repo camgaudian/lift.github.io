@@ -11,6 +11,8 @@ import {
 import { useExercises } from '@/features/exercises/useExercises'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
+import { ExerciseRemoveButton } from '@/components/ExerciseRemoveButton'
+import { ExerciseSwapButton } from '@/components/ExerciseSwapButton'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ExercisePickerPanel } from '@/features/exercises/ExercisePicker'
 import { useDragReorder, reorderList } from '@/lib/useDragReorder'
@@ -90,6 +92,18 @@ export function TemplateDetailPage() {
     reload()
   }
 
+  const handleSwap = async (item: TemplateExercise, exerciseId: string) => {
+    if (!id) return
+    const index = items.findIndex((i) => i.id === item.id)
+    if (index < 0) return
+
+    await removeExerciseFromTemplate(item.id)
+    const added = await addExerciseToTemplate(id, exerciseId, index)
+    const orderedIds = items.map((i) => (i.id === item.id ? added.id : i.id))
+    await reorderTemplateExercises(orderedIds)
+    await reload()
+  }
+
   if (loading) return <LoadingSpinner />
 
   return (
@@ -166,9 +180,19 @@ export function TemplateDetailPage() {
               <span className="flex-1">
                 {idx + 1}. {(item.exercise as { name: string } | undefined)?.name ?? 'Exercise'}
               </span>
-              <button type="button" onClick={() => handleRemove(item.id)} className="shrink-0 text-sm text-danger">
-                Remove
-              </button>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <ExerciseSwapButton
+                  exerciseName={(item.exercise as { name: string } | undefined)?.name ?? 'Exercise'}
+                  exercises={exercises}
+                  excludeIds={alreadyAdded}
+                  onSwap={(exerciseId) => handleSwap(item, exerciseId)}
+                />
+                <ExerciseRemoveButton
+                  exerciseName={(item.exercise as { name: string } | undefined)?.name ?? 'Exercise'}
+                  fromLabel="template"
+                  onRemove={() => handleRemove(item.id)}
+                />
+              </div>
             </Card>
           </div>
         ))}

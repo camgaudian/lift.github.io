@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { BottomNav } from './BottomNav'
+import { PushPermissionPrompt } from '@/features/settings/PushPermissionPrompt'
 
 export function AppLayout() {
   const { pathname } = useLocation()
@@ -19,6 +20,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <BottomNav />
+      <PushPermissionPrompt />
     </div>
   )
 }

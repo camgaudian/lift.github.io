@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { AvatarImage } from '@/components/AvatarImage'
-import { Modal } from '@/components/Modal'
+import { BottomSheet } from '@/components/BottomSheet'
 import { FriendNoTrackInline } from '@/features/profile/FriendNoTrackInline'
 import { FriendNowPlayingInline } from '@/features/profile/FriendNowPlayingInline'
 import { getAvatarUrl } from '@/features/profile/avatarApi'
@@ -133,7 +133,7 @@ export function ReactionsListModal({
   onClose: () => void
 }) {
   return (
-    <Modal title="Reactions" onClose={onClose} showCloseButton scrollable>
+    <BottomSheet title="Reactions" onClose={onClose} showCloseButton scrollable>
       {reactions.length === 0 ? (
         <p className="text-sm text-text-secondary">No reactions yet.</p>
       ) : (
@@ -168,6 +168,6 @@ export function ReactionsListModal({
           ))}
         </ul>
       )}
-    </Modal>
+    </BottomSheet>
   )
 }

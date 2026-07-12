@@ -30,6 +30,13 @@ import { WorkoutAchievementsSection } from './WorkoutAchievementsSection'
 import { SaveEntriesNotice } from './SaveEntriesNotice'
 import { useDragReorder, reorderList } from '@/lib/useDragReorder'
 import { navFromState, setStoredNavFrom } from '@/lib/nav'
+import {
+  clearCollapsedExercises,
+  getCollapsedExerciseIds,
+  removeCollapsedExercise,
+  saveCollapsedExerciseIds,
+} from '@/lib/collapsedExercises'
+import { formatSaveError } from '@/lib/saveError'
 import type { Workout, WorkoutExercise } from '@/lib/types'
 
 const TEMP_ID_PREFIX = 'temp-'
@@ -80,6 +87,7 @@ export function ActiveWorkoutPage() {
   const [showCancelEditConfirm, setShowCancelEditConfirm] = useState(false)
   const [showSaveEditConfirm, setShowSaveEditConfirm] = useState(false)
   const [editFormDirty, setEditFormDirty] = useState(false)
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
   const exerciseRefs = useRef<Record<string, ExerciseBlockHandle | null>>({})
 
   const reload = async () => {
@@ -97,6 +105,36 @@ export function ActiveWorkoutPage() {
   useEffect(() => {
     reload()
   }, [id])
+
+  useEffect(() => {
+    if (!id || workout?.status !== 'in_progress') {
+      setCollapsedIds(new Set())
+      return
+    }
+    setCollapsedIds(getCollapsedExerciseIds(id))
+  }, [id, workout?.status])
+
+  const setExerciseCollapsed = (exerciseId: string, collapsed: boolean) => {
+    if (!id) return
+    setCollapsedIds((prev) => {
+      const next = new Set(prev)
+      if (collapsed) next.add(exerciseId)
+      else next.delete(exerciseId)
+      saveCollapsedExerciseIds(id, next)
+      return next
+    })
+  }
+
+  const dropCollapsedExercise = (exerciseId: string) => {
+    if (!id) return
+    removeCollapsedExercise(id, exerciseId)
+    setCollapsedIds((prev) => {
+      if (!prev.has(exerciseId)) return prev
+      const next = new Set(prev)
+      next.delete(exerciseId)
+      return next
+    })
+  }
 
   useEffect(() => {
     const fromState = navFromState(location.state)
@@ -155,6 +193,7 @@ export function ActiveWorkoutPage() {
   }
 
   const handleRemoveExercise = async (item: WorkoutExercise) => {
+    dropCollapsedExercise(item.id)
     if (isEditing) {
       if (!isTempExerciseId(item.id)) {
         setRemovedExerciseIds((prev) => [...prev, item.id])
@@ -164,6 +203,48 @@ export function ActiveWorkoutPage() {
     }
     await removeWorkoutExercise(item.id)
     reload()
+  }
+
+  const handleSwapExercise = async (item: WorkoutExercise, exerciseId: string) => {
+    if (!id) return
+    const ex = allExercises.find((e) => e.id === exerciseId)
+    if (!ex) return
+
+    const index = items.findIndex((i) => i.id === item.id)
+    if (index < 0) return
+
+    if (isEditing) {
+      dropCollapsedExercise(item.id)
+      if (!isTempExerciseId(item.id)) {
+        setRemovedExerciseIds((prev) => [...prev, item.id])
+      }
+      const tempId = `${TEMP_ID_PREFIX}${crypto.randomUUID()}`
+      const replacement: WorkoutExercise = {
+        id: tempId,
+        workout_id: id,
+        exercise_id: ex.id,
+        sort_order: index,
+        exercise_type: ex.exercise_type,
+        exercise: ex,
+        strength_sets: ex.exercise_type === 'cardio' ? undefined : [],
+        cardio_entry:
+          ex.exercise_type === 'cardio'
+            ? { duration_seconds: 0, distance_miles: null, calories: null }
+            : null,
+        session_note:
+          ex.exercise_type !== 'cardio' ? { note_for_next_time: '' } : null,
+      }
+      setItems((prev) => prev.map((i) => (i.id === item.id ? replacement : i)))
+      setEditFormDirty(true)
+      return
+    }
+
+    dropCollapsedExercise(item.id)
+    await removeWorkoutExercise(item.id)
+    const added = await addExerciseToWorkout(id, ex.id, ex.exercise_type, index)
+    const orderedIds = items.map((i) => (i.id === item.id ? added.id : i.id))
+    await reorderWorkoutExercises(orderedIds)
+    await reload()
   }
 
   const openCompleteConfirm = () => {
@@ -190,12 +271,14 @@ export function ActiveWorkoutPage() {
       await clearStaleSessionNotesForWorkout(id)
       await Promise.all(items.map((item) => exerciseRefs.current[item.id]?.save()))
       await completeWorkout(id, pendingCompletedAt)
+      clearCollapsedExercises(id)
+      setCollapsedIds(new Set())
       const { workout: w, exercises } = await fetchWorkout(id)
       setWorkout(w)
       setItems(exercises)
       setShowCompletionSummary(true)
     } catch (err) {
-      setCompleteError(err instanceof Error ? err.message : 'Failed to complete workout')
+      setCompleteError(formatSaveError(err, "Failed to complete."))
     } finally {
       setCompleting(false)
       setShowCompleteConfirm(false)
@@ -210,9 +293,11 @@ export function ActiveWorkoutPage() {
     setDiscardError(null)
     try {
       await cancelWorkout(id)
+      clearCollapsedExercises(id)
+      setCollapsedIds(new Set())
       navigate('/')
-    } catch {
-      setDiscardError('Failed to discard workout.')
+    } catch (err) {
+      setDiscardError(formatSaveError(err, "Failed to discard."))
     } finally {
       setDiscarding(false)
     }
@@ -309,11 +394,14 @@ export function ActiveWorkoutPage() {
       }
 
       const idMap: Record<string, string> = {}
-      for (const item of items) {
+      for (const [index, item] of items.entries()) {
         if (!isTempExerciseId(item.id)) continue
-        const added = await addExerciseToWorkout(id, item.exercise_id, item.exercise_type)
+        const added = await addExerciseToWorkout(id, item.exercise_id, item.exercise_type, index)
         idMap[item.id] = added.id
       }
+
+      const finalOrderedIds = items.map((item) => idMap[item.id] ?? item.id)
+      await reorderWorkoutExercises(finalOrderedIds)
 
       await Promise.all(
         items.map((item) => {
@@ -331,7 +419,7 @@ export function ActiveWorkoutPage() {
       exitEditMode()
       await reload()
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save changes')
+      setSaveError(formatSaveError(err, "Failed to save."))
     } finally {
       setSavingEdits(false)
     }
@@ -470,24 +558,7 @@ export function ActiveWorkoutPage() {
         </>
       )}
 
-      {showEditable && !reorderMode && (
-        <>
-          <Button variant="secondary" fullWidth onClick={() => setShowPicker(!showPicker)}>
-            {showPicker ? 'Cancel' : '+ Add exercise'}
-          </Button>
-
-          {showPicker && (
-            <ExercisePickerPanel
-              exercises={allExercises}
-              excludeIds={alreadyAdded}
-              onSelect={handleAddExercise}
-              disabled={adding}
-            />
-          )}
-        </>
-      )}
-
-      {reorderMode ? (
+      {reorderMode && (
         <div ref={listRef} className="flex flex-col gap-2">
           <p className="px-1 text-sm text-text-secondary">
             Drag exercises into a new order, then tap the reorder icon again when done.
@@ -520,38 +591,69 @@ export function ActiveWorkoutPage() {
             </div>
           ))}
         </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {items.map((item) => (
-            <ExerciseBlock
-              key={item.id}
-              ref={(el) => {
-                exerciseRefs.current[item.id] = el
-              }}
-              workoutExerciseId={item.id}
-              exerciseId={item.exercise_id}
-              exerciseName={exerciseName(item)}
-              exerciseType={item.exercise_type}
-              initialSets={item.strength_sets}
-              initialNote={item.session_note?.note_for_next_time ?? ''}
-              initialCardio={item.cardio_entry ?? undefined}
-              readOnly={blockReadOnly}
-              persistenceMode={isEditing ? 'manual' : 'auto'}
-              sessionNoteReadOnly={isCompleted}
-              onDirty={isEditing ? () => setEditFormDirty(true) : undefined}
-              onRemove={
-                showEditable
-                  ? () => handleRemoveExercise(item)
-                  : undefined
-              }
+      )}
+
+      {/* Keep ExerciseBlocks mounted in reorder mode so local set/note state is not reset. */}
+      <div
+        className={reorderMode ? 'hidden' : 'flex flex-col gap-4'}
+        aria-hidden={reorderMode}
+      >
+        {items.map((item) => (
+          <ExerciseBlock
+            key={item.id}
+            ref={(el) => {
+              exerciseRefs.current[item.id] = el
+            }}
+            workoutExerciseId={item.id}
+            exerciseId={item.exercise_id}
+            exerciseName={exerciseName(item)}
+            exerciseType={item.exercise_type}
+            initialSets={item.strength_sets}
+            initialNote={item.session_note?.note_for_next_time ?? ''}
+            initialCardio={item.cardio_entry ?? undefined}
+            readOnly={blockReadOnly}
+            persistenceMode={isEditing ? 'manual' : 'auto'}
+            sessionNoteReadOnly={isCompleted}
+            onDirty={isEditing ? () => setEditFormDirty(true) : undefined}
+            collapseEnabled={!isCompleted}
+            collapsed={collapsedIds.has(item.id)}
+            onCollapsedChange={(next) => setExerciseCollapsed(item.id, next)}
+            onRemove={
+              showEditable
+                ? () => handleRemoveExercise(item)
+                : undefined
+            }
+            onSwap={
+              showEditable
+                ? (exerciseId) => handleSwapExercise(item, exerciseId)
+                : undefined
+            }
+            swapExercises={showEditable ? allExercises : undefined}
+            swapExcludeIds={showEditable ? alreadyAdded : undefined}
+          />
+        ))}
+        {items.length === 0 && (
+          <Card>
+            <p className="text-text-secondary text-center">Add exercises to log your workout.</p>
+          </Card>
+        )}
+      </div>
+
+      {showEditable && !reorderMode && (
+        <>
+          <Button variant="secondary" fullWidth onClick={() => setShowPicker(!showPicker)}>
+            {showPicker ? 'Cancel' : '+ Add exercise'}
+          </Button>
+
+          {showPicker && (
+            <ExercisePickerPanel
+              exercises={allExercises}
+              excludeIds={alreadyAdded}
+              onSelect={handleAddExercise}
+              disabled={adding}
             />
-          ))}
-          {items.length === 0 && (
-            <Card>
-              <p className="text-text-secondary text-center">Add exercises to log your workout.</p>
-            </Card>
           )}
-        </div>
+        </>
       )}
 
       {isEditing && (

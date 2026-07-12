@@ -50,7 +50,9 @@ const CONTENT_OFFSET_MULTIPLIERS: Record<MilestoneCategoryId, number> = {
   streak: -0.04,
 }
 
-const METAL_GRADIENTS: Record<'bronze' | 'silver' | 'gold', string> = {
+export type MilestoneMetal = 'bronze' | 'silver' | 'gold'
+
+export const METAL_GRADIENTS: Record<MilestoneMetal, string> = {
   bronze:
     'repeating-linear-gradient(115deg, rgba(255,255,255,0.16) 0 1px, transparent 1px 4px), linear-gradient(135deg, #7a3f1d 0%, #cd7f32 24%, #f4c79b 45%, #cd7f32 60%, #8a4b2a 80%, #e0a06a 100%)',
   silver:
@@ -59,10 +61,13 @@ const METAL_GRADIENTS: Record<'bronze' | 'silver' | 'gold', string> = {
     'repeating-linear-gradient(115deg, rgba(255,255,255,0.18) 0 1px, transparent 1px 4px), linear-gradient(135deg, #9c6f12 0%, #d4af37 24%, #fbef9b 46%, #e7c44d 62%, #a87f17 82%, #f3df7d 100%)',
 }
 
+/** Border thickness used for metal / accent rings on milestone icons. */
+export const MILESTONE_BORDER_WIDTH = BORDER_WIDTH
+
 type TierStyle =
   | { kind: 'none' }
   | { kind: 'accent'; opacityPct: number }
-  | { kind: 'metal'; metal: 'bronze' | 'silver' | 'gold' }
+  | { kind: 'metal'; metal: MilestoneMetal }
 
 function getTierStyle(tier: number): TierStyle {
   switch (tier) {

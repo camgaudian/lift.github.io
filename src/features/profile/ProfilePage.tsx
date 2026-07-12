@@ -504,10 +504,11 @@ export function ProfilePage() {
       </section>
 
       {showAddWarning && (
-        <Modal title="Share workout data?" onClose={() => !adding && setShowAddWarning(false)}>
+        <Modal title="Share PR data with friends?" onClose={() => !adding && setShowAddWarning(false)}>
           <p className="text-sm text-text-secondary">
-            Adding a friend lets them see your workout data once they accept. Only add people you
-            trust.
+            Adding a friend lets them compare your PR leaderboards and exercise rankings once they
+            accept, unless you choose not to share in Settings → Preferences → Hide PR data from
+            friends. Only add people you trust.
           </p>
           <label className="mt-4 flex items-start gap-2 text-sm">
             <input
@@ -550,7 +551,7 @@ export function ProfilePage() {
         <Modal title="Unfriend?" onClose={() => !unfriending && setUnfriendTarget(null)}>
           <p className="text-sm text-text-secondary">
             Remove {formatUsername(unfriendTarget.display_name)} from your friends? They will no
-            longer be able to see your workout data, and you won&apos;t see theirs.
+            longer be able to compare PR leaderboards with you, and you won&apos;t see theirs.
           </p>
           <div className="mt-5 flex gap-2">
             <Button

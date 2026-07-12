@@ -37,9 +37,16 @@ export async function updateProfileSettings(
     display_name?: string | null
     unit_preference?: WeightUnit
     hide_add_friend_warning?: boolean
+    hide_exercise_data_from_friends?: boolean
     show_updates_popup?: boolean
+    last_seen_updates_version?: number
     featured_milestone_category?: MilestoneCategoryId | null
     avatar_path?: string | null
+    push_friend_request?: boolean
+    push_exercise_share?: boolean
+    push_template_share?: boolean
+    push_workout_reminder?: boolean
+    push_prompt_completed?: boolean
   },
 ): Promise<Profile> {
   const { data, error } = await supabase

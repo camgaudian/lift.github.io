@@ -16,14 +16,21 @@ export function displayToLb(value: number, unit: WeightUnit): number {
   return value
 }
 
+function formatWeightNumber(value: number, maxFractionDigits: number): string {
+  const factor = 10 ** maxFractionDigits
+  const rounded = Math.round(value * factor) / factor
+  return rounded.toLocaleString(undefined, {
+    maximumFractionDigits: maxFractionDigits,
+    minimumFractionDigits: 0,
+  })
+}
+
 export function formatWeight(lb: number, unit: WeightUnit): string {
   if (lb <= 0) return '—'
   if (unit === 'kg') {
-    const kg = lb / LB_PER_KG
-    const rounded = Math.round(kg * 10) / 10
-    return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)} kg`
+    return `${formatWeightNumber(lb / LB_PER_KG, 1)} kg`
   }
-  return `${Math.round(lb).toLocaleString()} lb`
+  return `${formatWeightNumber(lb, 2)} lb`
 }
 
 export function formatVolume(volumeLb: number, unit: WeightUnit): string {
