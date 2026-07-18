@@ -608,7 +608,7 @@ export function ActiveWorkoutPage() {
       {isCompleted && !isEditing && workout && <WorkoutDateHeader workout={workout} />}
 
       {isEditing && (
-        <Card className="flex flex-col gap-3">
+        <Card className="flex min-w-0 flex-col gap-3 overflow-hidden">
           <Input
             label="Started"
             type="datetime-local"

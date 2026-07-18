@@ -3,6 +3,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
@@ -49,17 +50,16 @@ export function AnimatedListItem({
     completedRef.current = false
   }, [phase])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (phase !== 'exiting' && phase !== 'swapping') {
       setExitStyle(undefined)
       return
     }
 
-    // Height collapse only for delete; swap keeps its slot size.
-    if (phase === 'exiting') {
-      const el = outerRef.current
-      if (!el) return
+    const el = outerRef.current
+    if (!el) return
 
+    if (phase === 'exiting') {
       const height = el.offsetHeight
       setExitStyle({
         height,
@@ -92,6 +92,13 @@ export function AnimatedListItem({
       }
     }
 
+    // Lock the outgoing slot height so siblings don't jump while the
+    // replacement card slides in (it may be taller/shorter).
+    setExitStyle({
+      height: el.offsetHeight,
+      overflow: 'hidden',
+    })
+
     const timer = window.setTimeout(() => {
       if (completedRef.current) return
       completedRef.current = true
@@ -102,6 +109,7 @@ export function AnimatedListItem({
   }, [phase])
 
   const locked = phase !== 'idle'
+  const sliding = phase === 'exiting' || phase === 'swapping'
 
   return (
     <div
@@ -111,29 +119,22 @@ export function AnimatedListItem({
       aria-busy={phase === 'busy' || undefined}
       {...rest}
     >
-      {phase === 'swapping' && incoming ? (
-        <div className="grid overflow-hidden">
-          <div className="col-start-1 row-start-1 card-slide-out-left pointer-events-none">
-            {children}
-          </div>
-          <div className="col-start-1 row-start-1 card-slide-in-right pointer-events-none">
-            {incoming}
-          </div>
-        </div>
-      ) : (
-        <div
-          className={[
-            'relative',
-            phase === 'exiting' ? 'card-slide-out-left' : '',
-            locked ? 'pointer-events-none' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          {children}
-          {phase === 'busy' && <CardBusyOverlay />}
-        </div>
-      )}
+      <div
+        className={[
+          'relative',
+          phase === 'swapping' ? 'overflow-hidden' : '',
+          locked ? 'pointer-events-none' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {/* Stable child path avoids remounting the outgoing block mid-swap. */}
+        <div className={sliding ? 'card-slide-out-left' : undefined}>{children}</div>
+        {phase === 'swapping' && incoming ? (
+          <div className="absolute inset-x-0 top-0 z-10 card-slide-in-right">{incoming}</div>
+        ) : null}
+        {phase === 'busy' && <CardBusyOverlay />}
+      </div>
     </div>
   )
 }

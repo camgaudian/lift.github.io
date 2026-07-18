@@ -56,20 +56,37 @@ button {
   font-family: inherit;
 }
 
-/* Native date/time controls have a large intrinsic min-width that can
-   overflow cards on narrow viewports even with width: 100%. */
+/* iOS WebKit sizes date/time inputs to their content and ignores width
+   unless appearance is reset. Native pickers still open on tap. */
 input[type="date"],
 input[type="time"],
 input[type="datetime-local"] {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
+  -webkit-min-logical-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 input[type="date"]::-webkit-datetime-edit,
 input[type="time"]::-webkit-datetime-edit,
-input[type="datetime-local"]::-webkit-datetime-edit {
+input[type="datetime-local"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
   min-width: 0;
   max-width: 100%;
+  padding: 0;
+  text-align: left;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  display: none;
 }
 
 .safe-bottom {
