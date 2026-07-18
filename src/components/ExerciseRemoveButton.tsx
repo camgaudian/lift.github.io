@@ -21,16 +21,12 @@ export function ExerciseRemoveButton({
   iconSize,
 }: ExerciseRemoveButtonProps) {
   const [showConfirm, setShowConfirm] = useState(false)
-  const [removing, setRemoving] = useState(false)
 
-  const confirmRemove = async () => {
-    setRemoving(true)
-    try {
-      await onRemove()
-      setShowConfirm(false)
-    } finally {
-      setRemoving(false)
-    }
+  const confirmRemove = () => {
+    setShowConfirm(false)
+    void Promise.resolve(onRemove()).catch(() => {
+      // Parent restores the card UI on failure.
+    })
   }
 
   return (
@@ -44,22 +40,17 @@ export function ExerciseRemoveButton({
         <TrashIcon size={iconSize} />
       </button>
       {showConfirm && (
-        <Modal title="Remove exercise?" onClose={() => !removing && setShowConfirm(false)}>
+        <Modal title="Remove exercise?" onClose={() => setShowConfirm(false)}>
           <p className="text-sm text-text-secondary">
             Remove <span className="font-medium text-text">{exerciseName}</span> from this{' '}
             {fromLabel}?
           </p>
           <div className="mt-5 flex gap-2">
-            <Button
-              variant="secondary"
-              fullWidth
-              disabled={removing}
-              onClick={() => setShowConfirm(false)}
-            >
+            <Button variant="secondary" fullWidth onClick={() => setShowConfirm(false)}>
               Cancel
             </Button>
-            <Button variant="danger" fullWidth disabled={removing} onClick={confirmRemove}>
-              {removing ? 'Removing…' : 'Remove'}
+            <Button variant="danger" fullWidth onClick={confirmRemove}>
+              Remove
             </Button>
           </div>
         </Modal>

@@ -56,6 +56,22 @@ button {
   font-family: inherit;
 }
 
+/* Native date/time controls have a large intrinsic min-width that can
+   overflow cards on narrow viewports even with width: 100%. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  min-width: 0;
+  max-width: 100%;
+}
+
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -201,6 +217,36 @@ button {
   animation: autofill-flash 0.9s ease-out;
 }
 
+@keyframes card-slide-out-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-110%);
+    opacity: 0;
+  }
+}
+
+@keyframes card-slide-in-right {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.card-slide-out-left {
+  animation: card-slide-out-left 320ms ease forwards;
+}
+
+.card-slide-in-right {
+  animation: card-slide-in-right 320ms ease forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;
@@ -226,6 +272,11 @@ button {
   .autofill-flash {
     animation: none;
   }
+
+  .card-slide-out-left,
+  .card-slide-in-right {
+    animation: none;
+  }
 }
 
 /* ── Liquid glass nav ── */
@@ -235,19 +286,17 @@ button {
   -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.02);
   border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 12px 40px rgba(0, 0, 0, 0.18),
-    0 24px 64px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.09),
+    0 2px 8px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
 
 .liquid-glass-pill-nav {
   box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.1),
-    0 8px 28px rgba(0, 0, 0, 0.16),
-    0 16px 48px rgba(0, 0, 0, 0.22),
-    0 32px 80px rgba(0, 0, 0, 0.14),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 6px 22px rgba(0, 0, 0, 0.14),
+    0 12px 36px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
@@ -256,19 +305,17 @@ button {
   background: rgba(20, 20, 24, 0.36);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.35),
-    0 12px 40px rgba(0, 0, 0, 0.55),
-    0 24px 64px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.32),
+    0 2px 8px rgba(0, 0, 0, 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] .liquid-glass-pill-nav {
   box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.45),
-    0 8px 28px rgba(0, 0, 0, 0.55),
-    0 16px 48px rgba(0, 0, 0, 0.45),
-    0 32px 80px rgba(0, 0, 0, 0.38),
+    0 2px 8px rgba(0, 0, 0, 0.42),
+    0 6px 22px rgba(0, 0, 0, 0.48),
+    0 12px 36px rgba(0, 0, 0, 0.36),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }

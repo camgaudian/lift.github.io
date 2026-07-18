@@ -69,7 +69,7 @@ interface ExerciseBlockProps {
   persistenceMode?: 'auto' | 'manual'
   sessionNoteReadOnly?: boolean
   onDirty?: () => void
-  /** When true, this block can be collapsed (active in-progress workouts only). */
+  /** When true, this block can be collapsed (active workouts and history edit mode). */
   collapseEnabled?: boolean
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
@@ -641,19 +641,6 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
       </span>
     ) : null
 
-  // Swap/remove only live in the header when there's no collapse feature (e.g.
-  // template editing). In an active workout they move to the bottom corners, and
-  // collapse/expand take the header slot instead.
-  const headerSwapButton =
-    onSwap && swapExercises && !collapseEnabled ? (
-      <ExerciseSwapButton
-        exerciseName={exerciseName}
-        exercises={swapExercises}
-        excludeIds={swapExcludeIds}
-        onSwap={onSwap}
-      />
-    ) : null
-
   const collapseButtonClass =
     'shrink-0 rounded-lg p-2 -mr-1.5 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-accent'
 
@@ -687,15 +674,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
         <h3 className="truncate font-semibold">{exerciseName}</h3>
         {autosaveStatus}
       </div>
-      {!readOnly && (headerCollapseButton || headerSwapButton || (!collapseEnabled && onRemove)) && (
-        <div className="flex shrink-0 items-center gap-0.5">
-          {headerSwapButton}
-          {!collapseEnabled && onRemove && (
-            <ExerciseRemoveButton exerciseName={exerciseName} onRemove={onRemove} />
-          )}
-          {headerCollapseButton}
-        </div>
-      )}
+      {headerCollapseButton}
     </div>
   )
 
@@ -704,12 +683,12 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     isCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
   ].join(' ')
 
-  // Quarter-circle buttons anchored to the card's own bottom corners (active
-  // workouts only). Rendered as a sibling of the collapsible body so they aren't
-  // clipped by its overflow-hidden animation wrapper. Hidden while collapsed,
-  // and only remounted after the expand animation finishes.
+  // Quarter-circle buttons anchored to the card's bottom corners. Rendered as a
+  // sibling of the collapsible body so they aren't clipped by its overflow-hidden
+  // animation wrapper. Hidden while collapsed, and only remounted after the
+  // expand animation finishes. Same placement for active workouts and edit mode.
   const cornerButtons =
-    collapseEnabled && !readOnly && !isCollapsed && cornerButtonsReady ? (
+    !readOnly && !isCollapsed && cornerButtonsReady ? (
       <>
         {onSwap && swapExercises && (
           <ExerciseSwapButton

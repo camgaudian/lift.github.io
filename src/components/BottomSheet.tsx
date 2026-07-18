@@ -73,12 +73,14 @@ export function BottomSheet({
           'w-full rounded-t-2xl border-x border-t liquid-glass-surface',
           scrollable ? 'flex max-h-[90dvh] flex-col' : 'max-h-[90dvh] overflow-auto',
           'transition-transform duration-300 ease-out',
-          'touch-pan-y',
+          // Allow vertical sheet scroll without chaining to the page behind.
+          // Do not stopPropagation on touchmove — that breaks document-level
+          // listeners used by gesture UIs (e.g. react-easy-crop pan on iOS).
+          'touch-pan-y overscroll-contain',
           visible ? 'translate-y-0' : 'translate-y-full',
         ].join(' ')}
         style={accentColor ? ({ '--color-accent': accentColor } as CSSProperties) : undefined}
         onClick={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
       >
         {/* Drag handle + title — never scrolls away */}
         <div className="shrink-0 px-5 pt-3">

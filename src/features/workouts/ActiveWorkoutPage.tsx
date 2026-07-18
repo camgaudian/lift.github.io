@@ -12,6 +12,7 @@ import {
 } from './workoutApi'
 import { ExerciseBlock, type ExerciseBlockHandle } from './ExerciseBlock'
 import { useExercises } from '@/features/exercises/useExercises'
+import { AnimatedListItem } from '@/components/AnimatedListItem'
 import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
@@ -29,6 +30,7 @@ import { WorkoutFunStatsSection } from './WorkoutFunStatsSection'
 import { WorkoutAchievementsSection } from './WorkoutAchievementsSection'
 import { SaveEntriesNotice } from './SaveEntriesNotice'
 import { useDragReorder, reorderList } from '@/lib/useDragReorder'
+import { useListItemMotion } from '@/lib/useListItemMotion'
 import { navFromState, setStoredNavFrom } from '@/lib/nav'
 import {
   clearCollapsedExercises,
@@ -37,9 +39,10 @@ import {
   saveCollapsedExerciseIds,
 } from '@/lib/collapsedExercises'
 import { formatSaveError } from '@/lib/saveError'
-import type { Workout, WorkoutExercise } from '@/lib/types'
+import type { Exercise, Workout, WorkoutExercise } from '@/lib/types'
 
 const TEMP_ID_PREFIX = 'temp-'
+const noop = () => undefined
 
 type WorkoutLocationState = {
   navFrom?: string
@@ -55,6 +58,53 @@ function toDatetimeLocalValue(iso: string | null | undefined): string {
   const d = new Date(iso)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function buildLocalReplacement(
+  workoutId: string,
+  exercise: Exercise,
+  index: number,
+): WorkoutExercise {
+  const tempId = `${TEMP_ID_PREFIX}${crypto.randomUUID()}`
+  return {
+    id: tempId,
+    workout_id: workoutId,
+    exercise_id: exercise.id,
+    sort_order: index,
+    exercise_type: exercise.exercise_type,
+    exercise,
+    strength_sets: exercise.exercise_type === 'cardio' ? undefined : [],
+    cardio_entry:
+      exercise.exercise_type === 'cardio'
+        ? { duration_seconds: 0, distance_miles: null, calories: null }
+        : null,
+    session_note:
+      exercise.exercise_type !== 'cardio' ? { note_for_next_time: '' } : null,
+  }
+}
+
+function normalizeAddedExercise(
+  added: WorkoutExercise,
+  exerciseType: WorkoutExercise['exercise_type'],
+): WorkoutExercise {
+  if (exerciseType === 'cardio') {
+    return {
+      ...added,
+      strength_sets: undefined,
+      cardio_entry: added.cardio_entry ?? {
+        duration_seconds: 0,
+        distance_miles: null,
+        calories: null,
+      },
+      session_note: null,
+    }
+  }
+  return {
+    ...added,
+    strength_sets: added.strength_sets ?? [],
+    cardio_entry: null,
+    session_note: added.session_note ?? { note_for_next_time: '' },
+  }
 }
 
 export function ActiveWorkoutPage() {
@@ -88,6 +138,14 @@ export function ActiveWorkoutPage() {
   const [showSaveEditConfirm, setShowSaveEditConfirm] = useState(false)
   const [editFormDirty, setEditFormDirty] = useState(false)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
+  const {
+    motions: itemMotions,
+    clearMotion,
+    setBusy,
+    setExiting,
+    setSwapping,
+    phaseOf,
+  } = useListItemMotion<WorkoutExercise>()
   const exerciseRefs = useRef<Record<string, ExerciseBlockHandle | null>>({})
 
   const reload = async () => {
@@ -120,7 +178,10 @@ export function ActiveWorkoutPage() {
       const next = new Set(prev)
       if (collapsed) next.add(exerciseId)
       else next.delete(exerciseId)
-      saveCollapsedExerciseIds(id, next)
+      // Persist only for in-progress workouts; history edit collapse is session-only.
+      if (workout?.status === 'in_progress') {
+        saveCollapsedExerciseIds(id, next)
+      }
       return next
     })
   }
@@ -193,58 +254,69 @@ export function ActiveWorkoutPage() {
   }
 
   const handleRemoveExercise = async (item: WorkoutExercise) => {
-    dropCollapsedExercise(item.id)
-    if (isEditing) {
-      if (!isTempExerciseId(item.id)) {
-        setRemovedExerciseIds((prev) => [...prev, item.id])
+    if (itemMotions[item.id]) return
+    const showLoading = !isEditing
+    if (showLoading) setBusy(item.id)
+    try {
+      dropCollapsedExercise(item.id)
+      if (isEditing) {
+        if (!isTempExerciseId(item.id)) {
+          setRemovedExerciseIds((prev) => [...prev, item.id])
+        }
+      } else {
+        await removeWorkoutExercise(item.id)
       }
-      setItems((prev) => prev.filter((i) => i.id !== item.id))
-      return
+      setExiting(item.id)
+    } catch {
+      clearMotion(item.id)
     }
-    await removeWorkoutExercise(item.id)
-    reload()
+  }
+
+  const finishRemoveExercise = (itemId: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== itemId))
+    delete exerciseRefs.current[itemId]
+    clearMotion(itemId)
   }
 
   const handleSwapExercise = async (item: WorkoutExercise, exerciseId: string) => {
-    if (!id) return
+    if (!id || itemMotions[item.id]) return
     const ex = allExercises.find((e) => e.id === exerciseId)
     if (!ex) return
 
     const index = items.findIndex((i) => i.id === item.id)
     if (index < 0) return
 
-    if (isEditing) {
-      dropCollapsedExercise(item.id)
-      if (!isTempExerciseId(item.id)) {
-        setRemovedExerciseIds((prev) => [...prev, item.id])
-      }
-      const tempId = `${TEMP_ID_PREFIX}${crypto.randomUUID()}`
-      const replacement: WorkoutExercise = {
-        id: tempId,
-        workout_id: id,
-        exercise_id: ex.id,
-        sort_order: index,
-        exercise_type: ex.exercise_type,
-        exercise: ex,
-        strength_sets: ex.exercise_type === 'cardio' ? undefined : [],
-        cardio_entry:
-          ex.exercise_type === 'cardio'
-            ? { duration_seconds: 0, distance_miles: null, calories: null }
-            : null,
-        session_note:
-          ex.exercise_type !== 'cardio' ? { note_for_next_time: '' } : null,
-      }
-      setItems((prev) => prev.map((i) => (i.id === item.id ? replacement : i)))
-      setEditFormDirty(true)
-      return
-    }
+    const showLoading = !isEditing
+    if (showLoading) setBusy(item.id)
 
-    dropCollapsedExercise(item.id)
-    await removeWorkoutExercise(item.id)
-    const added = await addExerciseToWorkout(id, ex.id, ex.exercise_type, index)
-    const orderedIds = items.map((i) => (i.id === item.id ? added.id : i.id))
-    await reorderWorkoutExercises(orderedIds)
-    await reload()
+    try {
+      dropCollapsedExercise(item.id)
+
+      let incoming: WorkoutExercise
+      if (isEditing) {
+        if (!isTempExerciseId(item.id)) {
+          setRemovedExerciseIds((prev) => [...prev, item.id])
+        }
+        incoming = buildLocalReplacement(id, ex, index)
+        setEditFormDirty(true)
+      } else {
+        await removeWorkoutExercise(item.id)
+        const added = await addExerciseToWorkout(id, ex.id, ex.exercise_type, index)
+        const orderedIds = items.map((i) => (i.id === item.id ? added.id : i.id))
+        await reorderWorkoutExercises(orderedIds)
+        incoming = normalizeAddedExercise(added, ex.exercise_type)
+      }
+
+      setSwapping(item.id, incoming)
+    } catch {
+      clearMotion(item.id)
+    }
+  }
+
+  const finishSwapExercise = (itemId: string, incoming: WorkoutExercise) => {
+    setItems((prev) => prev.map((i) => (i.id === itemId ? incoming : i)))
+    delete exerciseRefs.current[itemId]
+    clearMotion(itemId)
   }
 
   const openCompleteConfirm = () => {
@@ -312,6 +384,8 @@ export function ActiveWorkoutPage() {
     setDraftCompletedAt(toDatetimeLocalValue(workout.completed_at))
     setSaveError(null)
     setShowPicker(false)
+    // History editor: collapse all existing exercises by default (active workouts stay expanded).
+    setCollapsedIds(new Set(items.map((item) => item.id)))
     setIsEditing(true)
   }
 
@@ -330,6 +404,7 @@ export function ActiveWorkoutPage() {
     setEditFormDirty(false)
     setSaveError(null)
     setShowPicker(false)
+    setCollapsedIds(new Set())
   }
 
   const requestCancelEdit = () => {
@@ -595,43 +670,83 @@ export function ActiveWorkoutPage() {
 
       {/* Keep ExerciseBlocks mounted in reorder mode so local set/note state is not reset. */}
       <div
-        className={reorderMode ? 'hidden' : 'flex flex-col gap-4'}
+        className={reorderMode ? 'hidden' : 'flex flex-col'}
         aria-hidden={reorderMode}
       >
-        {items.map((item) => (
-          <ExerciseBlock
-            key={item.id}
-            ref={(el) => {
-              exerciseRefs.current[item.id] = el
-            }}
-            workoutExerciseId={item.id}
-            exerciseId={item.exercise_id}
-            exerciseName={exerciseName(item)}
-            exerciseType={item.exercise_type}
-            initialSets={item.strength_sets}
-            initialNote={item.session_note?.note_for_next_time ?? ''}
-            initialCardio={item.cardio_entry ?? undefined}
-            readOnly={blockReadOnly}
-            persistenceMode={isEditing ? 'manual' : 'auto'}
-            sessionNoteReadOnly={isCompleted}
-            onDirty={isEditing ? () => setEditFormDirty(true) : undefined}
-            collapseEnabled={!isCompleted}
-            collapsed={collapsedIds.has(item.id)}
-            onCollapsedChange={(next) => setExerciseCollapsed(item.id, next)}
-            onRemove={
-              showEditable
-                ? () => handleRemoveExercise(item)
-                : undefined
-            }
-            onSwap={
-              showEditable
-                ? (exerciseId) => handleSwapExercise(item, exerciseId)
-                : undefined
-            }
-            swapExercises={showEditable ? allExercises : undefined}
-            swapExcludeIds={showEditable ? alreadyAdded : undefined}
-          />
-        ))}
+        {items.map((item) => {
+          const motion = itemMotions[item.id]
+          const incoming =
+            motion?.phase === 'swapping' ? motion.incoming : undefined
+
+          return (
+            <AnimatedListItem
+              key={item.id}
+              phase={phaseOf(item.id)}
+              spacingClassName="mb-4 last:mb-0"
+              incoming={
+                incoming ? (
+                  <ExerciseBlock
+                    workoutExerciseId={incoming.id}
+                    exerciseId={incoming.exercise_id}
+                    exerciseName={exerciseName(incoming)}
+                    exerciseType={incoming.exercise_type}
+                    initialSets={incoming.strength_sets}
+                    initialNote={incoming.session_note?.note_for_next_time ?? ''}
+                    initialCardio={incoming.cardio_entry ?? undefined}
+                    readOnly={blockReadOnly}
+                    persistenceMode="manual"
+                    sessionNoteReadOnly={isCompleted}
+                    collapseEnabled={showEditable}
+                    collapsed={false}
+                    onRemove={showEditable ? noop : undefined}
+                    onSwap={showEditable ? noop : undefined}
+                    swapExercises={showEditable ? allExercises : undefined}
+                    swapExcludeIds={showEditable ? alreadyAdded : undefined}
+                  />
+                ) : undefined
+              }
+              onAnimationComplete={() => {
+                if (motion?.phase === 'exiting') {
+                  finishRemoveExercise(item.id)
+                } else if (motion?.phase === 'swapping') {
+                  finishSwapExercise(item.id, motion.incoming)
+                }
+              }}
+            >
+              <ExerciseBlock
+                ref={(el) => {
+                  exerciseRefs.current[item.id] = el
+                }}
+                workoutExerciseId={item.id}
+                exerciseId={item.exercise_id}
+                exerciseName={exerciseName(item)}
+                exerciseType={item.exercise_type}
+                initialSets={item.strength_sets}
+                initialNote={item.session_note?.note_for_next_time ?? ''}
+                initialCardio={item.cardio_entry ?? undefined}
+                readOnly={blockReadOnly}
+                persistenceMode={isEditing ? 'manual' : 'auto'}
+                sessionNoteReadOnly={isCompleted}
+                onDirty={isEditing ? () => setEditFormDirty(true) : undefined}
+                collapseEnabled={showEditable}
+                collapsed={collapsedIds.has(item.id)}
+                onCollapsedChange={(next) => setExerciseCollapsed(item.id, next)}
+                onRemove={
+                  showEditable
+                    ? () => handleRemoveExercise(item)
+                    : undefined
+                }
+                onSwap={
+                  showEditable
+                    ? (exerciseId) => handleSwapExercise(item, exerciseId)
+                    : undefined
+                }
+                swapExercises={showEditable ? allExercises : undefined}
+                swapExcludeIds={showEditable ? alreadyAdded : undefined}
+              />
+            </AnimatedListItem>
+          )
+        })}
         {items.length === 0 && (
           <Card>
             <p className="text-text-secondary text-center">Add exercises to log your workout.</p>

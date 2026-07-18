@@ -23,5 +23,11 @@ export function isReactionEmoji(value: string): value is QuickReactionEmoji {
 export function isValidReactionEmoji(value: string): boolean {
   if (!value || [...value].length > 16) return false
   if (/[\s\u0000-\u001f\u007f]/.test(value)) return false
-  return /\p{Extended_Pictographic}/u.test(value)
+  // Most emoji (ZWJ sequences, skin tones, decorative / subdivision flags, …)
+  if (/\p{Extended_Pictographic}/u.test(value)) return true
+  // ISO country/region flags: two Regional Indicator symbols (not Extended_Pictographic)
+  if (/^\p{Regional_Indicator}{2}$/u.test(value)) return true
+  // Keycaps: 0️⃣–9️⃣, #️⃣, *️⃣
+  if (/^[#*0-9]\uFE0F?\u20E3$/u.test(value)) return true
+  return false
 }

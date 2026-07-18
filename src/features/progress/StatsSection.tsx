@@ -12,23 +12,14 @@ import { Card } from '@/components/Card'
 import { CountUp } from '@/components/CountUp'
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
+import { WeeklyVolumeChart } from '@/features/progress/WeeklyVolumeChart'
 import type { FunStats, WeeklyVolume } from '@/lib/types'
-import { format, parseISO } from 'date-fns'
 
 function StatsSkeleton() {
   return (
     <SkeletonGroup className="flex flex-col gap-4">
       <Skeleton className="h-12 w-full rounded-2xl" />
       <section>
-        <Skeleton className="mb-2 h-4 w-24" />
         <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-2xl" />
@@ -45,7 +36,7 @@ export function StatsSection() {
   const { accentColor } = useTheme()
   const { unit } = useProfile()
   const [stats, setStats] = useState<FunStats | null>(null)
-  const [weekVolume, setWeekVolume] = useState<(WeeklyVolume & { label: string })[]>([])
+  const [weekVolume, setWeekVolume] = useState<WeeklyVolume[]>([])
   const [cumulative, setCumulative] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -57,12 +48,7 @@ export function StatsSection() {
     ])
       .then(([s, wv, cum]) => {
         setStats(s)
-        setWeekVolume(
-          wv.map((w) => ({
-            ...w,
-            label: format(parseISO(w.week_start), 'MMM d'),
-          })),
-        )
+        setWeekVolume(wv)
         setCumulative(cum)
         setLoading(false)
       })
@@ -100,7 +86,6 @@ export function StatsSection() {
       <PrLeaderboardLink from="progress" />
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-text-secondary">Fun numbers</h2>
         <div className="grid grid-cols-2 gap-3">
           {funCards.map((c) => (
             <Card key={c.label} padding="sm">
@@ -129,33 +114,11 @@ export function StatsSection() {
 
       {weekVolume.length > 0 && (
         <Card>
-          <h2 className="text-sm font-medium text-text-secondary mb-3">Volume by week (12 wk)</h2>
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={weekVolume}>
-                <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} width={45} />
-                <Tooltip
-                  formatter={(value: number) => [formatVolume(value, unit), 'Volume']}
-                  contentStyle={{
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 8,
-                    color: 'var(--color-text)',
-                  }}
-                  labelStyle={{ color: 'var(--color-text-secondary)' }}
-                  itemStyle={{ color: accentColor }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="volume_lb"
-                  stroke={accentColor}
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <WeeklyVolumeChart
+            data={weekVolume}
+            unit={unit}
+            accentColor={accentColor}
+          />
         </Card>
       )}
 

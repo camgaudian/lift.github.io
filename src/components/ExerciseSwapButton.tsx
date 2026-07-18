@@ -27,10 +27,8 @@ export function ExerciseSwapButton({
 }: ExerciseSwapButtonProps) {
   const [showPicker, setShowPicker] = useState(false)
   const [pending, setPending] = useState<Exercise | null>(null)
-  const [swapping, setSwapping] = useState(false)
 
   const closeAll = () => {
-    if (swapping) return
     setShowPicker(false)
     setPending(null)
   }
@@ -42,15 +40,13 @@ export function ExerciseSwapButton({
     setPending(ex)
   }
 
-  const confirmSwap = async () => {
+  const confirmSwap = () => {
     if (!pending) return
-    setSwapping(true)
-    try {
-      await onSwap(pending.id)
-      setPending(null)
-    } finally {
-      setSwapping(false)
-    }
+    const nextId = pending.id
+    setPending(null)
+    void Promise.resolve(onSwap(nextId)).catch(() => {
+      // Parent restores the card UI on failure.
+    })
   }
 
   return (
@@ -86,16 +82,11 @@ export function ExerciseSwapButton({
             <span className="font-medium text-text">{pending.name}</span>?
           </p>
           <div className="mt-5 flex gap-2">
-            <Button
-              variant="secondary"
-              fullWidth
-              disabled={swapping}
-              onClick={() => setPending(null)}
-            >
+            <Button variant="secondary" fullWidth onClick={() => setPending(null)}>
               Cancel
             </Button>
-            <Button fullWidth disabled={swapping} onClick={confirmSwap}>
-              {swapping ? 'Swapping…' : 'Swap'}
+            <Button fullWidth onClick={confirmSwap}>
+              Swap
             </Button>
           </div>
         </Modal>

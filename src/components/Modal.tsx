@@ -1,6 +1,12 @@
-import { ReactNode, useId, type CSSProperties } from 'react'
+import { ReactNode, useEffect, useId, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '@/components/Button'
 
+/**
+ * Centered overlay dialog. Always portals to document.body so nesting under
+ * BottomSheet (or other fixed/transformed ancestors) does not trap the modal
+ * under a higher stacking context.
+ */
 export function Modal({
   title,
   children,
@@ -11,6 +17,7 @@ export function Modal({
   bodyClassName = 'mt-4',
   accentColor,
   footer,
+  zIndexClassName = 'z-[100]',
 }: {
   title: string
   children: ReactNode
@@ -21,12 +28,25 @@ export function Modal({
   bodyClassName?: string
   accentColor?: string
   footer?: ReactNode
+  /** Stacking class when nesting over sheets (default z-[100]). */
+  zIndexClassName?: string
 }) {
   const titleId = useId()
 
-  return (
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
+
+  const modal = (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center glass-scrim p-4"
+      className={[
+        'fixed inset-0 flex items-center justify-center glass-scrim p-4',
+        zIndexClassName,
+      ].join(' ')}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -74,4 +94,7 @@ export function Modal({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') return null
+  return createPortal(modal, document.body)
 }

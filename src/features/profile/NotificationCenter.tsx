@@ -87,7 +87,11 @@ function NotificationDetail({
   const secondaryLabel = item.type === 'friend_request' ? 'Decline' : 'Dismiss'
 
   return (
-    <Modal title={titleByType[item.type]} onClose={() => !pending && onClose()}>
+    <Modal
+      title={titleByType[item.type]}
+      onClose={() => !pending && onClose()}
+      zIndexClassName="z-[110]"
+    >
       <p className="text-sm text-text-secondary">
         From <span className="font-medium text-text">{sender}</span>
       </p>

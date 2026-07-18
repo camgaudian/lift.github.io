@@ -106,8 +106,11 @@ export function AvatarUploadSheet({
       >
         {hasImage ? (
           <>
-            {/* Crop area — fixed height container required by react-easy-crop */}
-            <div className="relative w-full rounded-xl overflow-hidden" style={{ height: 288 }}>
+            {/* Crop area — fixed height; touch-none so the sheet does not steal pans on iOS */}
+            <div
+              className="relative w-full rounded-xl overflow-hidden touch-none"
+              style={{ height: 288 }}
+            >
               <Cropper
                 image={imageSrc!}
                 crop={crop}
