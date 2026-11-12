@@ -1,3 +1,6 @@
+import { HolidaySpinner } from './HolidayDecor'
+import { useHoliday } from '@/lib/holidays'
+
 type LoadingSpinnerProps = {
   /** 'screen' = full viewport; 'page' = below nav; 'section' = tab/section content; 'inline' = no min-height */
   size?: 'screen' | 'page' | 'section' | 'inline'
@@ -11,13 +14,18 @@ const sizeClasses = {
 } as const
 
 export function LoadingSpinner({ size = 'page' }: LoadingSpinnerProps) {
+  const holiday = useHoliday()
   return (
     <div
       className={`flex items-center justify-center ${sizeClasses[size]}`}
       role="status"
       aria-label="Loading"
     >
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" />
+      {holiday ? (
+        <HolidaySpinner holiday={holiday} />
+      ) : (
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" />
+      )}
     </div>
   )
 }

@@ -38,7 +38,7 @@ self.addEventListener('push', (event) => {
       body,
       data: { url, type },
       icon: `${self.registration.scope}icon-192.png`,
-      badge: `${self.registration.scope}icon-192.png`,
+      badge: `${self.registration.scope}badge-96.png`,
     }),
   )
 })

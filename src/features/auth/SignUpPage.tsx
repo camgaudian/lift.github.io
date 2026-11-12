@@ -5,6 +5,7 @@ import { AuthPageLayout } from '@/components/AuthPageLayout'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { Card } from '@/components/Card'
+import { LiftMonogram } from '@/components/LiftMark'
 
 const RESEND_DELAY_MS = 60_000
 const RESEND_COOLDOWN_SEC = 60
@@ -122,8 +123,9 @@ export function SignUpPage() {
 
   return (
     <AuthPageLayout>
-      <div className="mb-4 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Create account</h1>
+      <div className="mb-4 flex flex-col items-center text-center">
+        <LiftMonogram height={72} className="mb-2" animate />
+        <h1 className="text-3xl font-bold tracking-tight">Create account</h1>
         <p className="mt-1 text-text-secondary">Ready to Lift?</p>
       </div>
       <Card>
@@ -152,7 +154,11 @@ export function SignUpPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && (
+            <p key={error} className="error-shake-in text-sm text-danger">
+              {error}
+            </p>
+          )}
           <Button type="submit" fullWidth disabled={loading}>
             {loading ? 'Creating…' : 'Sign up'}
           </Button>

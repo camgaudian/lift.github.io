@@ -1,3 +1,4 @@
+import { SegmentedProgress } from '@/components/SegmentedProgress'
 import { useEffect, useState } from 'react'
 import { useProfile } from '@/contexts/ProfileContext'
 import { MilestoneIcon } from '@/components/milestone-icons/MilestoneIcons'
@@ -117,12 +118,7 @@ export function MilestoneDetailSheet({ category, stats, onClose }: Props) {
                     {formatMilestoneValue(category.id, value, unit)} / {nextTier.label}
                   </span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-surface-secondary">
-                  <div
-                    className="h-full rounded-full bg-accent transition-all duration-500"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
+                <SegmentedProgress percent={progressPct} />
               </div>
 
               <div className="mt-3 flex items-center gap-3 rounded-xl border border-border px-3 py-2.5 opacity-40">

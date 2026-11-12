@@ -308,7 +308,7 @@ export function PrLeaderboardPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <BackButton to={backTo} label={backLabel} />
-        <h1 className="flex-1 text-2xl font-semibold">PR leaderboard</h1>
+        <h1 className="flex-1 text-2xl font-bold tracking-tight">PR leaderboard</h1>
         <button
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-accent transition-opacity hover:opacity-70 active:opacity-50"
           aria-label="How exercises are matched with friends"

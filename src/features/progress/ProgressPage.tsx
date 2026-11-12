@@ -7,10 +7,12 @@ type ProgressTab = 'stats' | 'milestones'
 
 export function ProgressPage() {
   const [tab, setTab] = useState<ProgressTab>('stats')
+  // Slide direction follows the pill; none on first render.
+  const [tabEnter, setTabEnter] = useState('')
 
   return (
     <div className="flex flex-col gap-4 pt-3">
-      <h1 className="text-2xl font-semibold">Progress</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Progress</h1>
 
       <SegmentedControl
         tabs={[
@@ -18,10 +20,15 @@ export function ProgressPage() {
           { value: 'milestones', label: 'Milestones' },
         ]}
         value={tab}
-        onChange={setTab}
+        onChange={(next: ProgressTab) => {
+          if (next === tab) return
+          setTabEnter(next === 'stats' ? 'tab-enter-left' : 'tab-enter-right')
+          setTab(next)
+        }}
       />
-
-      {tab === 'stats' ? <StatsSection /> : <MilestonesSection />}
+      <div key={tab} className={tabEnter}>
+        {tab === 'stats' ? <StatsSection /> : <MilestonesSection />}
+      </div>
     </div>
   )
 }

@@ -23,7 +23,7 @@ export function InstallGuide() {
 
   return (
     <Card padding="sm" className="p-0 overflow-hidden">
-      <details className="group">
+      <details className="smooth-details group">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
           <div className="min-w-0 space-y-0.5">
             <p className="text-sm font-medium">Install app</p>

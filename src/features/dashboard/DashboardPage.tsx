@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
-import { useTheme } from '@/contexts/ThemeContext'
 import {
   fetchActiveWorkout,
   startEmptyWorkout,
@@ -10,7 +9,7 @@ import {
   createPastWorkoutShell,
 } from '@/features/workouts/workoutApi'
 import { fetchTemplates } from '@/features/templates/templateApi'
-import { AppIcon } from '@/components/AppIcon'
+import { LiftWordmark } from '@/components/LiftMark'
 import { Button } from '@/components/Button'
 import {
   fetchFunStats,
@@ -28,12 +27,14 @@ import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
 import { useColorPopText } from '@/lib/ui'
 import type { FunStats, WorkoutTemplate } from '@/lib/types'
+import { useHoliday } from '@/lib/holidays'
+import { CardCornerOrnament, WordmarkHat } from '@/components/HolidayDecor'
 
 export function DashboardPage() {
   const { user } = useAuth()
   const { unit, displayName, loading: profileLoading } = useProfile()
-  const { accentColor } = useTheme()
   const usernameClass = useColorPopText('text-text-secondary')
+  const holiday = useHoliday()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [stats, setStats] = useState<FunStats | null>(null)
@@ -100,18 +101,21 @@ export function DashboardPage() {
   if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="flex min-h-full flex-col justify-center gap-5 py-6">
+    <div className="stagger-in center-above-nav flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <AppIcon size={26} color={accentColor} />
-          <h1 className="text-2xl font-semibold">Lift</h1>
+        <h1 className="relative flex items-center">
+          <LiftWordmark height={44} title="Lift" />
+          {holiday && <WordmarkHat holiday={holiday} />}
+        </h1>
+        <div className="flex min-w-0 max-w-[50%] flex-col items-end leading-tight">
+          <span className="text-lg font-semibold tracking-tight text-text">{todayLabel()}</span>
+          <Link
+            to="/profile"
+            className={`max-w-full truncate text-sm font-medium ${usernameClass}`}
+          >
+            {profileLoading ? '…' : displayName ? `@${displayName}` : 'Set username'}
+          </Link>
         </div>
-        <Link
-          to="/profile"
-          className={`text-sm font-medium truncate max-w-[45%] shrink-0 ${usernameClass}`}
-        >
-          {profileLoading ? '…' : displayName ? `@${displayName}` : 'Set username'}
-        </Link>
       </div>
 
       <InstallBanner />
@@ -121,7 +125,9 @@ export function DashboardPage() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Streak" value={`${stats?.streak_days ?? 0} days`} />
         <StatCard label="Workouts" value={String(stats?.total_workouts ?? 0)} />
-        <StatCard label="All-time volume" value={formatVolume(stats?.cumulative_volume_lb ?? 0, unit)} className="col-span-2" />
+        <StatCard label="All-time volume" value={formatVolume(stats?.cumulative_volume_lb ?? 0, unit)} className="relative col-span-2">
+          {holiday && <CardCornerOrnament holiday={holiday} />}
+        </StatCard>
       </div>
 
       {startingWorkout ? (
@@ -194,15 +200,20 @@ export function DashboardPage() {
   )
 }
 
+/** e.g. "Thursday, Nov 12" */
+function todayLabel(now = new Date()) {
+  return now.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+}
+
 function DashboardSkeleton() {
   return (
-    <SkeletonGroup className="flex min-h-full flex-col justify-center gap-5 py-6">
+    <SkeletonGroup className="center-above-nav flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-7 w-7 rounded-lg" />
-          <Skeleton className="h-7 w-16" />
+        <Skeleton className="h-[44px] w-32 rounded-lg" />
+        <div className="flex flex-col items-end gap-1">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-4 w-24" />
         </div>
-        <Skeleton className="h-4 w-20" />
       </div>
       <Skeleton className="h-14 w-full rounded-2xl" />
       <div className="grid grid-cols-2 gap-3">
@@ -220,15 +231,18 @@ function StatCard({
   label,
   value,
   className = '',
+  children,
 }: {
   label: string
   value: string
   className?: string
+  children?: React.ReactNode
 }) {
   return (
     <Card className={className}>
       <p className="text-xs text-text-secondary">{label}</p>
       <p className="mt-1 text-lg font-semibold">{value}</p>
+      {children}
     </Card>
   )
 }

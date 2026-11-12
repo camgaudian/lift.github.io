@@ -115,7 +115,7 @@ export function ReactionPicker({
           {current ? <span className="text-base leading-none">{current}</span> : <ReactFaceIcon />}
         </button>
         {open && (
-          <div className="absolute right-0 top-full z-20 mt-1.5 flex gap-1 rounded-xl border border-border bg-surface p-1.5 shadow-lg">
+          <div className="popover-in absolute right-0 top-full z-20 mt-1.5 flex gap-1 rounded-xl border border-border bg-surface p-1.5 shadow-lg">
             {QUICK_REACTION_EMOJIS.map((emoji) => (
               <button
                 key={emoji}

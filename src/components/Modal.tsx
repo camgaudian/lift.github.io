@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useId, type CSSProperties } from 'react'
+import { ReactNode, useEffect, useId, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/Button'
 
@@ -32,6 +32,22 @@ export function Modal({
   zIndexClassName?: string
 }) {
   const titleId = useId()
+  const [visible, setVisible] = useState(false)
+  const closingRef = useRef(false)
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  // Play the exit animation, then let the parent unmount us.
+  const handleClose = () => {
+    if (closingRef.current) return
+    closingRef.current = true
+    setVisible(false)
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    window.setTimeout(onClose, reduced ? 0 : 180)
+  }
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -44,20 +60,22 @@ export function Modal({
   const modal = (
     <div
       className={[
-        'fixed inset-0 flex items-center justify-center glass-scrim p-4',
+        'modal-scrim fixed inset-0 flex items-center justify-center p-4',
+        visible ? 'glass-scrim' : 'glass-scrim-hidden',
         zIndexClassName,
       ].join(' ')}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className={[
-          'w-full max-w-md rounded-2xl border liquid-glass-surface p-5',
+          'modal-panel w-full max-w-md rounded-2xl border liquid-glass-surface p-5',
           scrollable ? 'flex max-h-[min(90dvh,calc(100dvh-2rem))] flex-col' : '',
         ].join(' ')}
         style={accentColor ? ({ '--color-accent': accentColor } as CSSProperties) : undefined}
+        data-state={visible ? 'open' : 'closed'}
         onClick={(e) => e.stopPropagation()}
       >
         {headerAction ? (
@@ -86,7 +104,7 @@ export function Modal({
             variant="secondary"
             fullWidth
             className={scrollable ? 'mt-4 shrink-0' : 'mt-5'}
-            onClick={onClose}
+            onClick={handleClose}
           >
             Close
           </Button>

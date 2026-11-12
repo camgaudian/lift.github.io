@@ -9,16 +9,16 @@ import { Card } from '@/components/Card'
 import { Switch } from '@/components/Switch'
 import { DisplayNameInput } from '@/components/DisplayNameInput'
 import { Input } from '@/components/Input'
+import { Select } from '@/components/Select'
+import { LiftWordmark } from '@/components/LiftMark'
 import { eraseAllWorkoutData, fetchProfile, isDisplayNameTaken, updateProfileSettings } from '@/features/settings/profileApi'
 import { FeedbackSection } from '@/features/settings/FeedbackSection'
 import { InstallGuide } from '@/features/settings/InstallGuide'
 import { PushNotificationsSheet } from '@/features/settings/PushNotificationsSheet'
 import { capitalize } from '@/lib/format'
+import { setHolidayDecorEnabled, useHolidayDecorEnabled } from '@/lib/holidays'
 import { sectionHeadingBase, useSectionHeadingClass } from '@/lib/ui'
 import type { Profile, ThemeMode, WeightUnit } from '@/lib/types'
-
-const selectClass =
-  'mt-1 w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base'
 
 function isPresetAccent(color: string) {
   return ACCENT_PRESETS.some((p) => p.color.toLowerCase() === color.toLowerCase())
@@ -53,6 +53,7 @@ export function SettingsPage() {
   const { user, signOut, verifyPassword, changePassword } = useAuth()
   const { displayName, unit, loading: profileLoading, setDisplayName, setUnit } = useProfile()
   const { theme, accentColor, colorPop, loading, setTheme, setAccentColor, setColorPop } = useTheme()
+  const holidayDecor = useHolidayDecorEnabled()
   const sectionHeadingClassName = useSectionHeadingClass()
   const [saving, setSaving] = useState(false)
   const [nameDraft, setNameDraft] = useState('')
@@ -257,7 +258,7 @@ export function SettingsPage() {
     <div className="flex flex-col gap-6 pt-3">
       <div className="flex items-center gap-3">
         <BackButton to="/profile" label="Back to profile" />
-        <h1 className="text-2xl font-semibold">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
       </div>
 
       <section className="flex flex-col gap-2">
@@ -278,7 +279,7 @@ export function SettingsPage() {
         )}
 
         <Card padding="sm" className="p-0 overflow-hidden">
-          <details className="group">
+          <details className="smooth-details group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium">Username</p>
@@ -336,7 +337,7 @@ export function SettingsPage() {
 
         {user && (
           <Card padding="sm" className="p-0 overflow-hidden">
-            <details className="group">
+            <details className="smooth-details group">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
                 <div className="min-w-0 space-y-0.5">
                   <p className="text-sm font-medium">Password</p>
@@ -410,7 +411,7 @@ export function SettingsPage() {
         <h2 className={sectionHeadingClassName}>Preferences</h2>
 
         <Card padding="sm" className="p-0 overflow-hidden">
-          <details className="group">
+          <details className="smooth-details group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium">Appearance</p>
@@ -423,48 +424,36 @@ export function SettingsPage() {
             </summary>
 
             <div className="flex flex-col gap-4 border-t border-border px-3.5 py-3.5">
-              <div>
-                <label className="text-sm font-medium" htmlFor="theme-select">
-                  Theme
-                </label>
-                <select
-                  id="theme-select"
-                  className={selectClass}
-                  value={theme}
-                  disabled={loading || saving}
-                  onChange={(e) => handleTheme(e.target.value as ThemeMode)}
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </div>
+              <Select
+                label="Theme"
+                value={theme}
+                disabled={loading || saving}
+                onChange={(e) => handleTheme(e.target.value as ThemeMode)}
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </Select>
 
-              <div>
-                <label className="text-sm font-medium" htmlFor="accent-select">
-                  Your color
-                </label>
-                <select
-                  id="accent-select"
-                  className={selectClass}
-                  value={accentSelectValue}
-                  disabled={loading || saving}
-                  onChange={(e) => {
-                    if (e.target.value === 'custom') {
-                      setAccentMode('custom')
-                      return
-                    }
-                    setAccentMode('preset')
-                    handleAccent(e.target.value)
-                  }}
-                >
-                  {ACCENT_PRESETS.map((preset) => (
-                    <option key={preset.id} value={preset.color}>
-                      {preset.label}
-                    </option>
-                  ))}
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
+              <Select
+                label="Your color"
+                value={accentSelectValue}
+                disabled={loading || saving}
+                onChange={(e) => {
+                  if (e.target.value === 'custom') {
+                    setAccentMode('custom')
+                    return
+                  }
+                  setAccentMode('preset')
+                  handleAccent(e.target.value)
+                }}
+              >
+                {ACCENT_PRESETS.map((preset) => (
+                  <option key={preset.id} value={preset.color}>
+                    {preset.label}
+                  </option>
+                ))}
+                <option value="custom">Custom</option>
+              </Select>
 
               {accentSelectValue === 'custom' && (
                 <div>
@@ -485,6 +474,14 @@ export function SettingsPage() {
                 </div>
               )}
 
+              <div
+                className="flex items-center justify-center rounded-xl bg-surface-secondary py-4"
+                aria-label="Logo preview in your color"
+                role="img"
+              >
+                <LiftWordmark height={28} />
+              </div>
+
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium">Color Pop</p>
@@ -504,12 +501,26 @@ export function SettingsPage() {
                   onChange={handleColorPop}
                 />
               </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Holiday decorations</p>
+                  <p className="mt-0.5 text-xs text-text-secondary leading-snug">
+                    Seasonal touches around Thanksgiving, Christmas, and New Year&apos;s, in your color
+                  </p>
+                </div>
+                <Switch
+                  label="Holiday decorations"
+                  checked={holidayDecor}
+                  onChange={setHolidayDecorEnabled}
+                />
+              </div>
             </div>
           </details>
         </Card>
 
         <Card padding="sm" className="p-0 overflow-hidden">
-          <details className="group">
+          <details className="smooth-details group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium">Weight units</p>
@@ -522,19 +533,15 @@ export function SettingsPage() {
 
             <div className="flex flex-col gap-4 border-t border-border px-3.5 py-3.5">
               <div>
-                <label className="text-sm font-medium" htmlFor="unit-select">
-                  Units
-                </label>
-                <select
-                  id="unit-select"
-                  className={selectClass}
+                <Select
+                  label="Units"
                   value={unit}
                   disabled={profileLoading || saving}
                   onChange={(e) => handleUnit(e.target.value as WeightUnit)}
                 >
                   <option value="lb">Pounds (lb)</option>
                   <option value="kg">Kilograms (kg)</option>
-                </select>
+                </Select>
                 <p className="mt-2 text-xs text-text-secondary">
                   Weights are stored consistently; this changes how they are shown when logging and in stats.
                 </p>
@@ -544,7 +551,7 @@ export function SettingsPage() {
         </Card>
 
         <Card padding="sm" className="p-0 overflow-hidden">
-          <details className="group">
+          <details className="smooth-details group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium">PR sharing with friends</p>
@@ -612,7 +619,7 @@ export function SettingsPage() {
           <h2 className={`${sectionHeadingBase} text-danger`}>Danger</h2>
 
           <Card padding="sm" className="p-0 overflow-hidden border-danger/30">
-            <details className="group">
+            <details className="smooth-details group">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
                 <div className="min-w-0 space-y-0.5">
                   <p className="text-sm font-medium text-danger">Erase workout history</p>

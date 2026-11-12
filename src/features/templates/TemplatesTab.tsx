@@ -66,7 +66,7 @@ export function TemplatesTab() {
   if (loading) return <LoadingSpinner size="section" />
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="content-fade-in flex flex-col gap-4">
       <Button variant="secondary" fullWidth onClick={() => setShowAdd(!showAdd)}>
         {showAdd ? 'Cancel' : '+ New template'}
       </Button>

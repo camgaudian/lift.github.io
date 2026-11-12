@@ -1,5 +1,7 @@
 import { Card } from '@/components/Card'
 import { BottomSheet } from '@/components/BottomSheet'
+import { Button } from '@/components/Button'
+import { SwipeDeck } from '@/components/SwipeDeck'
 import { formatExercisePreview } from '@/lib/format'
 import { sectionHeadingClass } from '@/lib/ui'
 import type { WorkoutTemplate } from '@/lib/types'
@@ -65,33 +67,35 @@ export function StartWorkoutModal({
       {templates.length > 0 ? (
         <div className="mt-4 flex flex-col gap-2">
           <h3 className={sectionHeadingClass}>Templates</h3>
-          <div className="flex max-h-56 flex-col gap-2 overflow-y-auto pr-0.5">
-            {templates.map((template) => (
-              <button
-                key={template.id}
-                type="button"
-                onClick={() => onStart(template.id)}
-                className="w-full rounded-2xl border border-border bg-surface-secondary/40 p-3.5 text-left transition-colors hover:border-accent/40 hover:bg-surface-secondary"
-              >
+          <SwipeDeck
+            items={templates}
+            getKey={(template) => template.id}
+            cardHeightClass="h-44"
+            renderCard={(template) => (
+              <div className="flex h-full flex-col p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-accent">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-secondary text-accent">
                     <TemplateIcon />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{template.name}</p>
-                    <p className="truncate text-sm text-text-secondary">
-                      {template.exercise_names?.length
-                        ? formatExercisePreview(template.exercise_names)
-                        : 'No exercises yet'}
+                    <p className="truncate font-semibold">{template.name}</p>
+                    <p className="text-sm text-text-secondary">
+                      {template.exercise_names?.length ?? 0} exercise
+                      {template.exercise_names?.length === 1 ? '' : 's'}
                     </p>
                   </div>
-                  <span className="shrink-0 text-text-secondary">
-                    <ChevronRightIcon />
-                  </span>
                 </div>
-              </button>
-            ))}
-          </div>
+                <p className="mt-3 line-clamp-2 text-sm text-text-secondary">
+                  {template.exercise_names?.length
+                    ? formatExercisePreview(template.exercise_names)
+                    : 'No exercises yet'}
+                </p>
+                <Button className="mt-auto" fullWidth onClick={() => onStart(template.id)}>
+                  Start this workout
+                </Button>
+              </div>
+            )}
+          />
         </div>
       ) : (
         <Card padding="sm" className="mt-4 bg-surface-secondary/40">

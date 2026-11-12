@@ -64,7 +64,7 @@ export function MilestonesSection() {
 
   return (
     <>
-      <div className="flex flex-col gap-3">
+      <div className="stagger-in flex flex-col gap-3">
         <FeaturedMilestonePicker stats={stats} />
 
         {MILESTONE_CATEGORIES.map((category) => {

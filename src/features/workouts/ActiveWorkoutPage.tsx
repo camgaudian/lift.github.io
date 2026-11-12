@@ -1,3 +1,4 @@
+import { AssemblingMonogram } from '@/components/LiftMark'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
@@ -20,6 +21,8 @@ import { Confetti } from '@/components/Confetti'
 import { Input } from '@/components/Input'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
+import { RollingSteps } from '@/components/RollingSteps'
+import { SlideToConfirm } from '@/components/SlideToConfirm'
 import { DragGripIcon } from '@/components/DragGripIcon'
 import { ReorderModeIcon } from '@/components/ReorderModeIcon'
 import { TrashIcon } from '@/components/TrashIcon'
@@ -122,7 +125,7 @@ export function ActiveWorkoutPage() {
   const [completing, setCompleting] = useState(false)
   const [showCompletionSummary, setShowCompletionSummary] = useState(false)
   const [completeError, setCompleteError] = useState<string | null>(null)
-  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
+  const [completeStep, setCompleteStep] = useState(0)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [discarding, setDiscarding] = useState(false)
   const [discardError, setDiscardError] = useState<string | null>(null)
@@ -319,7 +322,9 @@ export function ActiveWorkoutPage() {
     clearMotion(itemId)
   }
 
-  const openCompleteConfirm = () => {
+  /** Validates sets, then completes. Returns false if it could not start. */
+  const startComplete = (): boolean => {
+    if (completing) return false
     setCompleteError(null)
 
     const hasPartialSets = items.some((item) => {
@@ -329,22 +334,26 @@ export function ActiveWorkoutPage() {
     })
     if (hasPartialSets) {
       setCompleteError('Please ensure all sets are filled in.')
-      return
+      return false
     }
 
-    setShowCompleteConfirm(true)
+    void handleComplete()
+    return true
   }
 
   const handleComplete = async () => {
     if (!id) return
     setCompleteError(null)
     setCompleting(true)
+    setCompleteStep(0)
     try {
       await clearStaleSessionNotesForWorkout(id)
       await Promise.all(items.map((item) => exerciseRefs.current[item.id]?.save()))
+      setCompleteStep(1)
       await completeWorkout(id, pendingCompletedAt)
       clearCollapsedExercises(id)
       setCollapsedIds(new Set())
+      setCompleteStep(2)
       const { workout: w, exercises } = await fetchWorkout(id)
       setWorkout(w)
       setItems(exercises)
@@ -353,7 +362,6 @@ export function ActiveWorkoutPage() {
       setCompleteError(formatSaveError(err, "Failed to complete."))
     } finally {
       setCompleting(false)
-      setShowCompleteConfirm(false)
     }
   }
 
@@ -534,7 +542,12 @@ export function ActiveWorkoutPage() {
     return (
       <div className="flex min-h-full flex-col justify-center gap-5 py-6">
         <Confetti />
-        <h1 className="text-2xl font-semibold">Workout complete!</h1>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <AssemblingMonogram height={56} />
+          <h1 className="lift-snap-in text-2xl font-bold tracking-tight" style={{ animationDelay: '420ms' }}>
+            Workout complete!
+          </h1>
+        </div>
         <WorkoutAchievementsSection workoutId={id} exercises={items} />
         <WorkoutFunStatsSection exercises={items} animate />
         <Button fullWidth size="lg" onClick={handleDone}>
@@ -545,14 +558,14 @@ export function ActiveWorkoutPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col justify-center gap-5 py-6">
+    <div className="content-fade-in flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-2.5">
             {isCompleted && !isEditing && (
               <BackButton to="/history" label="Back to history" state={{ navFrom: 'history' }} />
             )}
-            <h1 className="text-2xl font-semibold">
+            <h1 className="text-2xl font-bold tracking-tight">
               {isEditing
                 ? 'Editing workout'
                 : isCompleted
@@ -646,7 +659,7 @@ export function ActiveWorkoutPage() {
                 draggingKey === item.id
                   ? 'relative z-10 rounded-2xl shadow-lg ring-1 ring-accent/40'
                   : isDragging
-                    ? 'transition-transform duration-150 ease-out'
+                    ? 'reorder-shift'
                     : '',
               ].join(' ')}
               style={getRowStyle(idx)}
@@ -782,38 +795,21 @@ export function ActiveWorkoutPage() {
 
       {!isCompleted && !reorderMode && items.length > 0 && (
         <div className="flex flex-col gap-2">
-          <Button fullWidth size="lg" onClick={openCompleteConfirm} disabled={completing}>
-            {completing ? 'Finishing…' : 'Complete workout'}
-          </Button>
+          <SlideToConfirm
+            label="Slide to complete"
+            onConfirm={startComplete}
+            busy={completing}
+            busyContent={
+              <RollingSteps
+                steps={['Saving your sets', 'Wrapping up', 'Tallying results']}
+                activeIndex={completeStep}
+              />
+            }
+          />
           {completeError && (
             <p className="text-sm text-danger text-center">{completeError}</p>
           )}
         </div>
-      )}
-
-      {showCompleteConfirm && (
-        <Modal
-          title="Complete workout?"
-          onClose={() => !completing && setShowCompleteConfirm(false)}
-        >
-          <p className="text-sm text-text-secondary">
-            Mark this workout as finished? You can still view it in your history afterward.
-          </p>
-          {completeError && <p className="mt-2 text-sm text-danger text-center">{completeError}</p>}
-          <div className="mt-5 flex gap-2">
-            <Button
-              variant="secondary"
-              fullWidth
-              disabled={completing}
-              onClick={() => setShowCompleteConfirm(false)}
-            >
-              Cancel
-            </Button>
-            <Button fullWidth disabled={completing} onClick={handleComplete}>
-              {completing ? 'Finishing…' : 'Complete'}
-            </Button>
-          </div>
-        </Modal>
       )}
 
       {showDiscardConfirm && (

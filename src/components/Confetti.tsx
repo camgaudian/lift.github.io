@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { prefersReducedMotion } from '@/hooks/useCountUp'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useHoliday } from '@/lib/holidays'
+import { CONFETTI_SHAPES, HOLIDAY_SHAPES } from './HolidayDecor'
 
 const PIECE_COUNT = 80
 
@@ -10,6 +12,7 @@ const PIECE_COUNT = 80
  */
 export function Confetti() {
   const { accentColor } = useTheme()
+  const holiday = useHoliday()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -17,7 +20,11 @@ export function Confetti() {
     const container = containerRef.current
     if (!container) return
 
-    const colors = [accentColor, '#fbbf24', '#34d399', '#60a5fa', '#f472b6']
+    // Holiday confetti is themed shapes in the user's own accent tones.
+    const shapes = holiday ? CONFETTI_SHAPES[holiday] : null
+    const colors = shapes
+      ? ['var(--color-accent-deep)', 'var(--color-accent-soft)', 'var(--color-text-secondary)']
+      : [accentColor, '#fbbf24', '#34d399', '#60a5fa', '#f472b6']
     const pieces: HTMLSpanElement[] = []
 
     for (let i = 0; i < PIECE_COUNT; i++) {
@@ -26,10 +33,18 @@ export function Confetti() {
       piece.style.position = 'absolute'
       piece.style.top = '0'
       piece.style.left = `${Math.random() * 100}%`
-      piece.style.width = `${size}px`
-      piece.style.height = `${size * (0.4 + Math.random())}px`
-      piece.style.backgroundColor = colors[i % colors.length]
-      piece.style.borderRadius = '1px'
+      if (shapes) {
+        const shapeSize = size * 1.6
+        piece.style.width = `${shapeSize}px`
+        piece.style.height = `${shapeSize}px`
+        piece.style.color = colors[i % colors.length]
+        piece.innerHTML = HOLIDAY_SHAPES[shapes[i % shapes.length]]
+      } else {
+        piece.style.width = `${size}px`
+        piece.style.height = `${size * (0.4 + Math.random())}px`
+        piece.style.backgroundColor = colors[i % colors.length]
+        piece.style.borderRadius = '1px'
+      }
       piece.style.opacity = '0'
       container.appendChild(piece)
       pieces.push(piece)
@@ -64,7 +79,7 @@ export function Confetti() {
       window.clearTimeout(cleanup)
       pieces.forEach((p) => p.remove())
     }
-  }, [accentColor])
+  }, [accentColor, holiday])
 
   return (
     <div

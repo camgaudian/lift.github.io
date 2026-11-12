@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { formatVolume } from '@/lib/format'
+import { brandShades } from '@/lib/theme'
 import type { WeightUnit, WeeklyVolume } from '@/lib/types'
 
 interface WeeklyVolumeChartProps {
@@ -49,8 +50,8 @@ export function WeeklyVolumeChart({ data, unit, accentColor }: WeeklyVolumeChart
   const avgPct = Math.min(100, (avgVolume / maxVolume) * 100)
   const isLatest = selectedIndex === data.length - 1
 
-  const mutedFill = `${accentColor}33`
-  const selectedFill = accentColor
+  // Logo two-tone: selected week in the deep shade, other weeks in the soft shade.
+  const { deep: selectedFill, soft: mutedFill } = brandShades(accentColor)
 
   return (
     <div className="select-none [-webkit-touch-callout:none]">

@@ -91,11 +91,38 @@ export function HistorySection({
 
   const filtered = selectedDate
     ? workouts.filter((w) => isSameDay(parseISO(w.completed_at!), selectedDate))
-    : showAllRecent
-      ? workouts
-      : workouts.slice(0, RECENT_LIMIT)
+    : workouts.slice(0, RECENT_LIMIT)
 
   const hasMoreRecent = !selectedDate && workouts.length > RECENT_LIMIT
+  // Always rendered (collapsed) so "Show older" can animate the height open.
+  const olderWorkouts = hasMoreRecent ? workouts.slice(RECENT_LIMIT) : []
+
+  const renderWorkoutRow = (w: (typeof workouts)[number]) => (
+    <li key={w.id}>
+      <Card padding="sm" className="flex items-center gap-2 hover:border-accent/50 transition-colors">
+        <Link to={`/workout/${w.id}`} state={{ navFrom: 'history' }} className="min-w-0 flex-1">
+          <p className="font-medium">
+            {format(parseISO(w.completed_at!), 'EEE, MMM d · h:mm a')}
+          </p>
+          {w.template?.name && (
+            <p className="text-sm text-text-secondary truncate">{w.template.name}</p>
+          )}
+          {w.notes && <p className="text-sm text-text-secondary truncate">{w.notes}</p>}
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteError(null)
+            setDeleteTarget(w)
+          }}
+          className={iconDeleteButtonClass}
+          aria-label={`Delete workout from ${format(parseISO(w.completed_at!), 'MMM d, yyyy')}`}
+        >
+          <TrashIcon />
+        </button>
+      </Card>
+    </li>
+  )
 
   const confirmDelete = async () => {
     if (!deleteTarget) return
@@ -115,7 +142,7 @@ export function HistorySection({
   if (loading) return <HistorySkeleton />
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="stagger-in flex flex-col gap-4">
       <Card>
         <div className="flex items-center justify-between mb-3">
           <button
@@ -179,36 +206,20 @@ export function HistorySection({
           {selectedDate ? format(selectedDate, 'MMM d, yyyy') : 'Recent workouts'}
         </h2>
         <ul className="flex flex-col gap-2">
-          {filtered.map((w) => (
-            <li key={w.id}>
-              <Card padding="sm" className="flex items-center gap-2 hover:border-accent/50 transition-colors">
-                <Link to={`/workout/${w.id}`} state={{ navFrom: 'history' }} className="min-w-0 flex-1">
-                  <p className="font-medium">
-                    {format(parseISO(w.completed_at!), 'EEE, MMM d · h:mm a')}
-                  </p>
-                  {w.template?.name && (
-                    <p className="text-sm text-text-secondary truncate">{w.template.name}</p>
-                  )}
-                  {w.notes && <p className="text-sm text-text-secondary truncate">{w.notes}</p>}
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDeleteError(null)
-                    setDeleteTarget(w)
-                  }}
-                  className={iconDeleteButtonClass}
-                  aria-label={`Delete workout from ${format(parseISO(w.completed_at!), 'MMM d, yyyy')}`}
-                >
-                  <TrashIcon />
-                </button>
-              </Card>
-            </li>
-          ))}
+          {filtered.map(renderWorkoutRow)}
           {filtered.length === 0 && (
             <p className="text-sm text-text-secondary">No workouts for this period.</p>
           )}
         </ul>
+        {olderWorkouts.length > 0 && (
+          <div className="expand-grid" data-open={showAllRecent} aria-hidden={!showAllRecent}>
+            <div>
+              <ul className="flex flex-col gap-2 pt-2" inert={!showAllRecent}>
+                {olderWorkouts.map(renderWorkoutRow)}
+              </ul>
+            </div>
+          </div>
+        )}
         {hasMoreRecent && (
           <button
             type="button"

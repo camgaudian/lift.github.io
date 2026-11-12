@@ -8,69 +8,75 @@
  */
 
 export type UpdateItemIcon =
-  | 'push'
-  | 'collapse'
-  | 'swap'
-  | 'reuse'
-  | 'privacy'
-  | 'leaderboard'
-  | 'library'
+  | 'brand'
+  | 'holiday'
+  | 'slide'
+  | 'refresh'
+  | 'templates'
+  | 'milestone'
+  | 'delete'
+  | 'polish'
 
 export type UpdateItem = {
   title: string
   description: string
   icon: UpdateItemIcon
+  /** Extra tip shown in a highlighted callout under the description. */
+  note?: string
 }
 
 /** Bump this whenever UPDATES_POPUP copy changes. */
-export const UPDATES_POPUP_VERSION = 5
+export const UPDATES_POPUP_VERSION = 6
 
 export const UPDATES_POPUP = {
-  title: "Update 4.5: What's new?",
+  title: "Update 4.6: What's new?",
   main: [
     {
-      icon: 'push',
-      title: 'Push notifications',
+      icon: 'brand',
+      title: 'A fresh new look',
       description:
-        'Get alerts for friend requests, shares, and unfinished workouts, even when Lift is closed. Customize what you receive in Settings.',
+        'A brand-new two-tone Lift logo and app icon, plus refreshed text fields, menus, and switches throughout the app.',
+      note: 'Installed Lift on your home screen? You may need to delete it and add it again to see the new app icon.',
     },
     {
-      icon: 'collapse',
-      title: 'Collapse finished exercises',
+      icon: 'holiday',
+      title: 'Holiday themes',
       description:
-        'Tap the collapse control on an exercise when finished to tuck it away. Expand anytime to edit sets again.',
+        'Seasonal decorations for Thanksgiving, Christmas, and New Year’s, all drawn in your color. Turn them off in Settings → Appearance.',
     },
     {
-      icon: 'swap',
-      title: 'Swap exercises',
+      icon: 'slide',
+      title: 'Slide to complete',
       description:
-        'Replace an exercise mid-workout or in a template with the swap control. No more rebuild hassles!',
+        'Finish a workout with a slide instead of a tap, so no more accidental finishes. Your PRs now roll in with a celebration!',
     },
     {
-      icon: 'reuse',
-      title: 'Reuse last set',
-      description:
-        'Tap the reuse control on a set to fill in your previous session’s weight and reps in one tap.',
+      icon: 'refresh',
+      title: 'Pull to refresh',
+      description: 'Pull down from the top of any page to reload your latest data.',
     },
   ] satisfies UpdateItem[],
   mainSectionTitle: 'Big changes',
   more: [
     {
-      icon: 'privacy',
-      title: 'Hide PR data from friends',
-      description:
-        'Opt out of the PR leaderboard and exercise rankings in Settings → Preferences.',
+      icon: 'templates',
+      title: 'Swipe through templates',
+      description: 'Flick through your templates like a deck of cards when starting a workout.',
     },
     {
-      icon: 'leaderboard',
-      title: 'PR leaderboard refresh',
-      description:
-        'A whole new look, including a podium for your top exercises!',
+      icon: 'milestone',
+      title: 'Milestone picker',
+      description: 'Swipe a carousel to choose which milestone friends see on your profile.',
     },
     {
-      icon: 'library',
-      title: 'Bigger exercise library',
-      description: 'Dozens more built-in exercises, plus workout polish and bug fixes.',
+      icon: 'delete',
+      title: 'Safer deletes',
+      description: 'Tap once to arm, tap again to confirm when removing exercises and sets.',
+    },
+    {
+      icon: 'polish',
+      title: 'Smoother everywhere',
+      description: 'New loading animations, progress bars, and lots of small interaction polish.',
     },
   ] satisfies UpdateItem[],
   moreSectionTitle: 'Also in this update',

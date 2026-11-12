@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   getStoredNavFrom,
@@ -22,8 +23,32 @@ export function BottomNav() {
 
   const activeIndex = tabs.findIndex(({ id }) => isNavTabActive(id, pathname, navFrom))
 
+  // Skip the jelly squash on first render; play it on every tab change after.
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+  }, [])
+
+  // Publish the nav's real height (pill + bottom inset) so pages can center
+  // content in the space actually visible above it.
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    const root = document.documentElement
+    const update = () => root.style.setProperty('--bottom-nav-h', `${el.offsetHeight}px`)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => {
+      ro.disconnect()
+      root.style.removeProperty('--bottom-nav-h')
+    }
+  }, [])
+
   return (
     <div
+      ref={wrapperRef}
       className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-5 pointer-events-none"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
     >
@@ -34,14 +59,22 @@ export function BottomNav() {
           {activeIndex >= 0 && (
             <div
               aria-hidden="true"
-              className="liquid-glass-indicator absolute top-0 bottom-0 my-auto rounded-full"
+              className="absolute top-0 bottom-0 my-auto"
               style={{
                 width: `calc(${100 / TAB_COUNT}% - 2px)`,
                 height: '100%',
                 left: `calc(${activeIndex * (100 / TAB_COUNT)}% + 1px)`,
                 transition: 'left 320ms cubic-bezier(0.34, 1.4, 0.64, 1)',
               }}
-            />
+            >
+              <div
+                key={mounted.current ? activeIndex : 'initial'}
+                className={[
+                  'liquid-glass-indicator h-full w-full rounded-full',
+                  mounted.current ? 'jelly-squash' : '',
+                ].join(' ')}
+              />
+            </div>
           )}
 
           {tabs.map(({ to, id, label, icon: Icon }) => {
