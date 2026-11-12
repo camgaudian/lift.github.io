@@ -10,7 +10,7 @@ export function HistoryPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-3">
-      <h1 className="text-2xl font-semibold">History</h1>
+      <h1 className="text-2xl font-bold tracking-tight">History</h1>
 
       <HistorySection
         showAllRecent={showAllRecent}

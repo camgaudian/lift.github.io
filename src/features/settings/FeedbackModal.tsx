@@ -3,13 +3,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { Button } from '@/components/Button'
 import { BottomSheet } from '@/components/BottomSheet'
+import { Select } from '@/components/Select'
+import { Textarea } from '@/components/Textarea'
 import { sendFeedback, type FeedbackCategory } from '@/features/settings/feedbackApi'
-
-const textareaClass =
-  'mt-1 w-full rounded-xl border border-border bg-surface px-4 py-3 text-base min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent'
-
-const selectClass =
-  'mt-1 w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base'
 
 const MAX_MESSAGE_LENGTH = 1500
 
@@ -68,30 +64,21 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
           Report a bug, suggest a feature, or share anything else on your mind.
         </p>
 
-        <div>
-          <label className="text-sm font-medium" htmlFor="feedback-category">
-            Category
-          </label>
-          <select
-            id="feedback-category"
-            className={selectClass}
-            value={category}
-            disabled={sending}
-            onChange={(e) => setCategory(e.target.value as FeedbackCategory)}
-          >
-            <option value="bug">Bug report</option>
-            <option value="idea">Feature idea</option>
-            <option value="general">General feedback</option>
-          </select>
-        </div>
+        <Select
+          label="Category"
+          value={category}
+          disabled={sending}
+          onChange={(e) => setCategory(e.target.value as FeedbackCategory)}
+        >
+          <option value="bug">Bug report</option>
+          <option value="idea">Feature idea</option>
+          <option value="general">General feedback</option>
+        </Select>
 
         <div>
-          <label className="text-sm font-medium" htmlFor="feedback-message">
-            Message
-          </label>
-          <textarea
-            id="feedback-message"
-            className={textareaClass}
+          <Textarea
+            label="Message"
+            className="min-h-[120px] resize-y"
             value={message}
             disabled={sending}
             maxLength={MAX_MESSAGE_LENGTH}

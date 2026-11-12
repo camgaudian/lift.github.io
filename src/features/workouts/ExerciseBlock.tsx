@@ -14,9 +14,11 @@ import { CollapseIcon } from '@/components/CollapseIcon'
 import { DragGripIcon } from '@/components/DragGripIcon'
 import { ExpandIcon } from '@/components/ExpandIcon'
 import { ExerciseRemoveButton } from '@/components/ExerciseRemoveButton'
+import { DeletePillButton } from '@/components/DeletePillButton'
 import { ExerciseSwapButton } from '@/components/ExerciseSwapButton'
 import { ReuseIcon } from '@/components/ReuseIcon'
 import { Input } from '@/components/Input'
+import { Textarea } from '@/components/Textarea'
 import { Card } from '@/components/Card'
 import { cornerButtonClass, useColorPopText } from '@/lib/ui'
 import {
@@ -625,6 +627,19 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
     },
   })
 
+  // Second tap on a set's delete pill dissolves the row, then removes it.
+  const [dissolvingKey, setDissolvingKey] = useState<string | null>(null)
+
+  const dissolveSet = (rowKey: string) => {
+    if (dissolvingKey) return
+    setDissolvingKey(rowKey)
+    window.setTimeout(() => {
+      const index = setsRef.current.findIndex((s) => s.rowKey === rowKey)
+      if (index >= 0) removeSet(index)
+      setDissolvingKey(null)
+    }, 280)
+  }
+
   const autosaveStatus =
     !isCollapsed &&
     persistenceMode === 'auto' &&
@@ -704,8 +719,7 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
           <ExerciseRemoveButton
             exerciseName={exerciseName}
             onRemove={onRemove}
-            className={cornerButtonClass('right', 'danger')}
-            iconSize={18}
+            variant="corner"
           />
         )}
       </>
@@ -781,19 +795,17 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
             )}
 
             {!readOnly && !sessionNoteReadOnly && (
-              <div>
-                <label className={`text-sm ${mutedTextClass}`}>Note for next session</label>
-                <textarea
-                  className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-3 text-base min-h-[72px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-                  value={note}
-                  onChange={(e) => {
-                    setNote(e.target.value)
-                    scheduleAutosave()
-                  }}
-                  onBlur={flushAutosave}
-                  placeholder="How did it feel? What to remember?"
-                />
-              </div>
+              <Textarea
+                label="Note for next session"
+                className="min-h-[72px]"
+                value={note}
+                onChange={(e) => {
+                  setNote(e.target.value)
+                  scheduleAutosave()
+                }}
+                onBlur={flushAutosave}
+                placeholder="How did it feel? What to remember?"
+              />
             )}
 
             {(readOnly || sessionNoteReadOnly) && note && (
@@ -813,10 +825,11 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                   data-drag-row
                   className={[
                     'flex items-center gap-1 rounded-xl',
+                    dissolvingKey === set.rowKey ? 'set-dissolve pointer-events-none' : '',
                     draggingKey === set.rowKey
                       ? 'relative bg-surface shadow-lg ring-1 ring-accent/40'
                       : isDragging
-                        ? 'transition-transform duration-150 ease-out'
+                        ? 'reorder-shift'
                         : '',
                   ].join(' ')}
                   style={getRowStyle(idx)}
@@ -926,14 +939,13 @@ export const ExerciseBlock = forwardRef<ExerciseBlockHandle, ExerciseBlockProps>
                     </>
                   )}
                   {!readOnly && sets.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeSet(idx)}
-                      className="shrink-0 px-1 py-2 text-text-secondary hover:text-danger"
-                      aria-label={`Delete set ${idx + 1}`}
-                    >
-                      ×
-                    </button>
+                    <DeletePillButton
+                      icon="×"
+                      ariaLabel={`Delete set ${idx + 1}`}
+                      idleWidth="1.5rem"
+                      armedWidth="3.75rem"
+                      onConfirm={() => dissolveSet(set.rowKey)}
+                    />
                   )}
                 </div>
                 )

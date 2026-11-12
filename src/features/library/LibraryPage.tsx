@@ -15,7 +15,7 @@ export function LibraryPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-3">
-      <h1 className="text-2xl font-semibold">Library</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Library</h1>
       <SegmentedControl
         tabs={[
           { value: 'exercises', label: 'Exercises' },

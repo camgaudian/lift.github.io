@@ -3,7 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
-import { AppIcon } from '@/components/AppIcon'
+import { LiftWordmark } from '@/components/LiftMark'
 import { AuthPageLayout } from '@/components/AuthPageLayout'
 import { Card } from '@/components/Card'
 import { isSupabaseConfigured } from '@/lib/supabase'
@@ -29,11 +29,10 @@ export function LoginPage() {
   return (
     <AuthPageLayout>
       <div className="mb-4 text-center">
-        <div className="flex items-center justify-center gap-1.5">
-          <AppIcon size={30} />
-          <h1 className="text-3xl font-semibold tracking-tight">Lift</h1>
-        </div>
-        <p className="mt-1 text-text-secondary">Train together</p>
+        <h1 className="flex justify-center">
+          <LiftWordmark height={64} title="Lift" />
+        </h1>
+        <p className="mt-4 text-text-secondary">Train together</p>
       </div>
 
       {!isSupabaseConfigured && (

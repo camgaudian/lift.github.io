@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AvatarImage } from '@/components/AvatarImage'
 import { Button } from '@/components/Button'
 import { BottomSheet } from '@/components/BottomSheet'
+import { LiftWordmark } from '@/components/LiftMark'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
 import { acceptFriendRequest, declineFriendRequest } from '@/features/profile/friendsApi'
@@ -53,6 +54,16 @@ function describe(item: NotificationItem): string {
     case 'template_share':
       return `Shared a template: ${item.payload.name}`
   }
+}
+
+/** Shared exercise/template preview, signed with the Lift mark in the corner. */
+function SharedCard({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative rounded-xl border border-border p-3 pb-7">
+      {children}
+      <LiftWordmark height={11} className="absolute bottom-2.5 right-3 opacity-90" />
+    </div>
+  )
 }
 
 function NotificationDetail({
@@ -106,17 +117,19 @@ function NotificationDetail({
 
       {item.type === 'exercise_share' && (
         <div className="mt-3 flex flex-col gap-2">
-          <p className="text-base font-medium">{item.payload.name}</p>
-          <p className="text-sm text-text-secondary capitalize">
-            {item.payload.exercise_type}
-            {item.payload.category ? ` · ${item.payload.category}` : ''}
-            {item.payload.equipment ? ` · ${item.payload.equipment}` : ''}
-          </p>
-          {item.payload.primary_muscles.length > 0 && (
-            <p className="text-sm text-text-secondary">
-              Muscles: {item.payload.primary_muscles.map(capitalize).join(', ')}
+          <SharedCard>
+            <p className="text-base font-medium">{item.payload.name}</p>
+            <p className="mt-1 text-sm text-text-secondary capitalize">
+              {item.payload.exercise_type}
+              {item.payload.category ? ` · ${item.payload.category}` : ''}
+              {item.payload.equipment ? ` · ${item.payload.equipment}` : ''}
             </p>
-          )}
+            {item.payload.primary_muscles.length > 0 && (
+              <p className="mt-1 text-sm text-text-secondary">
+                Muscles: {item.payload.primary_muscles.map(capitalize).join(', ')}
+              </p>
+            )}
+          </SharedCard>
           <p className="mt-1 text-xs text-text-secondary">
             Adds this exercise to your custom library.
           </p>
@@ -125,21 +138,23 @@ function NotificationDetail({
 
       {item.type === 'template_share' && (
         <div className="mt-3 flex flex-col gap-2">
-          <p className="text-base font-medium">{item.payload.name}</p>
-          {item.payload.exercises.length > 0 ? (
-            <ul className="flex flex-col gap-1 rounded-xl border border-border p-3">
-              {item.payload.exercises.map((ex, idx) => (
-                <li key={`${ex.name}-${idx}`} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="truncate">{ex.name}</span>
-                  <span className="shrink-0 text-xs text-text-secondary capitalize">
-                    {ex.exercise_type}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-text-secondary">This template has no exercises.</p>
-          )}
+          <SharedCard>
+            <p className="text-base font-medium">{item.payload.name}</p>
+            {item.payload.exercises.length > 0 ? (
+              <ul className="mt-2 flex flex-col gap-1">
+                {item.payload.exercises.map((ex, idx) => (
+                  <li key={`${ex.name}-${idx}`} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="truncate">{ex.name}</span>
+                    <span className="shrink-0 text-xs text-text-secondary capitalize">
+                      {ex.exercise_type}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-sm text-text-secondary">This template has no exercises.</p>
+            )}
+          </SharedCard>
           <p className="mt-1 text-xs text-text-secondary">
             Saved to your templates as{' '}
             <span className="font-medium">

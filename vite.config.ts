@@ -69,6 +69,7 @@ export default defineConfig(({ mode }) => {
           'icon-192.png',
           'icon-512.png',
           'icon-512-maskable.png',
+          'badge-96.png',
         ],
         injectManifest: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],

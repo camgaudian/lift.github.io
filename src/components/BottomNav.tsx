@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   getStoredNavFrom,
@@ -22,6 +23,12 @@ export function BottomNav() {
 
   const activeIndex = tabs.findIndex(({ id }) => isNavTabActive(id, pathname, navFrom))
 
+  // Skip the jelly squash on first render; play it on every tab change after.
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+  }, [])
+
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-5 pointer-events-none"
@@ -34,14 +41,22 @@ export function BottomNav() {
           {activeIndex >= 0 && (
             <div
               aria-hidden="true"
-              className="liquid-glass-indicator absolute top-0 bottom-0 my-auto rounded-full"
+              className="absolute top-0 bottom-0 my-auto"
               style={{
                 width: `calc(${100 / TAB_COUNT}% - 2px)`,
                 height: '100%',
                 left: `calc(${activeIndex * (100 / TAB_COUNT)}% + 1px)`,
                 transition: 'left 320ms cubic-bezier(0.34, 1.4, 0.64, 1)',
               }}
-            />
+            >
+              <div
+                key={mounted.current ? activeIndex : 'initial'}
+                className={[
+                  'liquid-glass-indicator h-full w-full rounded-full',
+                  mounted.current ? 'jelly-squash' : '',
+                ].join(' ')}
+              />
+            </div>
           )}
 
           {tabs.map(({ to, id, label, icon: Icon }) => {

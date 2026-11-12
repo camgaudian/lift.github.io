@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
-import { useTheme } from '@/contexts/ThemeContext'
 import {
   fetchActiveWorkout,
   startEmptyWorkout,
@@ -10,7 +9,7 @@ import {
   createPastWorkoutShell,
 } from '@/features/workouts/workoutApi'
 import { fetchTemplates } from '@/features/templates/templateApi'
-import { AppIcon } from '@/components/AppIcon'
+import { LiftWordmark } from '@/components/LiftMark'
 import { Button } from '@/components/Button'
 import {
   fetchFunStats,
@@ -32,7 +31,6 @@ import type { FunStats, WorkoutTemplate } from '@/lib/types'
 export function DashboardPage() {
   const { user } = useAuth()
   const { unit, displayName, loading: profileLoading } = useProfile()
-  const { accentColor } = useTheme()
   const usernameClass = useColorPopText('text-text-secondary')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -102,16 +100,18 @@ export function DashboardPage() {
   return (
     <div className="flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <AppIcon size={26} color={accentColor} />
-          <h1 className="text-2xl font-semibold">Lift</h1>
+        <h1 className="flex items-center">
+          <LiftWordmark height={44} title="Lift" />
+        </h1>
+        <div className="flex min-w-0 max-w-[50%] flex-col items-end leading-tight">
+          <span className="text-lg font-semibold tracking-tight text-text">{todayLabel()}</span>
+          <Link
+            to="/profile"
+            className={`max-w-full truncate text-sm font-medium ${usernameClass}`}
+          >
+            {profileLoading ? '…' : displayName ? `@${displayName}` : 'Set username'}
+          </Link>
         </div>
-        <Link
-          to="/profile"
-          className={`text-sm font-medium truncate max-w-[45%] shrink-0 ${usernameClass}`}
-        >
-          {profileLoading ? '…' : displayName ? `@${displayName}` : 'Set username'}
-        </Link>
       </div>
 
       <InstallBanner />
@@ -194,15 +194,20 @@ export function DashboardPage() {
   )
 }
 
+/** e.g. "Thursday, Nov 12" */
+function todayLabel(now = new Date()) {
+  return now.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+}
+
 function DashboardSkeleton() {
   return (
     <SkeletonGroup className="flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-7 w-7 rounded-lg" />
-          <Skeleton className="h-7 w-16" />
+        <Skeleton className="h-[44px] w-32 rounded-lg" />
+        <div className="flex flex-col items-end gap-1">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-4 w-24" />
         </div>
-        <Skeleton className="h-4 w-20" />
       </div>
       <Skeleton className="h-14 w-full rounded-2xl" />
       <div className="grid grid-cols-2 gap-3">

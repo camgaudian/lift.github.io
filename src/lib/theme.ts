@@ -58,11 +58,36 @@ export function mixHexRgb(base: string, accent: string, percent: number): string
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 
+function relativeLuminance(hex: string): number | null {
+  const n = hex.replace('#', '')
+  if (n.length !== 6) return null
+  const ch = [0, 2, 4].map((i) => {
+    const v = parseInt(n.slice(i, i + 2), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2]
+}
+
+/**
+ * Two-tone shades derived from the user's accent (the logo's two colors).
+ * Normal accents: deep = accent, soft = accent lifted toward white.
+ * Already-light accents (pink, teal…): deep = darkened accent, soft = accent, so both stay visible.
+ */
+export function brandShades(accent: string): { deep: string; soft: string } {
+  const lum = relativeLuminance(accent)
+  if (lum === null) return { deep: accent, soft: accent }
+  if (lum > 0.45) return { deep: darkenHex(accent, 0.3), soft: accent }
+  return { deep: accent, soft: mixHexRgb(accent, '#ffffff', 45) }
+}
+
 export function applyAppearance(theme: ThemeMode, accentColor: string, colorPop = false) {
   const root = document.documentElement
   root.dataset.theme = theme
   root.style.setProperty('--color-accent', accentColor)
   root.style.setProperty('--color-accent-hover', darkenHex(accentColor))
+  const shades = brandShades(accentColor)
+  root.style.setProperty('--color-accent-deep', shades.deep)
+  root.style.setProperty('--color-accent-soft', shades.soft)
 
   const neutrals = BASE_NEUTRALS[theme]
   const mix = COLOR_POP_MIX[theme]

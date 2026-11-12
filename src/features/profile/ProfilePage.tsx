@@ -330,7 +330,7 @@ export function ProfilePage() {
   return (
     <div className="flex flex-col gap-6 pt-3">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Profile</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
         <SettingsGearLink linkClass={sectionTitleClass} />
       </div>
 

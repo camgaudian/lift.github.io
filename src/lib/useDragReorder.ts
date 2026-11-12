@@ -214,7 +214,8 @@ export function useDragReorder({
     if (dragIndex < 0 || !rowMetrics) return undefined
 
     if (idx === dragIndex) {
-      return { transform: `translateY(${dragOffset}px)`, zIndex: 10, touchAction: 'none' }
+      // Lifted slightly so the held row reads as picked up.
+      return { transform: `translateY(${dragOffset}px) scale(1.02)`, zIndex: 10, touchAction: 'none' }
     }
 
     const shift = getRowShift(idx, dragIndex, activeHoverIndex, rowMetrics)

@@ -174,7 +174,6 @@ export function TemplateDetailPage() {
         />
         <ExerciseRemoveButton
           exerciseName={templateItemLabel(item)}
-          fromLabel="template"
           onRemove={() => handleRemove(item.id)}
         />
       </div>
@@ -233,7 +232,7 @@ export function TemplateDetailPage() {
                 draggingKey === item.id
                   ? 'relative z-10'
                   : isDragging
-                    ? 'transition-transform duration-150 ease-out'
+                    ? 'reorder-shift'
                     : ''
               }
               style={getRowStyle(idx)}

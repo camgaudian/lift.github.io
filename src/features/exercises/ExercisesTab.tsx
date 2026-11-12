@@ -3,6 +3,7 @@ import { useExercises } from './useExercises'
 import { createExercise, deleteExercise } from './exerciseApi'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { Select } from '@/components/Select'
 import { Card } from '@/components/Card'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Modal } from '@/components/Modal'
@@ -120,31 +121,25 @@ export function ExercisesTab() {
       {showAdd && (
         <Card className="flex flex-col gap-3">
           <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} required />
-          <div>
-            <label className="text-sm text-text-secondary">Type</label>
-            <select
-              className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-3"
-              value={exerciseType}
-              onChange={(e) => setExerciseType(e.target.value as ExerciseType)}
-            >
-              {TYPES.map((t) => (
-                <option key={t} value={t}>{capitalize(t)}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Type"
+            value={exerciseType}
+            onChange={(e) => setExerciseType(e.target.value as ExerciseType)}
+          >
+            {TYPES.map((t) => (
+              <option key={t} value={t}>{capitalize(t)}</option>
+            ))}
+          </Select>
           {exerciseType !== 'cardio' && (
-            <div>
-              <label className="text-sm text-text-secondary">Category</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-3"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value as typeof newCategory)}
-              >
-                {EXERCISE_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{capitalize(c)}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Category"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value as typeof newCategory)}
+            >
+              {EXERCISE_CATEGORIES.map((c) => (
+                <option key={c} value={c}>{capitalize(c)}</option>
+              ))}
+            </Select>
           )}
           <Input label="Muscles (comma-separated)" value={muscles} onChange={(e) => setMuscles(e.target.value)} />
           <Input label="Equipment" value={equipment} onChange={(e) => setEquipment(e.target.value)} />

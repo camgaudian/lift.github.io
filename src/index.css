@@ -8,6 +8,9 @@
   --color-text-secondary: #86868b;
   --color-accent: #0071e3;
   --color-accent-hover: #0077ed;
+  /* Logo two-tone, derived from the accent at runtime (see brandShades in src/lib/theme.ts). */
+  --color-accent-deep: #0071e3;
+  --color-accent-soft: #80b8f1;
   --color-danger: #ff3b30;
   --color-success: #34c759;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -195,10 +198,27 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   }
 }
 
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
 .skeleton {
   background-color: var(--color-border);
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--color-surface) 55%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
   border-radius: 0.5rem;
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
 @keyframes reuse-spin {
@@ -393,4 +413,298 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   background: transparent;
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
+}
+
+/* ── Micro-interactions ── */
+
+/* Slide-to-confirm label and other text that shimmers left to right. */
+@keyframes shimmer-text-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.shimmer-text {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-accent) 35%,
+    color-mix(in srgb, var(--color-accent) 35%, white) 50%,
+    var(--color-accent) 65%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-text-sweep 2.4s linear infinite;
+}
+
+@keyframes slide-confirm-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+.slide-confirm-nudge {
+  animation: slide-confirm-nudge 260ms ease-in-out;
+}
+
+@keyframes rays-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rays-spin {
+  animation: rays-spin 0.9s steps(8) infinite;
+}
+
+.rolling-steps-column {
+  transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.rolling-digit {
+  transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* DeletePillButton: the icon grows into a red pill on the first tap and
+   shrinks back if left alone. */
+.delete-pill {
+  width: var(--pill-idle, 1.875rem);
+  border-radius: 9999px;
+  background-color: transparent;
+  transition:
+    width 260ms cubic-bezier(0.34, 1.4, 0.64, 1),
+    background-color 200ms ease;
+}
+
+.delete-pill:not([data-armed]):hover {
+  background-color: var(--color-surface-secondary);
+}
+
+.delete-pill[data-armed] {
+  width: var(--pill-armed, 4.25rem);
+  background-color: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+/* Corner variant: the exercise card's quarter-circle button (same idle look
+   as cornerButtonClass) that becomes a pill tucked into the corner. */
+.delete-pill-corner {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 3.5rem 0 0 0;
+  background-color: color-mix(in srgb, var(--color-surface-secondary) 70%, transparent);
+  transition:
+    width 300ms cubic-bezier(0.34, 1.3, 0.64, 1),
+    height 300ms cubic-bezier(0.34, 1.3, 0.64, 1),
+    right 300ms cubic-bezier(0.34, 1.3, 0.64, 1),
+    bottom 300ms cubic-bezier(0.34, 1.3, 0.64, 1),
+    border-radius 300ms ease,
+    background-color 200ms ease,
+    color 150ms ease;
+}
+
+.delete-pill-corner:not([data-armed]):hover {
+  background-color: var(--color-surface-secondary);
+}
+
+.delete-pill-corner[data-armed] {
+  right: 0.625rem;
+  bottom: 0.625rem;
+  width: 5.25rem;
+  height: 2.25rem;
+  border-radius: 1.125rem;
+  background-color: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface));
+}
+
+.delete-pill-x,
+.delete-pill-label {
+  transition:
+    opacity 180ms ease,
+    transform 260ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.delete-pill-label {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+[data-armed] > .delete-pill-x {
+  opacity: 0;
+  transform: scale(0.4) rotate(90deg);
+}
+
+[data-armed] > .delete-pill-label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Two-tap delete: the row dissolves after the second tap. */
+@keyframes set-dissolve {
+  to {
+    opacity: 0;
+    filter: blur(6px);
+    transform: scale(0.94) translateY(-2px);
+  }
+}
+
+.set-dissolve {
+  animation: set-dissolve 280ms ease-in forwards;
+}
+
+/* Liquid switch: the knob stretches toward where it's going, then settles. */
+@keyframes liquid-stretch {
+  0% {
+    transform: scaleX(1);
+  }
+  35% {
+    transform: scaleX(1.4) scaleY(0.88);
+  }
+  70% {
+    transform: scaleX(0.94) scaleY(1.04);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.liquid-stretch-right {
+  transform-origin: right center;
+  animation: liquid-stretch 380ms ease-out;
+}
+
+.liquid-stretch-left {
+  transform-origin: left center;
+  animation: liquid-stretch 380ms ease-out;
+}
+
+/* Jelly nav: the bottom-nav indicator squashes as it moves. */
+@keyframes jelly-squash {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scaleX(1.12) scaleY(0.86);
+  }
+  60% {
+    transform: scaleX(0.96) scaleY(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.jelly-squash {
+  animation: jelly-squash 360ms ease-out;
+}
+
+/* Rows making room during drag-to-reorder spring into place. */
+.reorder-shift {
+  transition: transform 280ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text {
+    animation: none;
+    background: none;
+    color: var(--color-accent);
+  }
+
+  .slide-confirm-nudge,
+  .rays-spin,
+  .set-dissolve,
+  .liquid-stretch-right,
+  .liquid-stretch-left,
+  .jelly-squash {
+    animation: none;
+  }
+
+  .set-dissolve {
+    opacity: 0;
+  }
+
+  .rolling-steps-column,
+  .rolling-digit,
+  .reorder-shift,
+  .delete-pill,
+  .delete-pill-corner,
+  .delete-pill-x,
+  .delete-pill-label {
+    transition: none;
+  }
+}
+
+/* Modular brand motion: pieces drop in and settle, like the logo snapping together. */
+@keyframes lift-snap-in {
+  0% {
+    transform: translateY(-14px);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(2px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Same motion in SVG user units (the mark's 1024 canvas) for pieces inside the logo. */
+@keyframes lift-snap-in-svg {
+  0% {
+    transform: translateY(-220px);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(24px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes lift-piece-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-90px);
+  }
+}
+
+.lift-snap-in {
+  animation: lift-snap-in 450ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+.lift-snap-in-svg {
+  animation: lift-snap-in-svg 500ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+.lift-piece-bob {
+  animation: lift-piece-bob 700ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lift-snap-in,
+  .lift-snap-in-svg,
+  .lift-piece-bob {
+    animation: none;
+  }
 }

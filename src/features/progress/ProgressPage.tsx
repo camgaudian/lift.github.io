@@ -10,7 +10,7 @@ export function ProgressPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-3">
-      <h1 className="text-2xl font-semibold">Progress</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Progress</h1>
 
       <SegmentedControl
         tabs={[
