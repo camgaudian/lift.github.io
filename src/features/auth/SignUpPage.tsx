@@ -154,7 +154,11 @@ export function SignUpPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && (
+            <p key={error} className="error-shake-in text-sm text-danger">
+              {error}
+            </p>
+          )}
           <Button type="submit" fullWidth disabled={loading}>
             {loading ? 'Creating…' : 'Sign up'}
           </Button>

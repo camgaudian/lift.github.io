@@ -183,7 +183,7 @@ export function TemplateDetailPage() {
   if (loading) return <LoadingSpinner />
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="content-fade-in flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <BackButton to="/library" label="Back to library" />
         <input

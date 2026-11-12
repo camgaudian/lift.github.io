@@ -279,7 +279,7 @@ export function SettingsPage() {
         )}
 
         <Card padding="sm" className="p-0 overflow-hidden">
-          <details className="group">
+          <details className="smooth-details group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium">Username</p>
@@ -337,7 +337,7 @@ export function SettingsPage() {
 
         {user && (
           <Card padding="sm" className="p-0 overflow-hidden">
-            <details className="group">
+            <details className="smooth-details group">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
                 <div className="min-w-0 space-y-0.5">
                   <p className="text-sm font-medium">Password</p>
@@ -411,7 +411,7 @@ export function SettingsPage() {
         <h2 className={sectionHeadingClassName}>Preferences</h2>
 
         <Card padding="sm" className="p-0 overflow-hidden">
-          <details className="group">
+          <details className="smooth-details group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium">Appearance</p>
@@ -520,7 +520,7 @@ export function SettingsPage() {
         </Card>
 
         <Card padding="sm" className="p-0 overflow-hidden">
-          <details className="group">
+          <details className="smooth-details group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium">Weight units</p>
@@ -551,7 +551,7 @@ export function SettingsPage() {
         </Card>
 
         <Card padding="sm" className="p-0 overflow-hidden">
-          <details className="group">
+          <details className="smooth-details group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium">PR sharing with friends</p>
@@ -619,7 +619,7 @@ export function SettingsPage() {
           <h2 className={`${sectionHeadingBase} text-danger`}>Danger</h2>
 
           <Card padding="sm" className="p-0 overflow-hidden border-danger/30">
-            <details className="group">
+            <details className="smooth-details group">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 select-none [&::-webkit-details-marker]:hidden">
                 <div className="min-w-0 space-y-0.5">
                   <p className="text-sm font-medium text-danger">Erase workout history</p>

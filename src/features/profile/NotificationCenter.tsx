@@ -214,7 +214,7 @@ function NotificationList({
     )
   }
   return (
-    <ul className="flex flex-col gap-1.5">
+    <ul className="stagger-in flex flex-col gap-1.5">
       {items.map((item) => (
         <li
           key={`${item.type}-${item.id}`}

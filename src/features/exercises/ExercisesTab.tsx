@@ -97,7 +97,7 @@ export function ExercisesTab() {
   if (error) return <p className="text-danger">{error}</p>
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="content-fade-in flex flex-col gap-4">
       <Input
         placeholder="Search exercises…"
         value={search}

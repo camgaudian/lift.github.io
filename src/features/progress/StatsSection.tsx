@@ -82,7 +82,7 @@ export function StatsSection() {
   ]
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="stagger-in flex flex-col gap-4">
       <PrLeaderboardLink from="progress" />
 
       <section>

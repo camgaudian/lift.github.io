@@ -29,8 +29,26 @@ export function BottomNav() {
     mounted.current = true
   }, [])
 
+  // Publish the nav's real height (pill + bottom inset) so pages can center
+  // content in the space actually visible above it.
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    const root = document.documentElement
+    const update = () => root.style.setProperty('--bottom-nav-h', `${el.offsetHeight}px`)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => {
+      ro.disconnect()
+      root.style.removeProperty('--bottom-nav-h')
+    }
+  }, [])
+
   return (
     <div
+      ref={wrapperRef}
       className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-5 pointer-events-none"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
     >

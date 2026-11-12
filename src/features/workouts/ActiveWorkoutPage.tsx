@@ -558,7 +558,7 @@ export function ActiveWorkoutPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col justify-center gap-5 py-6">
+    <div className="content-fade-in flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-2.5">

@@ -8,6 +8,8 @@ export function LibraryPage() {
   const location = useLocation()
   const isTemplateDetail = location.pathname.includes('/templates/')
   const [tab, setTab] = useState<'exercises' | 'templates'>('exercises')
+  // Slide direction follows the pill; none on first render.
+  const [tabEnter, setTabEnter] = useState('')
 
   if (isTemplateDetail) {
     return <Outlet />
@@ -22,9 +24,15 @@ export function LibraryPage() {
           { value: 'templates', label: 'Templates' },
         ]}
         value={tab}
-        onChange={setTab}
+        onChange={(next: 'exercises' | 'templates') => {
+          if (next === tab) return
+          setTabEnter(next === 'exercises' ? 'tab-enter-left' : 'tab-enter-right')
+          setTab(next)
+        }}
       />
-      {tab === 'exercises' ? <ExercisesTab /> : <TemplatesTab />}
+      <div key={tab} className={tabEnter}>
+        {tab === 'exercises' ? <ExercisesTab /> : <TemplatesTab />}
+      </div>
     </div>
   )
 }

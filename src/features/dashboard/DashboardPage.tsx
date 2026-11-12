@@ -101,7 +101,7 @@ export function DashboardPage() {
   if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="flex min-h-full flex-col justify-center gap-5 py-6">
+    <div className="stagger-in center-above-nav flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
         <h1 className="relative flex items-center">
           <LiftWordmark height={44} title="Lift" />
@@ -207,7 +207,7 @@ function todayLabel(now = new Date()) {
 
 function DashboardSkeleton() {
   return (
-    <SkeletonGroup className="flex min-h-full flex-col justify-center gap-5 py-6">
+    <SkeletonGroup className="center-above-nav flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
         <Skeleton className="h-[44px] w-32 rounded-lg" />
         <div className="flex flex-col items-end gap-1">
