@@ -3,11 +3,14 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { BottomNav } from './BottomNav'
 import { PullToRefresh } from './PullToRefresh'
 import { PushPermissionPrompt } from '@/features/settings/PushPermissionPrompt'
+import { HolidayParticles } from './HolidayDecor'
+import { useHoliday } from '@/lib/holidays'
 
 export function AppLayout() {
   const { pathname } = useLocation()
   const mainRef = useRef<HTMLElement>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const holiday = useHoliday()
 
   // Remounting the page makes it refetch its data, like a reload.
   const refresh = useCallback(async () => {
@@ -24,9 +27,11 @@ export function AppLayout() {
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
+      {/* Home only, and never mid-workout. Sits under main so content covers it. */}
+      {holiday && pathname === '/' && <HolidayParticles holiday={holiday} />}
       <main
         ref={mainRef}
-        className="mx-auto w-full max-w-lg min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-28 pt-6 safe-top"
+        className="relative z-[1] mx-auto w-full max-w-lg min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-28 pt-6 safe-top"
       >
         <PullToRefresh onRefresh={refresh} disabled={refreshDisabled}>
           <Outlet key={refreshKey} />

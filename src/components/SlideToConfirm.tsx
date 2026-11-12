@@ -1,4 +1,6 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { HolidayThumbIcon } from './HolidayDecor'
+import { useHoliday } from '@/lib/holidays'
 
 const THUMB = 48
 const PAD = 4
@@ -37,6 +39,7 @@ export function SlideToConfirm({
   const [dragging, setDragging] = useState(false)
   const [nudge, setNudge] = useState(0)
   const wasBusy = useRef(busy)
+  const holiday = useHoliday()
 
   // Reset once the confirmed action finishes (success or error).
   useEffect(() => {
@@ -138,7 +141,7 @@ export function SlideToConfirm({
             transition: dragging ? 'none' : 'transform 320ms cubic-bezier(0.34, 1.3, 0.64, 1)',
           }}
         >
-          <ChevronsIcon />
+          {holiday ? <HolidayThumbIcon holiday={holiday} /> : <ChevronsIcon />}
         </button>
       )}
     </div>

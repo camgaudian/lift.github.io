@@ -27,11 +27,14 @@ import { Skeleton, SkeletonGroup } from '@/components/Skeleton'
 import { PrLeaderboardLink } from '@/components/PrLeaderboardLink'
 import { useColorPopText } from '@/lib/ui'
 import type { FunStats, WorkoutTemplate } from '@/lib/types'
+import { useHoliday } from '@/lib/holidays'
+import { CardCornerOrnament, WordmarkHat } from '@/components/HolidayDecor'
 
 export function DashboardPage() {
   const { user } = useAuth()
   const { unit, displayName, loading: profileLoading } = useProfile()
   const usernameClass = useColorPopText('text-text-secondary')
+  const holiday = useHoliday()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [stats, setStats] = useState<FunStats | null>(null)
@@ -100,8 +103,9 @@ export function DashboardPage() {
   return (
     <div className="flex min-h-full flex-col justify-center gap-5 py-6">
       <div className="flex items-center justify-between px-1">
-        <h1 className="flex items-center">
+        <h1 className="relative flex items-center">
           <LiftWordmark height={44} title="Lift" />
+          {holiday && <WordmarkHat holiday={holiday} />}
         </h1>
         <div className="flex min-w-0 max-w-[50%] flex-col items-end leading-tight">
           <span className="text-lg font-semibold tracking-tight text-text">{todayLabel()}</span>
@@ -121,7 +125,9 @@ export function DashboardPage() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Streak" value={`${stats?.streak_days ?? 0} days`} />
         <StatCard label="Workouts" value={String(stats?.total_workouts ?? 0)} />
-        <StatCard label="All-time volume" value={formatVolume(stats?.cumulative_volume_lb ?? 0, unit)} className="col-span-2" />
+        <StatCard label="All-time volume" value={formatVolume(stats?.cumulative_volume_lb ?? 0, unit)} className="relative col-span-2">
+          {holiday && <CardCornerOrnament holiday={holiday} />}
+        </StatCard>
       </div>
 
       {startingWorkout ? (
@@ -225,15 +231,18 @@ function StatCard({
   label,
   value,
   className = '',
+  children,
 }: {
   label: string
   value: string
   className?: string
+  children?: React.ReactNode
 }) {
   return (
     <Card className={className}>
       <p className="text-xs text-text-secondary">{label}</p>
       <p className="mt-1 text-lg font-semibold">{value}</p>
+      {children}
     </Card>
   )
 }

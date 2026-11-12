@@ -16,6 +16,7 @@ import { FeedbackSection } from '@/features/settings/FeedbackSection'
 import { InstallGuide } from '@/features/settings/InstallGuide'
 import { PushNotificationsSheet } from '@/features/settings/PushNotificationsSheet'
 import { capitalize } from '@/lib/format'
+import { setHolidayDecorEnabled, useHolidayDecorEnabled } from '@/lib/holidays'
 import { sectionHeadingBase, useSectionHeadingClass } from '@/lib/ui'
 import type { Profile, ThemeMode, WeightUnit } from '@/lib/types'
 
@@ -52,6 +53,7 @@ export function SettingsPage() {
   const { user, signOut, verifyPassword, changePassword } = useAuth()
   const { displayName, unit, loading: profileLoading, setDisplayName, setUnit } = useProfile()
   const { theme, accentColor, colorPop, loading, setTheme, setAccentColor, setColorPop } = useTheme()
+  const holidayDecor = useHolidayDecorEnabled()
   const sectionHeadingClassName = useSectionHeadingClass()
   const [saving, setSaving] = useState(false)
   const [nameDraft, setNameDraft] = useState('')
@@ -497,6 +499,20 @@ export function SettingsPage() {
                   checked={colorPop}
                   disabled={loading || saving}
                   onChange={handleColorPop}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Holiday decorations</p>
+                  <p className="mt-0.5 text-xs text-text-secondary leading-snug">
+                    Seasonal touches around Thanksgiving, Christmas, and New Year&apos;s, in your color
+                  </p>
+                </div>
+                <Switch
+                  label="Holiday decorations"
+                  checked={holidayDecor}
+                  onChange={setHolidayDecorEnabled}
                 />
               </div>
             </div>

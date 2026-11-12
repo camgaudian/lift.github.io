@@ -708,3 +708,13 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     animation: none;
   }
 }
+
+/* Holiday decorations (src/components/HolidayDecor.tsx) */
+@keyframes holiday-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.holiday-burst-ray {
+  animation: holiday-twinkle 1.2s ease-in-out infinite;
+}
