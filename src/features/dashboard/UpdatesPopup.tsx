@@ -98,7 +98,26 @@ function UpdateItemGlyph({ icon, size = 'md' }: { icon: UpdateItemIcon; size?: '
   )
 }
 
-function MainUpdateItem({ title, description, icon }: UpdateItem) {
+function InfoIcon() {
+  return (
+    <svg
+      width={14}
+      height={14}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      className="mt-0.5 shrink-0"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 11v6M12 7.5v.01" />
+    </svg>
+  )
+}
+
+function MainUpdateItem({ title, description, icon, note }: UpdateItem) {
   return (
     <li className="relative overflow-hidden rounded-xl border border-border bg-surface-secondary/60 px-3.5 py-3">
       <div className="flex gap-3">
@@ -108,6 +127,14 @@ function MainUpdateItem({ title, description, icon }: UpdateItem) {
           <p className="mt-1 text-sm leading-relaxed text-text-secondary">{description}</p>
         </div>
       </div>
+      {note && (
+        <p className="mt-3 flex gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-medium leading-relaxed text-text">
+          <span className="text-accent">
+            <InfoIcon />
+          </span>
+          <span>{note}</span>
+        </p>
+      )}
     </li>
   )
 }

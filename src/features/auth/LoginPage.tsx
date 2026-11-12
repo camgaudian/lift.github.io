@@ -30,7 +30,7 @@ export function LoginPage() {
     <AuthPageLayout>
       <div className="mb-4 text-center">
         <h1 className="flex justify-center">
-          <LiftWordmark height={64} title="Lift" />
+          <LiftWordmark height={70} title="Lift" animate />
         </h1>
         <p className="mt-4 text-text-secondary">Train together</p>
       </div>

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { MONOGRAM, WORDMARK, brandShades } from '@/lib/brandMark'
 
@@ -9,6 +10,18 @@ interface LiftMarkProps {
   className?: string
   /** Accessible label; omit for a decorative mark. */
   title?: string
+  /** Play the snap-in (pieces drop in and settle) when the mark mounts. */
+  animate?: boolean
+}
+
+/** Snap-in timing for `animate`: first piece starts as the auth slide settles. */
+const SNAP_START_MS = 280
+const SNAP_STAGGER_MS = 90
+
+function groupByLetter<T extends { letter: number }>(pieces: readonly T[]): T[][] {
+  const groups: T[][] = []
+  for (const piece of pieces) (groups[piece.letter] ??= []).push(piece)
+  return groups
 }
 
 function Mark({
@@ -17,6 +30,7 @@ function Mark({
   color,
   className = '',
   title,
+  animate = false,
 }: LiftMarkProps & { shape: typeof WORDMARK | typeof MONOGRAM; height: number }) {
   const { accentColor } = useTheme()
   const { deep, soft } = brandShades(color ?? accentColor)
@@ -27,13 +41,41 @@ function Mark({
       width={(height * w) / h}
       height={height}
       viewBox={shape.viewBox}
-      className={`shrink-0 ${className}`}
+      className={`shrink-0 ${animate ? 'overflow-visible' : ''} ${className}`}
       role={title ? 'img' : undefined}
       aria-label={title}
       aria-hidden={title ? undefined : true}
     >
-      <path d={shape.deep} fill={deep} style={{ transition: 'fill 200ms ease' }} />
-      <path d={shape.soft} fill={soft} style={{ transition: 'fill 200ms ease' }} />
+      {animate ? (
+        groupByLetter(shape.pieces).map((pieces, i) => {
+          // Wordmark letters zip together (L rises, I drops, F rises, T drops); the monogram drops in.
+          const fromBelow = shape === WORDMARK && i % 2 === 0
+          return (
+            <g
+              key={i}
+              className={`lift-mark-piece ${shape === WORDMARK ? 'lift-mark-piece-subtle' : ''}`}
+              style={{
+                animationDelay: `${SNAP_START_MS + i * SNAP_STAGGER_MS}ms`,
+                ...(fromBelow ? { '--piece-dir': '1' } : null),
+              } as CSSProperties}
+            >
+              {pieces.map((piece, j) => (
+                <path
+                  key={j}
+                  d={piece.d}
+                  fill={piece.tone === 'deep' ? deep : soft}
+                  style={{ transition: 'fill 200ms ease' }}
+                />
+              ))}
+            </g>
+          )
+        })
+      ) : (
+        <>
+          <path d={shape.deep} fill={deep} style={{ transition: 'fill 200ms ease' }} />
+          <path d={shape.soft} fill={soft} style={{ transition: 'fill 200ms ease' }} />
+        </>
+      )}
     </svg>
   )
 }

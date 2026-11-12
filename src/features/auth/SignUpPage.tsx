@@ -124,7 +124,7 @@ export function SignUpPage() {
   return (
     <AuthPageLayout>
       <div className="mb-4 flex flex-col items-center text-center">
-        <LiftMonogram height={64} className="mb-4" />
+        <LiftMonogram height={72} className="mb-2" animate />
         <h1 className="text-3xl font-bold tracking-tight">Create account</h1>
         <p className="mt-1 text-text-secondary">Ready to Lift?</p>
       </div>

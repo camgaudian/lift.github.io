@@ -21,6 +21,8 @@ export type UpdateItem = {
   title: string
   description: string
   icon: UpdateItemIcon
+  /** Extra tip shown in a highlighted callout under the description. */
+  note?: string
 }
 
 /** Bump this whenever UPDATES_POPUP copy changes. */
@@ -34,6 +36,7 @@ export const UPDATES_POPUP = {
       title: 'A fresh new look',
       description:
         'A brand-new two-tone Lift logo and app icon, plus refreshed text fields, menus, and switches throughout the app.',
+      note: 'Installed Lift on your home screen? You may need to delete it and add it again to see the new app icon.',
     },
     {
       icon: 'holiday',
